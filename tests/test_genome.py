@@ -11,6 +11,7 @@ import neat
 from neat.activations import identity_activation
 
 from custom_neat.genome import *
+from custom_neat.species import SpeciesSet
 
 __author__ = "Adam Tupper"
 __copyright__ = "Adam Tupper"
@@ -23,7 +24,7 @@ class TestGenome:
         config_path = os.path.join(local_dir, 'configurations', 'test_configuration.ini')
         self.config = neat.Config(Genome,
                                   neat.DefaultReproduction,
-                                  neat.DefaultSpeciesSet,
+                                  SpeciesSet,
                                   neat.DefaultStagnation,
                                   config_path)
 
