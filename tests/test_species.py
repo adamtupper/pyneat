@@ -11,6 +11,7 @@ from neat.activations import  identity_activation
 
 from custom_neat.species import *
 from custom_neat.genome import *
+from custom_neat.reproduction import Reproduction
 
 
 class TestSpecies:
@@ -51,7 +52,7 @@ class TestSpeciesSet:
         local_dir = os.path.dirname(__file__)
         config_path = os.path.join(local_dir, 'configurations', 'test_configuration.ini')
         self.config = neat.Config(Genome,
-                                  neat.DefaultReproduction,
+                                  Reproduction,
                                   SpeciesSet,
                                   neat.DefaultStagnation,
                                   config_path)
