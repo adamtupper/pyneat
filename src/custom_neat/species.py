@@ -5,7 +5,7 @@ from itertools import count
 import math
 import statistics
 
-from neat.config import ConfigParameter, DefaultClassConfig
+from neat.config import ConfigParameter, DefaultClassConfig, Config
 from neat.species import GenomeDistanceCache
 
 
@@ -75,7 +75,7 @@ class SpeciesSet:
         """
 
         Args:
-            config:
+            config (SpeciesSetConfig):
             reporters:
         """
         self.species_set_config = config
@@ -101,7 +101,7 @@ class SpeciesSet:
         """
 
         Args:
-            config:
+            config (Config):
             population:
             generation:
 
@@ -159,11 +159,13 @@ class SpeciesSet:
 
             species.update(representative_id, {id: population[id] for id in new_members[species_id]})
 
-        gdmean = statistics.mean(distances.distances.values())
-        gdstdev = statistics.stdev(distances.distances.values())
-        self.reporters.info(
-            'Mean genetic distance {0:.3f}, standard deviation {1:.3f}'.format(gdmean, gdstdev)
-        )
+        if self.species:
+            # If there are species remaining
+            gdmean = statistics.mean(distances.distances.values())
+            gdstdev = statistics.stdev(distances.distances.values())
+            self.reporters.info(
+                'Mean genetic distance {0:.3f}, standard deviation {1:.3f}'.format(gdmean, gdstdev)
+            )
 
     def get_species_id(self, individual_id):
         """
