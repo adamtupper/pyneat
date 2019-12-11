@@ -150,6 +150,7 @@ class SpeciesSet:
                 new_members[species_id] = [genome_id]
 
         # Update set of species with new representatives and members
+        self.genome_to_species = {}
         for species_id, representative_id in new_representatives.items():
             species = self.species.get(species_id)
             if species is None:
@@ -157,7 +158,12 @@ class SpeciesSet:
                 species = Species(species_id, generation)
                 self.species[species_id] = species
 
-            species.update(representative_id, {id: population[id] for id in new_members[species_id]})
+            members = new_members[species_id]
+            for genome_id in members:
+                self.genome_to_species[genome_id] = species_id
+
+            member_dict = {id: population[id] for id in new_members[species_id]}
+            species.update(representative_id, member_dict)
 
         if self.species:
             # If there are species remaining
