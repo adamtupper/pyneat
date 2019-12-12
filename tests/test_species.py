@@ -25,7 +25,7 @@ class TestSpecies:
         assert 1 == species.last_improved
         assert {} == species.members
         assert species.fitness is None
-        assert species.adj_fitness is None
+        assert species.adjusted_fitness is None
         assert [] == species.fitness_history
 
     def test_species_update(self):

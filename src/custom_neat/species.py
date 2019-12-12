@@ -15,7 +15,7 @@ class Species:
     Attributes:
         members (dict): A dictionary of {genome ID: genome} pairs for each
             genome in the species.
-        adj_fitness (float): The sum of the adjusted fitnesses for each genome
+        adjusted_fitness (float): The sum of the adjusted fitnesses for each genome
             in the species.
     """
     def __init__(self, key, generation):
@@ -31,15 +31,15 @@ class Species:
         self.members = {}
         self.representative = None
         self.fitness = None
-        self.adj_fitness = None
+        self.adjusted_fitness = None
         self.fitness_history = []
 
     def __eq__(self, other):
         self_attr = (self.key, self.created, self.last_improved, self.members,
-                     self.representative, self.fitness, self.adj_fitness,
+                     self.representative, self.fitness, self.adjusted_fitness,
                      self.fitness_history)
         other_attr = (other.key, other.created, other.last_improved, other.members,
-                      other.representative, other.fitness, other.adj_fitness,
+                      other.representative, other.fitness, other.adjusted_fitness,
                       other.fitness_history)
         return self_attr == other_attr
 
@@ -110,7 +110,7 @@ class SpeciesSet:
         """
         unspeciated = set(population)
         distances = GenomeDistanceCache(config.genome_config)
-        new_representatives = {}  # species ID: genome ID
+        new_representatives = {}  # species ID: genome
         new_members = {}  # species ID: [genome IDs]
 
         # Find the best new representatives for each species (closest to the
@@ -151,7 +151,7 @@ class SpeciesSet:
 
         # Update set of species with new representatives and members
         self.genome_to_species = {}
-        for species_id, representative_id in new_representatives.items():
+        for species_id, representative in new_representatives.items():
             species = self.species.get(species_id)
             if species is None:
                 # Species is new
@@ -163,7 +163,10 @@ class SpeciesSet:
                 self.genome_to_species[genome_id] = species_id
 
             member_dict = {id: population[id] for id in new_members[species_id]}
-            species.update(representative_id, member_dict)
+            species.update(representative, member_dict)
+
+        # Remove species without any members
+        self.species = {k: s for k, s in self.species.items() if s.members}
 
         if self.species:
             # If there are species remaining
