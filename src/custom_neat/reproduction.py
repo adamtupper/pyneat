@@ -229,6 +229,7 @@ class Reproduction:
                     child = parent1.copy()
                     child.key = child_id
                     child.mutate(config.genome_config)
+                    self.ancestors[child_id] = (parent1,)
                 else:
                     # Offspring is generated through mutation and crossover
                     # TODO: Test check for a sufficient number of species
@@ -248,6 +249,7 @@ class Reproduction:
                     child = Genome(child_id)
                     child.configure_crossover(parent1, parent2, config.genome_config)
                     child.mutate(config.genome_config)
+                    self.ancestors[child_id] = (parent1, parent2)
 
                 new_population[child_id] = child
 
