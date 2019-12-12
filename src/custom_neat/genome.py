@@ -478,6 +478,12 @@ class Genome:
                 else:
                     self.nodes[key] = copy.deepcopy(gene2)
 
+            # Add to input/output nodes if applicable
+            if gene1.type == NodeTypes.INPUT:
+                self.inputs.append(key)
+            elif gene1.type == NodeTypes.OUTPUT:
+                self.outputs.append(key)
+
     def distance(self, other, config):
         """Computes the compatibility  (genetic) distance between two genomes.
 

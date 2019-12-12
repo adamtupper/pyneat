@@ -68,6 +68,7 @@ class RNN:
             self.curr_states[node_idx] = activation(bias + sum(weighted_inputs))
 
         self.prev_states = {node: val for (node, val) in self.curr_states.items()}
+
         return [self.curr_states[i] for i in self.output_nodes]
 
     @staticmethod
@@ -81,13 +82,8 @@ class RNN:
 
         """
         # Fetch indices of network input and output nodes
-        input_nodes = []
-        output_nodes = []
-        for i, gene in genome.nodes.items():
-            if gene.type == NodeTypes.INPUT:
-                input_nodes.append(i)
-            elif gene.type == NodeTypes.OUTPUT:
-                output_nodes.append(i)
+        input_nodes = genome.inputs
+        output_nodes = genome.outputs
 
         # Find all required nodes for computing the network outputs
         required = required_for_output(input_nodes, output_nodes, genome.connections.values())

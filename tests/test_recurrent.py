@@ -17,8 +17,9 @@ def test_create_all_required():
         0: NodeGene(NodeTypes.INPUT, 1.0, activation=identity_activation),
         1: NodeGene(NodeTypes.OUTPUT, 2.0, activation=identity_activation)
     }
-
     genome.connections = {(0, 1): ConnectionGene(0, 1, 1.0, True)}
+    genome.inputs = [0]
+    genome.outputs = [1]
 
     network = RNN.create(genome)
 
@@ -50,6 +51,8 @@ def test_create_some_required():
         (2, 4): ConnectionGene(2, 4, 4.0, True),
         (2, 5): ConnectionGene(2, 5, 5.0, True),
     }
+    genome.inputs = [0, 1]
+    genome.outputs = [4, 5]
 
     network = RNN.create(genome)
 
