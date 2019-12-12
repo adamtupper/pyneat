@@ -33,5 +33,27 @@ dependencies:
   - xz=5.2.4=h14c3975_4
   - zipp=0.6.0=py_0
   - zlib=1.2.11=h7b6447c_3
+  - pip:
+    - box2d-py==2.3.8
+    - click==7.0
+    - cloudpickle==1.2.2
+    - colorama==0.4.3
+    - filelock==3.0.12
+    - funcsigs==1.0.2
+    - future==0.18.2
+    - gym==0.15.4
+    - jsonschema==3.2.0
+    - neat-python==0.92
+    - numpy==1.17.4
+    - opencv-python==4.1.2.30
+    - protobuf==3.11.1
+    - psutil==5.6.7
+    - pyglet==1.3.2
+    - pyrsistent==0.15.6
+    - pyyaml==5.2
+    - ray==0.7.6
+    - redis==3.3.11
+    - scipy==1.3.3
+    - setproctitle==1.1.10
 prefix: /home/cosc/student/atu31/miniconda3/envs/custom_neat
 
