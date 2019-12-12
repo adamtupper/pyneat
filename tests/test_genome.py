@@ -440,11 +440,13 @@ class TestGenome:
         child.configure_crossover(parent1, parent2, self.config.genome_config)
         assert 4 == len(child.nodes)
         assert 4 == len(child.connections)
+        assert 4 == next(child.node_key_generator)
 
         child = Genome(key=2)
         child.configure_crossover(parent2, parent1, self.config.genome_config)
         assert 4 == len(child.nodes)
         assert 4 == len(child.connections)
+        assert 4 == next(child.node_key_generator)
 
     def test_crossover_reversed(self):
         """Test that the crossover operator function works as expected when the
@@ -480,6 +482,7 @@ class TestGenome:
         child.configure_crossover(parent2, parent1, self.config.genome_config)
         assert 4 == len(child.nodes)
         assert 4 == len(child.nodes)
+        assert 4 == next(child.node_key_generator)
 
     def test_crossover_no_excess_or_disjoint(self):
         """Test that the crossover operator function works when the higher
@@ -515,6 +518,7 @@ class TestGenome:
         child.configure_crossover(parent1, parent2, self.config.genome_config)
         assert 3 == len(child.nodes)
         assert 2 == len(child.connections)
+        assert 3 == next(child.node_key_generator)
 
     def test_crossover_disable_mutual_genes(self):
         """Test that the crossover operator function works when the connection gene
@@ -549,6 +553,7 @@ class TestGenome:
         assert 3 == len(child.nodes)
         assert 2 == len(child.connections)
         assert all([not g.expressed for g in child.connections.values()])
+        assert 3 == next(child.node_key_generator)
 
     def test_distance(self):
         """Test the genetic distance method.

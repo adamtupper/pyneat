@@ -343,6 +343,9 @@ class Genome:
             activation (function): The activation function for the new node.
         """
         new_node_id = next(self.node_key_generator)
+
+        assert new_node_id not in self.nodes
+
         self.nodes[new_node_id] = NodeGene(type=NodeTypes.HIDDEN,
                                            bias=0.0,
                                            activation=activation)
@@ -459,7 +462,7 @@ class Genome:
                 else:
                     self.connections[key] = copy.deepcopy(gene2)
 
-                if not gene1.expressed or not gene2.expressed:
+                if (not gene1.expressed) or (not gene2.expressed):
                     # Probabilistically disable gene
                     if random.random() < config.gene_disable_prob:
                         self.connections[key].expressed = False
@@ -483,6 +486,9 @@ class Genome:
                 self.inputs.append(key)
             elif gene1.type == NodeTypes.OUTPUT:
                 self.outputs.append(key)
+
+        # Update node_key_generator
+        self.node_key_generator = count(max(self.nodes.keys()) + 1)
 
     def distance(self, other, config):
         """Computes the compatibility  (genetic) distance between two genomes.
