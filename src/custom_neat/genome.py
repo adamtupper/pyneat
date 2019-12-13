@@ -499,8 +499,6 @@ class Genome:
         function of the number of disjoint and excess genes, as well as the
         weight differences of matching genes.
 
-        TODO: Investigate practical significance of the difference between the NEAT-Python and original measures of genetic distance.
-
         Args:
             other (Genome): The other genome to compare itself to.
             config (GenomeConfig): The genome configuration.
@@ -511,33 +509,34 @@ class Genome:
         c1 = config.compatibility_disjoint_coefficient
         c2 = config.compatibility_weight_coefficient
 
+        # Find size of larger genome
+        N = max(len(self.nodes) + len(self.connections),
+                len(other.nodes) + len(other.connections))
+
         # Node gene distance
-        max_nodes = max(len(self.nodes), len(other.nodes))
-        all_genes = set(self.nodes.keys()).union(set(other.nodes.keys()))
-        non_matching_genes = set(self.nodes.keys()) ^ set(other.nodes.keys())
-        matching_genes = all_genes - non_matching_genes
+        all_nodes = set(self.nodes.keys()).union(set(other.nodes.keys()))
+        non_matching_nodes = set(self.nodes.keys()) ^ set(other.nodes.keys())
+        matching_nodes = all_nodes - non_matching_nodes
 
-        avg_weight_diff = 0.0
-        for key in matching_genes:
-            avg_weight_diff += abs(self.nodes[key].bias - other.nodes[key].bias)
-        avg_weight_diff = avg_weight_diff / len(matching_genes)
-
-        node_distance = c1 * (len(non_matching_genes) / max_nodes) + c2 * avg_weight_diff
+        avg_bias_diff = 0.0
+        for key in matching_nodes:
+            avg_bias_diff += abs(self.nodes[key].bias - other.nodes[key].bias)
+        avg_bias_diff = avg_bias_diff / len(matching_nodes)
 
         # Connection gene distance
-        max_connections = max(len(self.connections), len(other.connections))
-        all_genes = set(self.connections.keys()).union(set(other.connections.keys()))
-        non_matching_genes = set(self.connections.keys()) ^ set(other.connections.keys())
-        matching_genes = all_genes - non_matching_genes
+        all_connections = set(self.connections.keys()).union(set(other.connections.keys()))
+        non_matching_connections = set(self.connections.keys()) ^ set(other.connections.keys())
+        matching_connections = all_connections - non_matching_connections
 
         avg_weight_diff = 0.0
-        for key in matching_genes:
+        for key in matching_connections:
             avg_weight_diff += abs(self.connections[key].weight - other.connections[key].weight)
-        avg_weight_diff = avg_weight_diff / len(matching_genes)
+        avg_weight_diff = avg_weight_diff / len(matching_connections)
 
-        connection_distance = c1 * (len(non_matching_genes) / max_connections) + c2 * avg_weight_diff
+        gene_dist = c1 * (len(non_matching_nodes) + len(non_matching_connections)) / N
+        weight_dist = c2 * (avg_weight_diff + avg_bias_diff) / 2
 
-        return node_distance + connection_distance
+        return gene_dist + weight_dist
 
     def size(self):
         """Returns a measure of genome complexity.
