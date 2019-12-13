@@ -15,7 +15,6 @@ Example:
 """
 import pickle
 import argparse
-import time
 
 import gym
 import ray
@@ -25,6 +24,8 @@ from custom_neat.nn.recurrent import RNN
 from custom_neat.genome import Genome
 from custom_neat.reproduction import Reproduction
 from custom_neat.species import SpeciesSet
+
+import visualize
 
 # Initialise argument parser
 parser = argparse.ArgumentParser()
@@ -59,7 +60,8 @@ def compute_fitness(network):
         observation = env.reset()
         network.reset()
         for t in range(500):  # considered solved if able to survive 500 time steps
-            observation = [observation[0], observation[2]]  # remove velocities
+            # remove velocities and normalise inputs to [-1, 1]
+            observation = [observation[0] / 2.4, observation[2] / 41.8]
 
             output = network.forward(observation)
             action = round(output[0])
@@ -119,24 +121,39 @@ def run():
                              neat.DefaultStagnation,
                              args.config)
 
-        # Perform evolutionary run
+        # Configure algorithm
         population = neat.Population(config)
-        population.add_reporter(neat.StatisticsReporter())
+        best = None
+
+        # Add reporters
+        stats = neat.StatisticsReporter()
+        population.add_reporter(stats)
         population.add_reporter(neat.StdOutReporter(True))
-        # Checkpoint every 10 generations
         population.add_reporter(neat.Checkpointer(generation_interval=10, time_interval_seconds=None))
 
-        start = time.time()
-        solution = population.run(fitness_function=evaluate_genomes, n=1000)
-        end = time.time()
+        while True:
+            try:
+                best = population.run(fitness_function=evaluate_genomes, n=5)
 
-        elapsed = end - start
-        print(f'Time elapsed: {time.strftime("%H:%M:%S", time.gmtime(elapsed))}')
-        print(f'Fitness achieved: {solution.fitness}')
+                visualize.plot_stats(stats, ylog=False, view=False, filename="fitness.svg")
+
+                mfs = sum(stats.get_fitness_mean()[-5:]) / 5.0
+                print("Average mean fitness over last 5 generations: {0}".format(mfs))
+
+                mfs = sum(stats.get_fitness_stat(min)[-5:]) / 5.0
+                print("Average min fitness over last 5 generations: {0}".format(mfs))
+
+                if best.fitness >= 475:
+                    # Solved
+                    break
+            except KeyboardInterrupt:
+                print('User interrupt.')
+                break
 
         # Save best genome
-        with open('solution.pickle', 'wb') as file:
-            pickle.dump(solution, file)
+        if best:
+            with open('solution.pickle', 'wb') as file:
+                pickle.dump(best, file)
 
     ray.shutdown()
 
