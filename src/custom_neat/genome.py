@@ -342,31 +342,33 @@ class Genome:
         Args:
             activation (function): The activation function for the new node.
         """
-        new_node_id = next(self.node_key_generator)
+        if self.connections:
+            # Only add a new node if there are existing connections to replace
+            new_node_id = next(self.node_key_generator)
 
-        assert new_node_id not in self.nodes
+            assert new_node_id not in self.nodes
 
-        self.nodes[new_node_id] = NodeGene(type=NodeTypes.HIDDEN,
-                                           bias=0.0,
-                                           activation=activation)
+            self.nodes[new_node_id] = NodeGene(type=NodeTypes.HIDDEN,
+                                               bias=0.0,
+                                               activation=activation)
 
-        # NOTE: Gene dictionaries could be replaced with RandomDict() for faster
-        # random access (currently O(n)): https://github.com/robtandy/randomdict
-        old_gene_key = random.choice(list(self.connections.keys()))
-        old_connection_gene = self.connections[old_gene_key]
-        old_connection_gene.expressed = False
-        
-        self.add_connection(
-            in_node=old_connection_gene.in_node,
-            out_node=new_node_id,
-            weight=1.0
-        )
+            # NOTE: Gene dictionaries could be replaced with RandomDict() for faster
+            # random access (currently O(n)): https://github.com/robtandy/randomdict
+            old_gene_key = random.choice(list(self.connections.keys()))
+            old_connection_gene = self.connections[old_gene_key]
+            old_connection_gene.expressed = False
 
-        self.add_connection(
-            in_node=new_node_id,
-            out_node=old_connection_gene.out_node,
-            weight=old_connection_gene.weight
-        )
+            self.add_connection(
+                in_node=old_connection_gene.in_node,
+                out_node=new_node_id,
+                weight=1.0
+            )
+
+            self.add_connection(
+                in_node=new_node_id,
+                out_node=old_connection_gene.out_node,
+                weight=old_connection_gene.weight
+            )
 
     def mutate_weights(self, replace_prob, init_std_dev, perturb_std_dev, min_val, max_val):
         """Performs weight mutations.
@@ -521,7 +523,9 @@ class Genome:
         avg_bias_diff = 0.0
         for key in matching_nodes:
             avg_bias_diff += abs(self.nodes[key].bias - other.nodes[key].bias)
-        avg_bias_diff = avg_bias_diff / len(matching_nodes)
+
+        if matching_nodes:
+            avg_bias_diff = avg_bias_diff / len(matching_nodes)
 
         # Connection gene distance
         all_connections = set(self.connections.keys()).union(set(other.connections.keys()))
@@ -531,7 +535,9 @@ class Genome:
         avg_weight_diff = 0.0
         for key in matching_connections:
             avg_weight_diff += abs(self.connections[key].weight - other.connections[key].weight)
-        avg_weight_diff = avg_weight_diff / len(matching_connections)
+
+        if matching_connections:
+            avg_weight_diff = avg_weight_diff / len(matching_connections)
 
         gene_dist = c1 * (len(non_matching_nodes) + len(non_matching_connections)) / N
         weight_dist = c2 * (avg_weight_diff + avg_bias_diff) / 2
