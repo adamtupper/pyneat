@@ -301,22 +301,13 @@ class Genome:
         A single connection with a random weight is added between two previously
         unconnected nodes.
 
-        Restrictions:
-            - Output nodes cannot be the input node of a connection.
-            - Input nodes cannot be the output node of a connection.
-            - Don't allow connections between output nodes, or between input
-              nodes.
-
-        The restrictions prevent recurrent connections on the input and output
-        nodes.
-
         Args:
             std_dev (float): The standard deviation for the normal distribution
                 from which the weight of the new connection is chosen.
         """
         # Do not allow connections between output nodes, between input nodes
-        possible_inputs = [k for k, g in self.nodes.items() if g.type != NodeTypes.OUTPUT]
-        possible_outputs = [k for k, g in self.nodes.items() if g.type != NodeTypes.INPUT]
+        possible_inputs = [k for k, g in self.nodes.items()]
+        possible_outputs = [k for k, g in self.nodes.items()]
 
         in_node = random.choice(possible_inputs)
         out_node = random.choice(possible_outputs)
