@@ -328,31 +328,39 @@ class TestGenome:
         # Alter configuration for this test
         self.config.genome_config.num_inputs = 1
         self.config.genome_config.num_outputs = 1
-        self.config.genome_config.init_conn_prob = 1.0  # fully-connected
+        self.config.genome_config.initial_conn_prob = 1.0  # fully-connected
 
         genome = Genome(key=0)
         genome.configure_new(self.config.genome_config)
 
+        # Manually add recurrent connections to saturate network
+        genome.connections[(1, 1)] = ConnectionGene(1, 1, 0.0, True)
+        genome.connections[(0, 0)] = ConnectionGene(0, 0, 0.0, True)
+        genome.connections[(1, 0)] = ConnectionGene(0, 0, 0.0, True)
+
         genome.mutate_add_connection(std_dev=1.0)
-        assert len(genome.connections) == 1
+        assert 4 == len(genome.connections)
 
     def test_mutate_add_connection_succeed(self):
-        """Test the function for the 'add connection' mutation when there are valid
-        connections that can be added.
+        """Test the function for the 'add connection' mutation when there are
+        valid connections that can be added.
         """
+        # Set random seed
+        random.seed(0)
+
         # Alter configuration for this test
         self.config.genome_config.num_inputs = 1
         self.config.genome_config.num_outputs = 1
-        self.config.genome_config.init_conn_prob = 0.0  # no connections
+        self.config.genome_config.initial_conn_prob = 0.0  # no connections
 
         genome = Genome(key=0)
         genome.configure_new(self.config.genome_config)
 
         genome.mutate_add_connection(std_dev=1.0)
-        assert len(genome.connections) == 1
+        assert  1 == len(genome.connections)
 
-        assert genome.connections[(0, 1)].in_node == 0
-        assert genome.connections[(0, 1)].out_node == 1
+        assert 1 == genome.connections[(1, 1)].in_node
+        assert 1 == genome.connections[(1, 1)].out_node
 
     def test_mutate_weights(self):
         """Test the mutation of genome connection weights.
