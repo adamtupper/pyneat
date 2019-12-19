@@ -24,14 +24,25 @@ env = gym.make('CartPole-v1')
 genome = pickle.load(open(args.agent, 'rb'))
 network = RNN.create(genome)
 
+outputs = []
+actions = []
+
 for i_episode in range(1):
     observation = env.reset()
     for t in range(1000):
         env.render()
+        observation = [observation[0] / 2.4, observation[2] / 41.8]
         print(observation)
-        action = round(network.forward(observation)[0])
+        output = network.forward(observation)[0]
+        action = round(output)
+        actions.append(action)
+        outputs.append(output)
         observation, reward, done, info = env.step(action)
         if done:
             print("Episode finished after {} timesteps".format(t+1))
             break
+
+print(outputs)
+print(actions)
+
 env.close()

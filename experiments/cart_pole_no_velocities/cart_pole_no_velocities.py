@@ -42,6 +42,17 @@ print()
 # TODO: Put fitness evaluation functions in a class to store progress over time
 
 
+def f(t, max_t, c_x, c_v, p_theta, p_v):
+    f1 = t / max_t
+
+    if t < 20:
+        f2 = 0
+    else:
+        f2 = 0.75 / sum([abs(c_x[i]) + abs(c_v[i]) + abs(p_theta[i]) + abs(p_v[i]) for i in range(t)])
+
+    return 0.1 * f1 + 0.9 * f2
+
+
 @ray.remote(num_cpus=1)
 def compute_fitness(network):
     """Evaluate the fitness of a network in the gym environment.
@@ -56,10 +67,21 @@ def compute_fitness(network):
     env = gym.make('CartPole-v1')
 
     episode_fitnesses = []
-    for i in range(100):  # average over 100 episodes
+    for i in range(10):  # average over 100 episodes
         observation = env.reset()
         network.reset()
+
+        c_x = []
+        c_v = []
+        p_theta = []
+        p_v = []
+
         for t in range(500):  # considered solved if able to survive 500 time steps
+            c_x.append(observation[0])
+            c_v.append(observation[1])
+            p_theta.append(observation[2])
+            p_v.append(observation[3])
+
             # remove velocities and normalise inputs to [-1, 1]
             observation = [observation[0] / 2.4, observation[2] / 41.8]
 
@@ -69,7 +91,7 @@ def compute_fitness(network):
             observation, reward, done, info = env.step(action)
 
             if done:
-                episode_fitnesses.append(t)
+                episode_fitnesses.append(f(t, 475, c_x, c_v, p_theta, p_v))
                 break
 
     env.close()
@@ -129,11 +151,16 @@ def run():
         stats = neat.StatisticsReporter()
         population.add_reporter(stats)
         population.add_reporter(neat.StdOutReporter(True))
-        population.add_reporter(neat.Checkpointer(generation_interval=10, time_interval_seconds=None))
+        population.add_reporter(neat.Checkpointer(generation_interval=1, time_interval_seconds=None))
 
-        while True:
+        # Set generation limit
+        max_generations = 25
+        generation = 0
+
+        while generation < max_generations:
             try:
-                best = population.run(fitness_function=evaluate_genomes, n=5)
+                batch_size = 5
+                best = population.run(fitness_function=evaluate_genomes, n=batch_size)
 
                 visualize.plot_stats(stats, ylog=False, view=False, filename="fitness.svg")
 
@@ -146,9 +173,14 @@ def run():
                 if best.fitness >= 475:
                     # Solved
                     break
+
+                with open(f'solution_{generation}.pickle', 'wb') as file:
+                    pickle.dump(best, file)
             except KeyboardInterrupt:
                 print('User interrupt.')
                 break
+
+            generation += batch_size
 
         # Save best genome
         if best:
