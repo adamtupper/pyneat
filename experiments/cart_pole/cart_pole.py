@@ -36,6 +36,7 @@ print()
 
 # TODO: Put fitness evaluation functions in a class to store progress over time
 
+
 @ray.remote(num_cpus=1)
 def compute_fitness(network):
     """Evaluate the fitness of a network in the gym environment.
@@ -52,6 +53,7 @@ def compute_fitness(network):
     episode_fitnesses = []
     for i in range(100):  # average over 100 episodes
         observation = env.reset()
+        network.reset()
         for t in range(500):  # considered solved if able to survive 500 time steps
             action = round(network.forward(observation)[0])
             observation, reward, done, info = env.step(action)
