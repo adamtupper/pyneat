@@ -196,18 +196,28 @@ class Genome:
         # Create the required number of input and output nodes
         for _ in range(config.num_inputs):
             key = next(self.node_key_generator)
+            # self.nodes[key] = NodeGene(
+            #     type=NodeTypes.INPUT,
+            #     bias=random.normalvariate(mu=0.0, sigma=config.bias_init_std_dev),
+            #     activation=config.activation_defs.get(config.activation_func)
+            # )
             self.nodes[key] = NodeGene(
                 type=NodeTypes.INPUT,
-                bias=random.normalvariate(mu=0.0, sigma=config.bias_init_std_dev),
+                bias=random.uniform(-3.0, 3.0),
                 activation=config.activation_defs.get(config.activation_func)
             )
             self.inputs.append(key)
 
         for _ in range(config.num_outputs):
             key = next(self.node_key_generator)
+            # self.nodes[key] = NodeGene(
+            #     type=NodeTypes.OUTPUT,
+            #     bias=random.normalvariate(mu=0.0, sigma=config.bias_init_std_dev),
+            #     activation=config.activation_defs.get(config.activation_func)
+            # )
             self.nodes[key] = NodeGene(
                 type=NodeTypes.OUTPUT,
-                bias=random.normalvariate(mu=0.0, sigma=config.bias_init_std_dev),
+                bias=random.uniform(-3.0, 3.0),
                 activation=config.activation_defs.get(config.activation_func)
             )
             self.outputs.append(key)
@@ -216,10 +226,15 @@ class Genome:
         for in_node in self.inputs:
             for out_node in self.outputs:
                 if random.random() < config.initial_conn_prob:
+                    # self.add_connection(
+                    #     in_node,
+                    #     out_node,
+                    #     random.normalvariate(mu=0.0, sigma=config.weight_init_std_dev)
+                    # )
                     self.add_connection(
                         in_node,
                         out_node,
-                        random.normalvariate(mu=0.0, sigma=config.weight_init_std_dev)
+                        random.uniform(-3.0, 3.0)
                     )
 
     def __eq__(self, other):
@@ -318,7 +333,8 @@ class Genome:
             return
 
         # Add a new connection
-        connection_weight = random.normalvariate(mu=0.0, sigma=std_dev)
+        # connection_weight = random.normalvariate(mu=0.0, sigma=std_dev)
+        connection_weight = random.uniform(-3.0, 3.0)
         self.add_connection(in_node, out_node, connection_weight)
 
     def mutate_add_node(self, activation):
@@ -386,7 +402,8 @@ class Genome:
         for key, gene in self.connections.items():
             if random.random() < replace_prob:
                 # Replace weight
-                gene.weight = random.normalvariate(mu=0.0, sigma=init_std_dev)
+                # gene.weight = random.normalvariate(mu=0.0, sigma=init_std_dev)
+                gene.weight = random.uniform(-3.0, 3.0)
             else:
                 # Perturb weight
                 gene.weight += random.normalvariate(mu=0.0, sigma=perturb_std_dev)
@@ -416,7 +433,8 @@ class Genome:
         for key, gene in self.nodes.items():
             if random.random() < replace_prob:
                 # Replace bias
-                gene.bias = random.normalvariate(mu=0.0, sigma=init_std_dev)
+                # gene.bias = random.normalvariate(mu=0.0, sigma=init_std_dev)
+                gene.bias = random.uniform(-3.0, 3.0)
             else:
                 # Perturb bias
                 gene.bias += random.normalvariate(mu=0.0, sigma=perturb_std_dev)
