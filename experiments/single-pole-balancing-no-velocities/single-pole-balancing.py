@@ -20,6 +20,7 @@ import pickle
 import argparse
 import signal
 import sys
+from collections import deque
 
 import ray
 import neat
@@ -80,70 +81,78 @@ def signal_handler(sig, frame):
     sys.exit()
 
 
-def f(t, max_t, c_x, c_v, p_theta, p_v):
-    """
-
-    TODO: Complete function docstring.
+def calc_fitness(t, max_t, x, dx, theta, dtheta):
+    """Calculate genome fitness. This fitness function is designed to minimise
+    pole oscillations.
 
     Args:
-        t:
-        max_t:
-        c_x:
-        c_v:
-        p_theta:
-        p_v:
+        t (int): The number of time steps the agent balanced the pole for.
+        max_t (int): The maximum number of time steps (solution threshold).
+        x (iterable): The cart position in meters.
+        dx (iterable): The cart velocity in meters per second.
+        theta (iterable): The pole angle from vertical in degrees.
+        dtheta (iterable): The pole velocity in degrees per second.
 
     Returns:
-
+        float: The fitness of the genome.
     """
     f1 = t / max_t
 
     if t < 100:
         f2 = 0
     else:
-        f2 = 0.75 / sum([abs(c_x[i]) + abs(c_v[i]) + abs(p_theta[i]) + abs(p_v[i]) for i in range(t)])
+        f2 = 0.75 / sum([abs(x[i]) + abs(dx[i]) + abs(theta[i]) + abs(dtheta[i]) for i in range(100)])
 
     return 0.1 * f1 + 0.9 * f2
 
 
 @ray.remote(num_cpus=1)
-def compute_fitness(network, config):
+def evaluate_network(network, config, basic=False):
     """Evaluate the fitness of a network by running a pole balancing simulation.
 
     Args:
         network (RNN): The recurrent neural network to be evaluated.
-        config( (Config): The experiment configuration
+        config (Config): The experiment configuration
+        basic (bool): True if fitness is to be measured solely by balance time,
+            False otherwise.
 
     Returns:
         float: The fitness of the network.
     """
     episode_fitnesses = []
-    for i in range(config.num_episodes):  # average over multiple episodes
-        sim = cart_pole.CartPole()
+    for i in range(config.num_episodes):  # Average over multiple episodes
+        sim = cart_pole.CartPole(x=0.0, dx=0.0, theta=1.0, dtheta=0.0)
         network.reset()
         time_steps = 0
 
-        c_x = []
-        c_v = []
-        p_theta = []
-        p_v = []
+        X = deque()
+        DX = deque()
+        THETA = deque()
+        DTHETA = deque()
 
         while time_steps < config.fitness_threshold:  # Considered solved fitness exceeds some threshold
-            # Get normalise inputs to [-1, 1]
+            # Store the system state for the previous 100 time steps
+            if len(X) == 100:
+                X.popleft()
+                DX.popleft()
+                THETA.popleft()
+                DTHETA.popleft()
+
+            x, dx, theta, dtheta = sim.get_state()
+            X.append(x)
+            DX.append(dx)
+            THETA.append(theta)
+            DTHETA.append(dtheta)
+
+            # Get normalised inputs in the range [-1, 1]
             observation = sim.get_scaled_state()
-
-            c_x.append(observation[0])
-            c_v.append(observation[1])
-            p_theta.append(observation[2])
-            p_v.append(observation[3])
-
             observation = [observation[0], observation[2]]  # Remove velocities
 
             output = network.forward(observation)
             action = cart_pole.continuous_actuator_force(output)
 
             sim.step(action)
-            sim.step(0)  # Agent only outputs a force every 0.02 sec
+            sim.step(0)  # Skip every 2nd time step
 
             # Stop if network fails to keep the cart within the position or
             # angle limits
@@ -152,12 +161,17 @@ def compute_fitness(network, config):
 
             time_steps += 1
 
-        episode_fitnesses.append(f(time_steps, config.fitness_threshold, c_x, c_v, p_theta, p_v))
+        if basic:
+            fitness = time_steps
+        else:
+            fitness = calc_fitness(time_steps, config.fitness_threshold,
+                                   X, DX, THETA, DTHETA)
+        episode_fitnesses.append(fitness)
 
     return sum(episode_fitnesses) / len(episode_fitnesses)
 
 
-def evaluate_genomes(genomes, config):
+def evaluate_genomes(genomes, config, basic=False):
     """Setup the parallel evaluation of the given genomes.
 
     Modifies only the fitness member of each genome.
@@ -166,6 +180,8 @@ def evaluate_genomes(genomes, config):
         genomes (list):  A list of (genome_id, genome) pairs of the genomes to
             be evaluated.
         config (Config): The experiment configuration file.
+        basic (bool): True if fitness is to be measured solely by balance time,
+            False otherwise.
     """
     remaining_ids = []
     job_id_mapping = {}
@@ -175,7 +191,7 @@ def evaluate_genomes(genomes, config):
         network = RNN.create(genome)
 
         # Create job for evaluating the fitness
-        job_id = compute_fitness.remote(network, config)
+        job_id = evaluate_network.remote(network, config, basic)
         remaining_ids.append(job_id)
         job_id_mapping[job_id] = genome
 
@@ -211,14 +227,14 @@ def run():
         stats = neat.StatisticsReporter()
         population.add_reporter(stats)
         population.add_reporter(neat.StdOutReporter(True))
-        population.add_reporter(neat.Checkpointer(generation_interval=10, time_interval_seconds=None))
+        population.add_reporter(neat.Checkpointer(generation_interval=1, time_interval_seconds=None))
 
         # Set generation limit
-        max_generations = 25
+        max_generations = 50
         generation = 0
 
         while generation < max_generations:
-            batch_size = 5
+            batch_size = 1
             best = population.run(fitness_function=evaluate_genomes, n=batch_size)
 
             visualize.plot_stats(stats, ylog=False, view=False, filename="fitness.svg")
@@ -229,9 +245,15 @@ def run():
             mfs = sum(stats.get_fitness_stat(min)[-5:]) / 5.0
             print("Average min fitness over last 5 generations: {0}".format(mfs))
 
+            # Check if a solution has been found
+            evaluate_genomes([(0, best)], config, True)
+            print(f'Current best genome lasted {best.fitness} time steps.')
             if best.fitness >= config.fitness_threshold:
                 # Solved
                 break
+
+            # Save current best
+            save_genome(best, f'solution_{generation}.pickle')
 
             generation += batch_size
 
