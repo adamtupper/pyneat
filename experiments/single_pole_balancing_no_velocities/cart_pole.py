@@ -137,7 +137,8 @@ class CartPole(object):
 
 
 def continuous_actuator_force(action):
-    """The network output is converted to a force to be applied to the cart.
+    """Convert the network output to a continuous force to be applied to the
+    cart.
 
     Args:
         action (list): A scalar float vector in the range [-1, 1].
@@ -165,18 +166,17 @@ def noisy_continuous_actuator_force(action):
 
 
 def discrete_actuator_force(action):
-    """
-
-    # TODO: Complete function docstring.
-    # TODO: Check that the implementation conforms to my requirements.
+    """Convert the network action to a discrete force applied to the cart.
 
     Args:
-        action:
+        action ([float]): The action of the agent. Must be a scalar value in the
+            range [-1, 1].
 
     Returns:
-
+        float: A force of either 10 N (move cart right) or -10 N (move cart left)
+            to be applied to the cart.
     """
-    return 10.0 if action[0] > 0.5 else -10.0
+    return 10.0 if action[0] > 0.0 else -10.0
 
 
 def noisy_discrete_actuator_force(action):

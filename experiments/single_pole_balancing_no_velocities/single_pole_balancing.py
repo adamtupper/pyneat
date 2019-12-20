@@ -154,7 +154,7 @@ def evaluate_network(network, config, basic=False):
             observation = [observation[0], observation[2]]  # Remove velocities
 
             output = network.forward(observation)
-            action = cart_pole.continuous_actuator_force(output)
+            action = cart_pole.discrete_actuator_force(output)
 
             sim.step(action)
             sim.step(0)  # Skip every 2nd time step
@@ -176,7 +176,7 @@ def evaluate_network(network, config, basic=False):
     return sum(episode_fitnesses) / len(episode_fitnesses)
 
 
-def evaluate_genomes(genomes, config, basic=True):
+def evaluate_genomes(genomes, config, basic=False):
     """Setup the parallel evaluation of the given genomes.
 
     Modifies only the fitness member of each genome.
@@ -302,7 +302,7 @@ def main():
         for i in range(config.num_runs):
             print(f'Starting run {i+1}/{config.num_runs}')
 
-            results_dir = f'cont_basic_results/run_{i+1}/'
+            results_dir = f'disc_oscil_results/run_{i+1}/'
             if not os.path.exists(results_dir):
                 os.makedirs(results_dir)
                 os.makedirs(results_dir + 'checkpoints/')
