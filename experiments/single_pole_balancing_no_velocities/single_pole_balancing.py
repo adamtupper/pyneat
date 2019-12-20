@@ -16,6 +16,7 @@ Example:
     To safely stop an evolutionary run early, interrupt the program as the
     population statistics are reported for a generation.
 """
+import os
 import pickle
 import argparse
 import signal
@@ -34,19 +35,23 @@ from custom_neat.config import CustomConfig
 import visualize
 import cart_pole
 
-# Initialise argument parser
-parser = argparse.ArgumentParser()
-parser.add_argument('config', type=str, help="Experiment configuration file")
-args = parser.parse_args()
-
-# Initialise Ray
-ray.init()
-print('Ray Configuration:')
-print(f'Available resources: {ray.available_resources()}')
-print()
-
 # Keep track of best genome
 best = None
+
+
+def parse_args(args):
+    """Parse command line parameters.
+
+    Args:
+      args ([str]): command line parameters as list of strings.
+
+    Returns:
+      :obj:`argparse.Namespace`: command line parameters namespace.
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument('config', type=str, help="Experiment configuration file")
+
+    return parser.parse_args(args)
 
 
 def save_genome(genome, filename):
@@ -205,14 +210,88 @@ def evaluate_genomes(genomes, config, basic=False):
             genome.fitness = fitness
 
 
-def run():
-    """The entry point for the program, runs the experiment.
+def run(config, base_dir):
+    """Performs a single evolutionary run.
+
+    Args:
+        config (Config): The experiment configuration file.
+        base_dir (str): The base directory to store the results for this run.
     """
     global best
+
+    # Configure algorithm
+    population = neat.Population(config)
+
+    # Add reporters
+    stats = neat.StatisticsReporter()
+    population.add_reporter(stats)
+    population.add_reporter(neat.StdOutReporter(True))
+    population.add_reporter(neat.Checkpointer(generation_interval=config.checkpoint_interval,
+                                              time_interval_seconds=None,
+                                              filename_prefix=base_dir + 'checkpoints/' + 'neat-checkpoint-'))
+
+    # Set generation limit
+    max_generations = config.max_generations
+    generation = 0
+
+    while generation < max_generations:
+        batch_size = 1
+        best = population.run(fitness_function=evaluate_genomes, n=batch_size)
+
+        visualize.plot_stats(stats, ylog=False, view=False, filename=base_dir + "fitness.svg")
+
+        mfs = sum(stats.get_fitness_mean()[-5:]) / 5.0
+        print("Average mean fitness over last 5 generations: {0}".format(mfs))
+
+        mfs = sum(stats.get_fitness_stat(min)[-5:]) / 5.0
+        print("Average min fitness over last 5 generations: {0}".format(mfs))
+
+        # Check if a solution has been found
+        evaluate_genomes([(0, best)], config, True)
+        print(f'Current best genome lasted {best.fitness} time steps.')
+        if best.fitness >= config.fitness_threshold:
+            # Solved
+            break
+
+        # Save current best
+        save_genome(best, base_dir + f'solution_{generation}.pickle')
+
+        generation += batch_size
+
+    # Save best genome
+    if best:
+        print('Saving best genome...')
+        save_genome(best, base_dir + 'solution.pickle')
+
+        visualize.plot_stats(stats, ylog=True, view=True, filename=base_dir + "fitness.svg")
+        visualize.plot_species(stats, view=True, filename=base_dir + "speciation.svg")
+
+        node_names = {0: 'x', 1: 'theta', 2: 'out'}
+        visualize.draw_net(config, best, True, node_names=node_names)
+
+        visualize.draw_net(config, best, view=True, node_names=node_names,
+                           filename=base_dir + "best-rnn.gv")
+        visualize.draw_net(config, best, view=True, node_names=node_names,
+                           filename=base_dir + "best-rnn-enabled.gv", show_disabled=False)
+        visualize.draw_net(config, best, view=True, node_names=node_names,
+                           filename=base_dir + "best-rnn-enabled-pruned.gv", show_disabled=False, prune_unused=True)
+
+
+def main():
+    """The main entry point to the program. Performs multiple evolutionary runs.
+    """
+    args = parse_args(sys.argv[1:])
+    signal.signal(signal.SIGINT, signal_handler)
 
     if not args.config:
         print('No experiment configuration file provided.')
     else:
+        # Initialise Ray
+        ray.init()
+        print('Ray Configuration:')
+        print(f'Available resources: {ray.available_resources()}')
+        print()
+
         # Load the experiment configuration file
         config = CustomConfig(Genome,
                               Reproduction,
@@ -220,65 +299,17 @@ def run():
                               neat.DefaultStagnation,
                               args.config)
 
-        # Configure algorithm
-        population = neat.Population(config)
+        for i in range(config.num_runs):
+            print(f'Starting run {i}/{config.num_runs}')
 
-        # Add reporters
-        stats = neat.StatisticsReporter()
-        population.add_reporter(stats)
-        population.add_reporter(neat.StdOutReporter(True))
-        population.add_reporter(neat.Checkpointer(generation_interval=config.checkpoint_interval,
-                                                  time_interval_seconds=None))
+            results_dir = f'results/run_{i}/'
+            if not os.path.exists(results_dir):
+                os.makedirs(results_dir)
 
-        # Set generation limit
-        max_generations = config.max_generations
-        generation = 0
+            run(config, results_dir)
 
-        while generation < max_generations:
-            batch_size = 1
-            best = population.run(fitness_function=evaluate_genomes, n=batch_size)
-
-            visualize.plot_stats(stats, ylog=False, view=False, filename="fitness.svg")
-
-            mfs = sum(stats.get_fitness_mean()[-5:]) / 5.0
-            print("Average mean fitness over last 5 generations: {0}".format(mfs))
-
-            mfs = sum(stats.get_fitness_stat(min)[-5:]) / 5.0
-            print("Average min fitness over last 5 generations: {0}".format(mfs))
-
-            # Check if a solution has been found
-            evaluate_genomes([(0, best)], config, True)
-            print(f'Current best genome lasted {best.fitness} time steps.')
-            if best.fitness >= config.fitness_threshold:
-                # Solved
-                break
-
-            # Save current best
-            save_genome(best, f'solution_{generation}.pickle')
-
-            generation += batch_size
-
-        # Save best genome
-        if best:
-            print('Saving best genome...')
-            save_genome(best, 'solution.pickle')
-
-            visualize.plot_stats(stats, ylog=True, view=True, filename="fitness.svg")
-            visualize.plot_species(stats, view=True, filename="speciation.svg")
-
-            node_names = {0: 'x', 1: 'theta', 2: 'out'}
-            visualize.draw_net(config, best, True, node_names=node_names)
-
-            visualize.draw_net(config, best, view=True, node_names=node_names,
-                               filename="best-rnn.gv")
-            visualize.draw_net(config, best, view=True, node_names=node_names,
-                               filename="best-rnn-enabled.gv", show_disabled=False)
-            visualize.draw_net(config, best, view=True, node_names=node_names,
-                               filename="best-rnn-enabled-pruned.gv", show_disabled=False, prune_unused=True)
-
-    ray.shutdown()
+        ray.shutdown()
 
 
 if __name__ == '__main__':
-    signal.signal(signal.SIGINT, signal_handler)
-    run()
+    main()
