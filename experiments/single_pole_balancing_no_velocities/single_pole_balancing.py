@@ -29,7 +29,7 @@ from custom_neat.nn.recurrent import RNN
 from custom_neat.genome import Genome
 from custom_neat.reproduction import Reproduction
 from custom_neat.species import SpeciesSet
-from custom_neat.config import Config
+from custom_neat.config import CustomConfig
 
 import visualize
 import cart_pole
@@ -214,11 +214,11 @@ def run():
         print('No experiment configuration file provided.')
     else:
         # Load the experiment configuration file
-        config = Config(Genome,
-                        Reproduction,
-                        SpeciesSet,
-                        neat.DefaultStagnation,
-                        args.config)
+        config = CustomConfig(Genome,
+                              Reproduction,
+                              SpeciesSet,
+                              neat.DefaultStagnation,
+                              args.config)
 
         # Configure algorithm
         population = neat.Population(config)
@@ -227,10 +227,11 @@ def run():
         stats = neat.StatisticsReporter()
         population.add_reporter(stats)
         population.add_reporter(neat.StdOutReporter(True))
-        population.add_reporter(neat.Checkpointer(generation_interval=1, time_interval_seconds=None))
+        population.add_reporter(neat.Checkpointer(generation_interval=config.checkpoint_interval,
+                                                  time_interval_seconds=None))
 
         # Set generation limit
-        max_generations = 50
+        max_generations = config.max_generations
         generation = 0
 
         while generation < max_generations:

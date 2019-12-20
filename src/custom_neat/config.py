@@ -1,8 +1,14 @@
-"""Does general configuration parsing; used by other classes for their
-configuration.
+"""Customised configuration module with additional user-configurable parameters.
 
-Customised to include additional parameters for the overall algorithm, including
-number of evaluation episodes etc.
+Modifies the config object in the default NEAT-Python config module to include
+the following additional parameters:
+
+    num_episodes: the number of episodes each genome/agent should be
+        evaluated for.
+    num_runs: the number of evolutionary runs to perform.
+    checkpoint_interval: the number of generations between checkpoint saves.
+    max_generations: the maximum number of generations for each evolutionary
+        run.
 """
 from __future__ import print_function
 
@@ -14,136 +20,28 @@ try:
 except ImportError:
     from configparser import SafeConfigParser as ConfigParser
 
+from neat.config import ConfigParameter, UnknownConfigItemError, write_pretty_params
 from neat.six_util import iterkeys
 
 
-class ConfigParameter(object):
-    """Contains information about one configuration item.
+class CustomConfig:
+    """A simple custom config container for user-configurable parameters of NEAT.
+
+    To include additional top-level parameters, specify them in __params.
     """
-    def __init__(self, name, value_type, default=None):
-        self.name = name
-        self.value_type = value_type
-        self.default = default
-
-    def __repr__(self):
-        if self.default is None:
-            return "ConfigParameter({!r}, {!r})".format(self.name,
-                                                        self.value_type)
-        return "ConfigParameter({!r}, {!r}, {!r})".format(self.name,
-                                                          self.value_type,
-                                                          self.default)
-
-    def parse(self, section, config_parser):
-        if int == self.value_type:
-            return config_parser.getint(section, self.name)
-        if bool == self.value_type:
-            return config_parser.getboolean(section, self.name)
-        if float == self.value_type:
-            return config_parser.getfloat(section, self.name)
-        if list == self.value_type:
-            v = config_parser.get(section, self.name)
-            return v.split(" ")
-        if str == self.value_type:
-            return config_parser.get(section, self.name)
-
-        raise RuntimeError("Unexpected configuration type: "
-                           + repr(self.value_type))
-
-    def interpret(self, config_dict):
-        """Converts the config_parser output into the proper type, supplies
-        defaults if available and needed, and checks for some errors.
-        """
-        value = config_dict.get(self.name)
-        if value is None:
-            if self.default is None:
-                raise RuntimeError('Missing configuration item: ' + self.name)
-            else:
-                warnings.warn("Using default {!r} for '{!s}'".format(self.default, self.name),
-                              DeprecationWarning)
-                if (str != self.value_type) and isinstance(self.default, self.value_type):
-                    return self.default
-                else:
-                    value = self.default
-
-        try:
-            if str == self.value_type:
-                return str(value)
-            if int == self.value_type:
-                return int(value)
-            if bool == self.value_type:
-                if value.lower() == "true":
-                    return True
-                elif value.lower() == "false":
-                    return False
-                else:
-                    raise RuntimeError(self.name + " must be True or False")
-            if float == self.value_type:
-                return float(value)
-            if list == self.value_type:
-                return value.split(" ")
-        except Exception:
-            raise RuntimeError("Error interpreting config item '{}' with value {!r} and type {}".format(
-                self.name, value, self.value_type))
-
-        raise RuntimeError("Unexpected configuration type: " + repr(self.value_type))
-
-    def format(self, value):
-        if list == self.value_type:
-            return " ".join(value)
-        return str(value)
-
-
-def write_pretty_params(f, config, params):
-    param_names = [p.name for p in params]
-    longest_name = max(len(name) for name in param_names)
-    param_names.sort()
-    params = dict((p.name, p) for p in params)
-
-    for name in param_names:
-        p = params[name]
-        f.write('{} = {}\n'.format(p.name.ljust(longest_name), p.format(getattr(config, p.name))))
-
-
-class UnknownConfigItemError(NameError):
-    """Error for unknown configuration option - partially to catch typos.
-    """
-    pass
-
-
-class DefaultClassConfig(object):
-    """ Replaces at least some boilerplate configuration code for reproduction,
-    species_set, and stagnation classes.
-    """
-
-    def __init__(self, param_dict, param_list):
-        self._params = param_list
-        param_list_names = []
-        for p in param_list:
-            setattr(self, p.name, p.interpret(param_dict))
-            param_list_names.append(p.name)
-        unknown_list = [x for x in iterkeys(param_dict) if not x in param_list_names]
-        if unknown_list:
-            if len(unknown_list) > 1:
-                raise UnknownConfigItemError("Unknown configuration items:\n" +
-                                             "\n\t".join(unknown_list))
-            raise UnknownConfigItemError("Unknown configuration item {!s}".format(unknown_list[0]))
-
-    @classmethod
-    def write_config(cls, f, config):
-        # pylint: disable=protected-access
-        write_pretty_params(f, config, config._params)
-
-
-class Config(object):
-    """A simple container for user-configurable parameters of NEAT.
-    """
-
-    __params = [ConfigParameter('pop_size', int),
-                ConfigParameter('fitness_criterion', str),
-                ConfigParameter('fitness_threshold', float),
-                ConfigParameter('reset_on_extinction', bool),
-                ConfigParameter('no_fitness_termination', bool, False),
-                ConfigParameter('num_episodes', int)]
+    # Only modify this #########################################################
+    __params = [
+        ConfigParameter('pop_size', int),
+        ConfigParameter('fitness_criterion', str),
+        ConfigParameter('fitness_threshold', float),
+        ConfigParameter('reset_on_extinction', bool),
+        ConfigParameter('no_fitness_termination', bool, False),
+        ConfigParameter('num_episodes', int),
+        ConfigParameter('num_runs', int),
+        ConfigParameter('checkpoint_interval', int),
+        ConfigParameter('max_generations', int)
+    ]
+    ############################################################################
 
     def __init__(self, genome_type, reproduction_type, species_set_type, stagnation_type, filename):
         # Check that the provided types have the required methods.
