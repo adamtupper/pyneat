@@ -249,9 +249,9 @@ def run(config, base_dir):
         # Check if a solution has been found
         evaluate_genomes([(0, best)], config, True)
         print(f'Current best genome lasted {best.fitness} time steps.')
-        if best.fitness >= config.fitness_threshold:
-            # Solved
-            break
+        # if best.fitness >= config.fitness_threshold:
+        #     # Solved
+        #     break
 
         # Save current best
         save_genome(best, base_dir + f'solution_{generation}.pickle')
@@ -263,18 +263,18 @@ def run(config, base_dir):
         print('Saving best genome...')
         save_genome(best, base_dir + 'solution.pickle')
 
-        visualize.plot_stats(stats, ylog=True, view=True, filename=base_dir + "fitness.svg")
-        visualize.plot_species(stats, view=True, filename=base_dir + "speciation.svg")
-
-        node_names = {0: 'x', 1: 'theta', 2: 'out'}
-        visualize.draw_net(config, best, True, node_names=node_names)
-
-        visualize.draw_net(config, best, view=True, node_names=node_names,
-                           filename=base_dir + "best-rnn.gv")
-        visualize.draw_net(config, best, view=True, node_names=node_names,
-                           filename=base_dir + "best-rnn-enabled.gv", show_disabled=False)
-        visualize.draw_net(config, best, view=True, node_names=node_names,
-                           filename=base_dir + "best-rnn-enabled-pruned.gv", show_disabled=False, prune_unused=True)
+        # visualize.plot_stats(stats, ylog=True, view=True, filename=base_dir + "fitness.svg")
+        # visualize.plot_species(stats, view=True, filename=base_dir + "speciation.svg")
+        #
+        # node_names = {0: 'x', 1: 'theta', 2: 'out'}
+        # visualize.draw_net(config, best, True, node_names=node_names)
+        #
+        # visualize.draw_net(config, best, view=True, node_names=node_names,
+        #                    filename=base_dir + "best-rnn.gv")
+        # visualize.draw_net(config, best, view=True, node_names=node_names,
+        #                    filename=base_dir + "best-rnn-enabled.gv", show_disabled=False)
+        # visualize.draw_net(config, best, view=True, node_names=node_names,
+        #                    filename=base_dir + "best-rnn-enabled-pruned.gv", show_disabled=False, prune_unused=True)
 
 
 def main():
@@ -300,11 +300,12 @@ def main():
                               args.config)
 
         for i in range(config.num_runs):
-            print(f'Starting run {i}/{config.num_runs}')
+            print(f'Starting run {i+1}/{config.num_runs}')
 
-            results_dir = f'results/run_{i}/'
+            results_dir = f'cont_oscil_results_2/run_{i+1}/'
             if not os.path.exists(results_dir):
                 os.makedirs(results_dir)
+                os.makedirs(results_dir + 'checkpoints/')
 
             run(config, results_dir)
 
