@@ -35,8 +35,9 @@ from custom_neat.config import CustomConfig
 import visualize
 import cart_pole
 
-# Keep track of best genome
+# Keep track of best genome and run statistics
 best = None
+stats = None
 
 
 def parse_args(args):
@@ -54,7 +55,7 @@ def parse_args(args):
     return parser.parse_args(args)
 
 
-def save_genome(genome, filename):
+def save_object(genome, filename):
     """Save pickled genome object.
 
     Args:
@@ -75,12 +76,14 @@ def signal_handler(sig, frame):
         frame:
     """
     global best
+    global stats
 
     print('Early termination by user.')
 
     if best:
         print('Saving best genome...')
-        save_genome(best, 'solution.pickle')
+        save_object(best, 'solution.pickle')
+        save_object(stats, 'stats_reporter.pickle')
 
     ray.shutdown()
     sys.exit()
@@ -218,6 +221,7 @@ def run(config, base_dir):
         base_dir (str): The base directory to store the results for this run.
     """
     global best
+    global stats
 
     # Configure algorithm
     population = neat.Population(config)
@@ -254,14 +258,15 @@ def run(config, base_dir):
         #     break
 
         # Save current best
-        save_genome(best, base_dir + f'solution_{generation}.pickle')
+        save_object(best, base_dir + f'solution_{generation}.pickle')
 
         generation += batch_size
 
-    # Save best genome
+    # Save best genome and stats reporter
     if best:
         print('Saving best genome...')
-        save_genome(best, base_dir + 'solution.pickle')
+        save_object(best, base_dir + 'solution.pickle')
+        save_object(stats, base_dir + 'stats_reporter.pickle')
 
         # visualize.plot_stats(stats, ylog=True, view=True, filename=base_dir + "fitness.svg")
         # visualize.plot_species(stats, view=True, filename=base_dir + "speciation.svg")
