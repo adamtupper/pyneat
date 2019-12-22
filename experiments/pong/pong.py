@@ -156,15 +156,15 @@ def evaluate_genomes(genomes, config):
         remaining_ids.append(job_id)
         job_id_mapping[job_id] = genome
 
-        while remaining_ids:
-            print(len(remaining_ids))
-            # Use ray.wait to get the job ID of the first task that completes
-            # There is only one returned result by default
-            done_ids, remaining_ids = ray.wait(remaining_ids)
-            result_id = done_ids[0]
-            fitness = ray.get(result_id)
-            genome = job_id_mapping[result_id]
-            genome.fitness = fitness
+    while remaining_ids:
+        print(len(remaining_ids))
+        # Use ray.wait to get the job ID of the first task that completes
+        # There is only one returned result by default
+        done_ids, remaining_ids = ray.wait(remaining_ids)
+        result_id = done_ids[0]
+        fitness = ray.get(result_id)
+        genome = job_id_mapping[result_id]
+        genome.fitness = fitness
 
 
 def run(config, base_dir):
