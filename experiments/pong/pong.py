@@ -229,7 +229,7 @@ def main():
         print('No experiment configuration file provided.')
     else:
         # Initialise Ray
-        ray.init()
+        ray.init(address='auto')
         print('Ray Configuration:')
         print(f'Available resources: {ray.available_resources()}')
         print()
