@@ -157,6 +157,7 @@ def evaluate_genomes(genomes, config):
         job_id_mapping[job_id] = genome
 
         while remaining_ids:
+            print(len(remaining_ids))
             # Use ray.wait to get the job ID of the first task that completes
             # There is only one returned result by default
             done_ids, remaining_ids = ray.wait(remaining_ids)
