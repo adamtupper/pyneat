@@ -173,10 +173,10 @@ def discrete_actuator_force(action):
             range [-1, 1].
 
     Returns:
-        float: A force of either 10 N (move cart right) or -10 N (move cart left)
+        float: A force of either 5 N (move cart right) or -5 N (move cart left)
             to be applied to the cart.
     """
-    return 10.0 if action[0] > 0.0 else -10.0
+    return 5.0 if action[0] > 0.0 else -10.0
 
 
 def noisy_discrete_actuator_force(action):

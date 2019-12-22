@@ -307,7 +307,7 @@ def main():
         for i in range(config.num_runs):
             print(f'Starting run {i+1}/{config.num_runs}')
 
-            results_dir = f'disc_oscil_results/run_{i+1}/'
+            results_dir = f'disc_oscil_results_2/run_{i+1}/'
             if not os.path.exists(results_dir):
                 os.makedirs(results_dir)
                 os.makedirs(results_dir + 'checkpoints/')
