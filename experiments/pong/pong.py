@@ -114,7 +114,8 @@ def evaluate_network(network, config):
     episode_fitnesses = []
     for i in range(config.num_episodes):  # Average over multiple episodes
         img = env.reset()
-        img, reward, done, state = env.step(0)
+        # Avoid bug in Pong where agent can win if it doesn't move
+        img, reward, done, state = env.step(2)  # Move agent up once
         network.reset()
 
         while not done:
