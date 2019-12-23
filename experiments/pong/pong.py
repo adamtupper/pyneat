@@ -103,7 +103,7 @@ def evaluate_network(network, config):
     Returns:
         float: The fitness of the network.
     """
-    env = AtariARIWrapper(gym.make('Pongv4'))
+    env = AtariARIWrapper(gym.make('Pong-v4'))
 
     output_to_action = {
         0: 0,  # NOOP
