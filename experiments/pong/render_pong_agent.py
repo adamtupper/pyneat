@@ -20,7 +20,7 @@ parser.add_argument('agent', type=str, help="The (pickled) genome of the agent t
 args = parser.parse_args()
 
 # Build environment
-env = AtariARIWrapper(gym.make('PongNoFrameskip-v4'))
+env = AtariARIWrapper(gym.make('Pong-v4'))
 
 # Build network
 genome = pickle.load(open(args.agent, 'rb'))
@@ -47,7 +47,6 @@ for i_episode in range(1):
 
         output = network.forward(obs)
         action = output_to_action[np.argmax(output)]
-        print(action)
 
         img, reward, done, state = env.step(action)
 
