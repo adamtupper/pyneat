@@ -15,3 +15,18 @@
 # numpy==1.13.3
 # scipy==1.0
 #
+
+# NEAT-Python
+neat-python==0.92
+
+# OpenAI Gym and dependencies
+gym==0.15.4
+box2d-py==2.3.8
+atari_py~=0.2.0
+opencv-python==4.1.2.30
+
+# Ray
+ray==0.7.6
+
+# AtariARI
+git+git://github.com/mila-iqia/atari-representation-learning.git

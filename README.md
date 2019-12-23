@@ -19,6 +19,14 @@ required dependencies using the environment file provided:
 conda env create -f environment.yml
 ```
 
+Following this, activate the conda environment (`conda activate custom_neat`)
+and install the remaining dependencies that cannot be installed through conda
+using:
+
+```bash
+pip install -r requirements.txt
+```
+
 ### 2.2. Basic Usage
 
 For basic usage, install Custom-NEAT using:
