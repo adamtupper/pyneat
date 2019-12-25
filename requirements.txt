@@ -30,3 +30,6 @@ ray==0.7.6
 
 # AtariARI
 git+git://github.com/mila-iqia/atari-representation-learning.git
+
+# Visualisation
+pygraphviz==1.5
