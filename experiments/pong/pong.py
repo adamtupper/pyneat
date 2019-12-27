@@ -124,6 +124,12 @@ def evaluate_network(network, config):
                    state['labels']['ball_x'],
                    state['labels']['ball_y']]
 
+            # Normalise inputs in the range [0, 1]
+            obs[0] = (obs[0] - 38) / (203 - 38)  # player y
+            obs[1] = (obs[0] - 38) / (203 - 38)  # enemy y
+            obs[2] = (obs[2] - 0) / (205 - 0)    # ball x
+            obs[3] = (obs[3] - 44) / (207 - 44)  # ball y
+
             output = network.forward(obs)
             action = output_to_action[np.argmax(output)]
 
