@@ -54,7 +54,7 @@ def parse_args(args):
     """
     parser = argparse.ArgumentParser()
     parser.add_argument('config', type=str, help="Experiment configuration file")
-    parser.add_arguement('results_dir', type=str, help='Directory to save results')
+    parser.add_argument('results_dir', type=str, help='Directory to save results')
 
     return parser.parse_args(args)
 
