@@ -54,6 +54,7 @@ def parse_args(args):
     """
     parser = argparse.ArgumentParser()
     parser.add_argument('config', type=str, help="Experiment configuration file")
+    parser.add_arguement('results_dir', type=str, help='Directory to save results')
 
     return parser.parse_args(args)
 
@@ -251,7 +252,7 @@ def main():
         for i in range(config.num_runs):
             print(f'Starting run {i+1}/{config.num_runs}')
 
-            results_dir = f'pong_test/run_{i+1}/'
+            results_dir = args.results_dir + f'run_{i+1}/'
             if not os.path.exists(results_dir):
                 os.makedirs(results_dir)
                 os.makedirs(results_dir + 'checkpoints/')
