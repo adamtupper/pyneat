@@ -12,6 +12,13 @@ Installation instructions are as follows.
 
 ### 2.1. Common
 
+Network visualisations are created using Graphviz. First install Graphviz
+using:
+
+```bash
+sudo apt install graphviz graphviz-dev
+```
+
 To install this package, firstly create an isolated conda environment with all
 required dependencies using the environment file provided:
 
