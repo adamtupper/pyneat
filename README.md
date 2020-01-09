@@ -16,6 +16,7 @@ Network visualisations are created using Graphviz. First install Graphviz
 using:
 
 ```bash
+sudo apt update
 sudo apt install graphviz graphviz-dev
 ```
 
