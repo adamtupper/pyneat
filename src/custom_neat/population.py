@@ -113,6 +113,8 @@ class Population(object):
                     self.reporters.found_solution(self.config, self.generation, best)
                     break
 
+            self.reporters.end_generation(self.config, self.population, self.species)
+
             # Create the next generation from the current generation.
             self.population = self.reproduction.reproduce(self.config, self.species,
                                                           self.config.pop_size, self.generation)
@@ -132,8 +134,6 @@ class Population(object):
 
             # Divide the new population into species.
             self.species.speciate(self.config, self.population, self.generation)
-
-            self.reporters.end_generation(self.config, self.population, self.species)
 
             self.generation += 1
 
