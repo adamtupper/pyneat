@@ -89,6 +89,9 @@ class Population(object):
 
             self.reporters.start_generation(self.generation)
 
+            # Ensure population size is correct
+            assert len(self.population.keys()) == self.config.pop_size
+
             # Evaluate all genomes using the user-provided function.
             fitness_function(list(self.population.items()), self.config)
 

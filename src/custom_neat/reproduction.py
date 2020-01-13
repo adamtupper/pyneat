@@ -139,10 +139,6 @@ class Reproduction:
         num_elites = self.reproduction_config.elitism
         elitism_threshold = self.reproduction_config.min_species_size
         survival_threshold = self.reproduction_config.survival_threshold
-        # crossover_prob = float(config[NEAT][CROSSOVER_PROB])
-        # gene_disable_prob = float(config[NEAT][CONNECTION_GENE_DISABLE_PROB])
-        # inter_species_crossover_prob = float(config[NEAT][INTER_SPECIES_CROSSOVER_PROB])
-        # stagnation_threshold = int(config[NEAT][STAGNATION_THRESHOLD])
 
         # Ensure that the number of elites cannot exceed the minimum species
         # size for elitism.
@@ -259,8 +255,10 @@ class Reproduction:
     def compute_num_offspring(remaining_species, popn_size):
         """Compute the number of offspring per species (proportional to fitness).
 
-        Note: Rounding may result in a population size that is slightly
-        above or below the specified population size.
+        Note: The largest remainder method is used to ensure the population size
+        is maintained (https://en.wikipedia.org/wiki/Largest_remainder_method).
+
+        TODO: Investigate a more efficient implementation of offspring allocation
 
         Args:
             remaining_species (dict): A dictionary ({species ID: species}) of
@@ -287,6 +285,19 @@ class Reproduction:
             else:
                 # All members of all species have zero fitness
                 # Allocate each species an equal number of offspring
-                offspring[species_id] = round(popn_size * (1 / species_size))
+                offspring[species_id] = round(popn_size / species_size)
+
+        # Ensure that the species sizes sum to population size
+        # Sort offspring numbers by fractional remainder
+        sorted_ids = sorted(offspring.keys(), key=lambda k: offspring[k] - math.floor(offspring[k]))
+        offspring = {id: math.floor(n) for id, n in offspring.items()}
+
+        # Assign extra offspring to species based on fractional remainder
+        idx = 0
+        while sum(offspring.values()) < popn_size:
+            offspring[sorted_ids[idx]] = offspring[sorted_ids[idx]] + 1
+            idx += 1
+
+        assert sum(offspring.values()) == popn_size
 
         return offspring
