@@ -281,11 +281,11 @@ class Reproduction:
         adj_fitness_sum = sum([s.adj_fitness for s in remaining_species.values()])
         for species_id, species in remaining_species.items():
             if adj_fitness_sum != 0:
-                offspring[species_id] = round(popn_size * (species.adj_fitness / adj_fitness_sum))
+                offspring[species_id] = popn_size * (species.adj_fitness / adj_fitness_sum)
             else:
                 # All members of all species have zero fitness
                 # Allocate each species an equal number of offspring
-                offspring[species_id] = round(popn_size / species_size)
+                offspring[species_id] = popn_size / species_size
 
         # Ensure that the species sizes sum to population size
         # Sort offspring numbers by fractional remainder
