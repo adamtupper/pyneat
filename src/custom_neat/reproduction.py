@@ -198,10 +198,13 @@ class Reproduction:
 
             # Transfer elites to new generation if species is large enough
             num_members = len(old_members)  # len(species.members.keys())
-            if num_members > elitism_threshold:
+            if num_members > elitism_threshold and num_offspring > 0:
                 for genome_id, genome in old_members[:num_elites]:
                     new_population[genome_id] = genome
                     num_offspring -= 1
+
+                    if num_offspring == 0:
+                        break
 
             if num_offspring <= 0:
                 # No more offspring required for this species
