@@ -272,12 +272,19 @@ class Reproduction:
             dict: A dictionary of the number of offspring allowed for each
                 species of the form {species ID: number of offspring}.
         """
+        # Find genome of lowest fitness
+        lowest_fitness = math.inf
+        for species_id, species in remaining_species.items():
+            for genome_id, genome in species.members.items():
+                if genome.fitness < lowest_fitness:
+                    lowest_fitness = genome.fitness
+
         # Calculate the sum of adjusted fitnesses for each species
         species_size = len(remaining_species.keys())
         for species_id, species in remaining_species.items():
             species.adj_fitness = 0.0  # reset sum of the adjusted fitnesses
             for genome_id, genome in species.members.items():
-                species.adj_fitness += genome.fitness / species_size
+                species.adj_fitness += (genome.fitness - lowest_fitness) / species_size
 
         # Calculate the number of offspring for each species
         offspring = {}
