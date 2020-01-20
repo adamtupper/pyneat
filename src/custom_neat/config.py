@@ -14,6 +14,7 @@ from __future__ import print_function
 
 import os
 import warnings
+import math
 
 try:
     from configparser import ConfigParser
@@ -33,7 +34,7 @@ class CustomConfig:
     __params = [
         ConfigParameter('pop_size', int),
         ConfigParameter('fitness_criterion', str),
-        ConfigParameter('fitness_threshold', float),
+        ConfigParameter('fitness_threshold', float, math.inf),
         ConfigParameter('reset_on_extinction', bool),
         ConfigParameter('no_fitness_termination', bool, False),
         ConfigParameter('num_episodes', int),
