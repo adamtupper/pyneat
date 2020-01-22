@@ -67,7 +67,7 @@ class Species:
         return [m.fitness for m in self.members.values()]
 
 
-class SpeciesSet:
+class SpeciesSet(DefaultClassConfig):
     """Encapsulates the speciation scheme.
     """
     # TODO: The DefaultSpeciesSet class inherits from DefaultClassConfig, this may not be necessary
