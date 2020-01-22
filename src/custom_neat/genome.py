@@ -406,7 +406,8 @@ class Genome:
                 gene.weight = random.uniform(-3.0, 3.0)
             else:
                 # Perturb weight
-                gene.weight += random.normalvariate(mu=0.0, sigma=perturb_std_dev)
+                # gene.weight += random.normalvariate(mu=0.0, sigma=perturb_std_dev)
+                gene.weight += random.uniform(-perturb_std_dev, perturb_std_dev)
                 gene.weight = max(min_val, gene.weight)
                 gene.weight = min(max_val, gene.weight)
 
@@ -437,7 +438,9 @@ class Genome:
                 gene.bias = random.uniform(-3.0, 3.0)
             else:
                 # Perturb bias
-                gene.bias += random.normalvariate(mu=0.0, sigma=perturb_std_dev)
+                # TODO: Rename config param to reflect normal dist limits
+                # gene.bias += random.normalvariate(mu=0.0, sigma=perturb_std_dev)
+                gene.bias += random.uniform(-perturb_std_dev, perturb_std_dev)
                 gene.bias = max(min_val, gene.bias)
                 gene.bias = min(max_val, gene.bias)
 
