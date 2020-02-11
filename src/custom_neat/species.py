@@ -123,7 +123,7 @@ class SpeciesSet(DefaultClassConfig):
                 if distance < best_representative[2]:
                     best_representative = (genome_id, genome, distance)
 
-            if best_representative[2] < config.species_set_config.compatibility_threshold:
+            if best_representative[2] <= config.species_set_config.compatibility_threshold:
                 # Species has not become extinct
                 new_representatives[species_id] = best_representative[1]
                 new_members[species_id] = [best_representative[0]]
@@ -140,7 +140,7 @@ class SpeciesSet(DefaultClassConfig):
                 if distance < best_species[1]:
                     best_species = (species_id, distance)
 
-            if best_species[0] is not None and best_species[1] < config.species_set_config.compatibility_threshold:
+            if best_species[0] is not None and best_species[1] <= config.species_set_config.compatibility_threshold:
                 # Genome fits an existing species
                 new_members[best_species[0]].append(genome_id)
             else:

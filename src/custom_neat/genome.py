@@ -321,8 +321,8 @@ class Genome:
                 from which the weight of the new connection is chosen.
         """
         # Do not allow connections between output nodes, between input nodes
-        possible_inputs = [k for k, g in self.nodes.items()]
-        possible_outputs = [k for k, g in self.nodes.items()]
+        possible_inputs = [k for k, g in self.nodes.items() if g.type != NodeTypes.OUTPUT]
+        possible_outputs = [k for k, g in self.nodes.items() if g.type != NodeTypes.INPUT]
 
         in_node = random.choice(possible_inputs)
         out_node = random.choice(possible_outputs)
@@ -513,6 +513,10 @@ class Genome:
         function of the number of disjoint and excess genes, as well as the
         weight differences of matching genes.
 
+        Update (11.02.20): Distance is measured as topological dissimilarity.
+        It is implemented as a proportion of enabled and matching node and
+        connection genes. 0 = topologically identical, 1 = no matching genes.
+
         Args:
             other (Genome): The other genome to compare itself to.
             config (GenomeConfig): The genome configuration.
@@ -523,9 +527,9 @@ class Genome:
         c1 = config.compatibility_disjoint_coefficient
         c2 = config.compatibility_weight_coefficient
 
-        # Find size of larger genome
-        N = max(len(self.nodes) + len(self.connections),
-                len(other.nodes) + len(other.connections))
+        # Find size of larger genome (count only expressed connections)
+        N = max(len(self.nodes) + len([g for g in self.connections.values() if g.expressed]),
+                len(other.nodes) + len([g for g in other.connections.values() if g.expressed]))
 
         # Node gene distance
         all_nodes = set(self.nodes.keys()).union(set(other.nodes.keys()))
@@ -539,9 +543,9 @@ class Genome:
         if matching_nodes:
             avg_bias_diff = avg_bias_diff / len(matching_nodes)
 
-        # Connection gene distance
-        all_connections = set(self.connections.keys()).union(set(other.connections.keys()))
-        non_matching_connections = set(self.connections.keys()) ^ set(other.connections.keys())
+        # Connection gene distance (count only expressed connections)
+        all_connections = set([k for k, g in self.connections.items() if g.expressed]).union(set([k for k, g in other.connections.items() if g.expressed]))
+        non_matching_connections = set([k for k, g in self.connections.items() if g.expressed]) ^ set([k for k, g in other.connections.items() if g.expressed])
         matching_connections = all_connections - non_matching_connections
 
         avg_weight_diff = 0.0
