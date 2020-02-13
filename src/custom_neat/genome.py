@@ -9,11 +9,6 @@ from neat.activations import ActivationFunctionSet
 from neat.config import ConfigParameter, write_pretty_params
 
 
-__author__ = "Adam Tupper"
-__copyright__ = "Adam Tupper"
-__license__ = "mit"
-
-
 class NodeTypes(Enum):
     """Define the types for nodes in the network.
     """
@@ -25,20 +20,23 @@ class NodeTypes(Enum):
 class ConnectionGene:
     """Defines a connection gene used in the genome encoding.
 
-    TODO: Complete class docstring.
-
     Attributes:
-        ...
+        in_node (int): The ID of the node this connection from.
+        out_node (int): The ID of the node this connection is to.
+        weight (float): The connection weight.
+        expressed (bool): True if the connection is expressed (enabled) in the
+            phenotype, False otherwise.
     """
 
     def __init__(self, in_node, out_node, weight, expressed):
-        """Creates a ConnectionGene object with the required properties.
+        """Creates a new ConnectionGene object.
 
         Args:
-            in_node:
-            out_node:
-            weight:
-            expressed:
+            in_node (int): The ID of the node this connection from.
+            out_node (int): The ID of the node this connection is to.
+            weight (float): The connection weight.
+            expressed (bool): True if the connection is expressed (enabled) in the
+                phenotype, False otherwise.
         """
         self.in_node = in_node
         self.out_node = out_node
@@ -46,6 +44,14 @@ class ConnectionGene:
         self.expressed = expressed
 
     def __eq__(self, other):
+        """Test for equality against another connection gene.
+
+        Args:
+            other (ConnectionGene): The connection gene to compare.
+
+        Returns:
+            bool: True if the objects are equal, False otherwise.
+        """
         return (self.in_node, self.out_node, self.weight, self.expressed) == \
                (other.in_node, other.out_node, other.weight, other.expressed)
 
@@ -53,25 +59,33 @@ class ConnectionGene:
 class NodeGene:
     """Defines a node gene used in the genome encoding.
 
-    TODO: Complete class docstring.
-
     Attributes:
-        ...
+        type (NodeTypes): The type of the node (either input, output or hidden).
+        bias (float): The bias value of the node.
+        activation (function): The node activation function.
     """
 
     def __init__(self, type, bias, activation):
-        """Creates a NodeGene object with the required properties.
+        """Creates a new NodeGene object.
 
         Args:
-            type (NodeTypes):
-            bias (float):
-            activation (function):
+            type (NodeTypes): The type of the node (either input, output or hidden).
+            bias (float): The bias value of the node.
+            activation (function): The node activation function.
         """
         self.type = type
         self.bias = bias
         self.activation = activation
 
     def __eq__(self, other):
+        """Test for equality against another node gene.
+
+        Args:
+            other (NodeGene): The node gene to compare.
+
+        Returns:
+            bool: True if the objects are equal, False otherwise.
+        """
         return (self.type, self.bias, self.activation) == \
                (other.type, other.bias, other.activation)
 
@@ -79,13 +93,12 @@ class NodeGene:
 class GenomeConfig:
     """Sets up and holds configuration information for the Genome class.
     """
-    def __init__(self, params):
-        """GenomeConfig constructor.
 
-        TODO: Complete method docstring.
+    def __init__(self, params):
+        """Creates a new GenomeConfig object.
 
         Args:
-            params:
+            params (dict): A dictionary of config parameters and values.
         """
         # Create full set of available activation functions
         self.activation_defs = ActivationFunctionSet()
@@ -117,18 +130,28 @@ class GenomeConfig:
             setattr(self, p.name, p.interpret(params))
 
     def save(self, f):
-        """
-
-        TODO: Complete method docstring.
+        """Save the genome configuration.
 
         Args:
-            f:
+            f (str): The filename to write the configuration to.
         """
         write_pretty_params(f, self, self._params)
 
 
 class Genome:
     """Defines a genome used to encode a neural network.
+
+    TODO: Make node_key_generator private.
+
+    Attributes:
+        key (int): The genome ID.
+        fitness (float): The fitness of the genome.
+        node_key_generator (generator): A generator for new node IDs.
+        nodes (dict): A dictionary of node ID (int), node gene pairs.
+        connections (dict): A dictionary of connection gene ID (in node ID, out
+            node ID), connection gene pairs.
+        inputs (:list:`int`): The node IDs of input nodes.
+        outputs (:list:`int`): The node IDs of output nodes.
     """
     @classmethod
     def parse_config(cls, param_dict):
@@ -153,16 +176,14 @@ class Genome:
 
         Note: This is a required interface method.
 
-        TODO: Complete method docstring.
-
         Args:
-            f:
-            config (GenomeConfig):
+            f (str): The name of the file to write the genome configuration to.
+            config (GenomeConfig): The genome configuration to save.
         """
         config.save(f)
 
     def __init__(self, key):
-        """Creates a Genome object with the required properties.
+        """Creates a new Genome object.
 
         Note: This is a required interface method.
 

@@ -16,13 +16,12 @@ from custom_neat.genome import Genome
 class ReproductionConfig:
     """Sets up and hold configuration information for the Reproduction class.
     """
-    def __init__(self, params):
-        """Constructor.
 
-        TODO: Complete method docstring.
+    def __init__(self, params):
+        """Creates a new ReproductionConfig object.
 
         Args:
-            params:
+            params (dict): A dictionary of config parameters and values.
         """
         self._params = [ConfigParameter('crossover_prob', float),
                         ConfigParameter('inter_species_crossover_prob', float),
@@ -35,18 +34,29 @@ class ReproductionConfig:
             setattr(self, p.name, p.interpret(params))
 
     def save(self, f):
-        """
-
-        TODO: Complete method docstring.
+        """Save the reproduction configuration.
 
         Args:
-            f:
+            f (str): The filename to write the configuration to.
         """
         write_pretty_params(f, self, self._params)
 
 
 class Reproduction:
     """Implements the NEAT reproduction scheme.
+
+    TODO: Decide which attributes should be private.
+
+    Attributes:
+        reproduction_config (ReproductionConfig): The configuration for
+            reproduction hyperparameters.
+        reporters (ReporterSet): The set of reporters to log events via.
+        genome_indexer (generator): Keeps track of the next genome ID when
+            generating offspring.
+        stagnation (DefaultStagnation): Keeps track of which species have
+            stagnated.
+        ancestors (dict): A dictionary that stores the parents of each
+            offspring produced.
     """
 
     @classmethod
@@ -66,31 +76,29 @@ class Reproduction:
 
     @classmethod
     def write_config(cls, f, config):
-        """
-        Takes a file-like object and the configuration object created by
+        """Takes a file-like object and the configuration object created by
         parse_config. This method should write the configuration item
         definitions to the given file.
 
         Note: This is a required interface method.
 
         Args:
-            f:
-            config (ReproductionConfig):
-
-        Returns:
-
+            f (str): The filename of the file to write the configuration to.
+            config (ReproductionConfig): The reproduction config to save.
         """
         config.save(f)
 
     def __init__(self, config, reporters, stagnation):
-        """
+        """Create a new Reproduction object.
 
         Note: This is a required interface method.
 
         Args:
-            config (ReproductionConfig):
-            reporters:
-            stagnation:
+            config (ReproductionConfig): The configuration for
+                reproduction hyperparameters.
+            reporters (ReporterSet): The set of reporters to log events via.
+            stagnation (DefaultStagnation): Keeps track of which species have
+                stagnated.
         """
         self.reproduction_config = config
         self.reporters = reporters
@@ -99,17 +107,20 @@ class Reproduction:
         self.ancestors = {}
 
     def create_new(self, genome_type, genome_config, num_genomes):
-        """
+        """Create a brand new population.
 
         Note: This is a required interface method.
 
         Args:
-            genome_type:
-            genome_config:
-            num_genomes:
+            genome_type (Genome): The type of the genome to create individuals
+                using.
+            genome_config (GenomeConfig): The genome configuration.
+            num_genomes (int): The number of genomes to create (population
+                size).
 
         Returns:
-
+            dict: A dictionary of genome ID, genome pairs that make up the new
+                population.
         """
         genomes = {}
         for i in range(num_genomes):
@@ -133,7 +144,8 @@ class Reproduction:
             generation (int): The number of the next generation.
 
         Returns:
-
+            dict: A dictionary of genome ID, genome pairs that make up the new
+                population.
         """
         species_set = species
         num_elites = self.reproduction_config.elitism

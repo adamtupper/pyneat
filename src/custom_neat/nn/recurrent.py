@@ -6,17 +6,29 @@ from custom_neat.graph_utils import required_for_output
 
 
 class RNN:
+    """Time-delayed recurrent neural network (RNN) implementation.
+
+    TODO: Decide which attributes should be private (probably all).
+
+    Attributes:
+        input_nodes (:list:`int`): The node IDs of all input nodes.
+        output_nodes (:list:`int`): The node IDs of all output nodes.
+        node_evals (:list:`tuple`): The information required to evaluate each
+            node (e.g. activation fn, bias, node inputs).
+        prev_states (dict): A dictionary of node ID, value pairs that stores the
+            output value for each node from the previous time step.
+        curr_states (dict): A dictionary of node ID, value pairs that stores the
+            output value for each node at the current time step.
     """
-    A recurrent neural network.
-    """
+
     def __init__(self, input_nodes, output_nodes, node_evals):
-        """
-        TODO: Complete method docstring.
+        """Create a new RNN object.
 
         Args:
-            input_nodes (list):
-            output_nodes (list):
-            node_evals (list):
+            input_nodes (:list:`int`): The node IDs of all input nodes.
+            output_nodes (:list:`int`): The node IDs of all output nodes.
+            node_evals (:list:`tuple`): The information required to evaluate
+            each node (e.g. activation fn, bias, node inputs).
         """
         self.input_nodes = input_nodes
         self.output_nodes = output_nodes
@@ -47,15 +59,16 @@ class RNN:
         self.curr_states = {k: 0.0 for k, _ in self.curr_states.items()}
 
     def forward(self, inputs):
-        """
-
-        TODO: Complete method docstring.
+        """Calculate the new output values for the current time step, given the
+        new inputs to the network.
 
         Args:
-            inputs (lists):
+            inputs (:list:`float`): The input values for each input node of the
+                network.
 
         Returns:
-
+            :list:`float`: The output values for each output node of the
+                network.
         """
         # Update input nodes with latest inputs
         for node_idx, value in zip(self.input_nodes, inputs):
@@ -73,13 +86,13 @@ class RNN:
 
     @staticmethod
     def create(genome):
-        """
-        TODO: Complete method docstring.
+        """Create a new RNN object from the provided genome.
+
         Args:
-            genome (Genome):
+            genome (Genome): The genome that encodes the RNN to be built.
 
         Returns:
-
+            RNN: The RNN encoded by the genome.
         """
         # Fetch indices of network input and output nodes
         input_nodes = genome.inputs

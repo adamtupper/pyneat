@@ -13,17 +13,27 @@ class Species:
     """Encapsulates all information about a particular species.
 
     Attributes:
+        key (int): The species ID.
+        created (int): The generation in which the species was created.
+        last_improved (int): The last generation where the fitness of the
+            species improved.
         members (dict): A dictionary of {genome ID: genome} pairs for each
             genome in the species.
+        representative (Genome): The genome that is the representative of the
+            species, against which new genomes will be compared to see if they
+            belong in this species.
+        fitness (float): The species fitness.
         adjusted_fitness (float): The sum of the adjusted fitnesses for each genome
             in the species.
+        fitness_history (:list:`float`): All previous fitness values. One for
+            each generation this species has survived for.
     """
     def __init__(self, key, generation):
-        """Create a new species.
+        """Create a new Species object.
 
-        Args:next
-            key:
-            generation:
+        Args:
+            key (int): The species ID.
+            generation (int): The current generation.
         """
         self.key = key
         self.created = generation
@@ -35,6 +45,14 @@ class Species:
         self.fitness_history = []
 
     def __eq__(self, other):
+        """Check to see if another species is equal to this one.
+
+        Args:
+            other (Species): The other species to compare.
+
+        Returns:
+            bool: True if the two species are equal, False otherwise.
+        """
         self_attr = (self.key, self.created, self.last_improved, self.members,
                      self.representative, self.fitness, self.adjusted_fitness,
                      self.fitness_history)
@@ -51,32 +69,37 @@ class Species:
             for this species.
             members (dict): A dictionary of genome ID and genome pairs of the
                 new members of the species.
-
-        Returns:
-
         """
         self.representative = copy.deepcopy(representative)
         self.members = members
 
     def get_fitnesses(self):
-        """
+        """Get the fitnesses of each genome that belongs to this species.
 
         Returns:
-
+            :list:`float`: The fitness of each genome that belongs to this
+                species.
         """
         return [m.fitness for m in self.members.values()]
 
 
 class SpeciesSet(DefaultClassConfig):
     """Encapsulates the speciation scheme.
+
+    Attributes:
+        species_set_config (DefaultClassConfig): The speciation configuration.
+        reporters (ReporterSet): The set of reporters that log events.
+        indexer (generator): Keeps track of the next species ID.
+        species (dict): A dictionary of species ID, species pairs.
+        genome_to_species (dict): A dictionary of genome ID, species ID pairs.
     """
-    # TODO: The DefaultSpeciesSet class inherits from DefaultClassConfig, this may not be necessary
+
     def __init__(self, config, reporters):
-        """
+        """Creates a new SpeciesSet object.
 
         Args:
-            config (SpeciesSetConfig):
-            reporters:
+            config (DefaultClassConfig): The speciation configuration.
+            reporters (ReporterSet): The set of reporters that log events.
         """
         self.species_set_config = config
         self.reporters = reporters
@@ -86,27 +109,24 @@ class SpeciesSet(DefaultClassConfig):
 
     @classmethod
     def parse_config(cls, param_dict):
-        """
+        """Parse the speciation parameter values
 
         Args:
-            param_dict:
+            param_dict (dict): A dictionary of parameter values.
 
         Returns:
-
+            DefaultClassConfig: The speciation configuration.
         """
         return DefaultClassConfig(param_dict,
                                   [ConfigParameter('compatibility_threshold', float)])
 
     def speciate(self, config, population, generation):
-        """
+        """Speciate the population.
 
         Args:
-            config (Config):
-            population:
-            generation:
-
-        Returns:
-
+            config (Config): The global NEAT configuration.
+            population (dict): A dictionary of genome ID, genome pairs.
+            generation (int): The current generation.
         """
         unspeciated = set(population)
         distances = GenomeDistanceCache(config.genome_config)
@@ -177,24 +197,24 @@ class SpeciesSet(DefaultClassConfig):
             )
 
     def get_species_id(self, individual_id):
-        """
+        """Get the species ID of the species the given individual belongs to.
 
         Args:
-            individual_id:
+            individual_id (int): The genome ID of the individual to check.
 
         Returns:
-
+            int: The species ID the individual belongs to.
         """
         return self.genome_to_species[individual_id]
 
     def get_species(self, individual_id):
-        """
+        """Get the species to given individual belongs to.
 
         Args:
-            individual_id:
+            individual_id (int): The genome ID of the individual to check.
 
         Returns:
-
+            Species: The species the individual belongs to.
         """
         species_id = self.genome_to_species[individual_id]
         return self.species[species_id]

@@ -357,10 +357,10 @@ class TestGenome:
         genome.configure_new(self.config.genome_config)
 
         genome.mutate_add_connection(std_dev=1.0)
-        assert  1 == len(genome.connections)
+        assert 1 == len(genome.connections)
 
-        assert 1 == genome.connections[(1, 1)].in_node
-        assert 1 == genome.connections[(1, 1)].out_node
+        assert 0 == genome.connections[(0, 1)].in_node
+        assert 1 == genome.connections[(0, 1)].out_node
 
     def test_mutate_weights(self):
         """Test the mutation of genome connection weights.

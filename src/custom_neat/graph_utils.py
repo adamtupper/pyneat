@@ -11,12 +11,14 @@ def required_for_output(input_nodes, output_nodes, connections):
     TODO: Complete function docstring.
 
     Args:
-        input_nodes (list):
-        output_nodes (list):
-        connections (list):
+        input_nodes (:list:`int`): The node IDs of all input nodes.
+        output_nodes (:list:`int`): The node IDs of all output nodes.
+        connections (:list:`ConnectionGene`): The connection genes of the
+            genome.
 
     Returns:
-
+        set: The IDs of all required nodes for generating an RNN from the
+            genome.
     """
     required = set(output_nodes)
     updated = True
