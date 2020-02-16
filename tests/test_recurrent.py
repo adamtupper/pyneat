@@ -14,8 +14,8 @@ def test_create_all_required():
     # Manually create genome for deterministic testing
     genome = Genome(key=0, config=None)
     genome.nodes = {
-        0: NodeGene(NodeTypes.INPUT, 1.0, activation=identity_activation),
-        1: NodeGene(NodeTypes.OUTPUT, 2.0, activation=identity_activation)
+        0: NodeGene(NodeType.INPUT, 1.0, activation=identity_activation),
+        1: NodeGene(NodeType.OUTPUT, 2.0, activation=identity_activation)
     }
     genome.connections = {(0, 1): ConnectionGene(0, 1, 1.0, True)}
     genome.inputs = [0]
@@ -37,12 +37,12 @@ def test_create_some_required():
     # Manually create genome for deterministic testing
     genome = Genome(key=0, config=None)
     genome.nodes = {
-        0: NodeGene(NodeTypes.INPUT, bias=1.0, activation=identity_activation),
-        1: NodeGene(NodeTypes.INPUT, bias=2.0, activation=identity_activation),
-        2: NodeGene(NodeTypes.HIDDEN, bias=3.0, activation=identity_activation),
-        3: NodeGene(NodeTypes.HIDDEN, bias=4.0, activation=identity_activation),
-        4: NodeGene(NodeTypes.OUTPUT, bias=5.0, activation=identity_activation),
-        5: NodeGene(NodeTypes.OUTPUT, bias=6.0, activation=identity_activation),
+        0: NodeGene(NodeType.INPUT, bias=1.0, activation=identity_activation),
+        1: NodeGene(NodeType.INPUT, bias=2.0, activation=identity_activation),
+        2: NodeGene(NodeType.HIDDEN, bias=3.0, activation=identity_activation),
+        3: NodeGene(NodeType.HIDDEN, bias=4.0, activation=identity_activation),
+        4: NodeGene(NodeType.OUTPUT, bias=5.0, activation=identity_activation),
+        5: NodeGene(NodeType.OUTPUT, bias=6.0, activation=identity_activation),
     }
     genome.connections = {
         (0, 2): ConnectionGene(0, 2, 1.0, True),
@@ -75,12 +75,12 @@ def test_reset():
     # Manually create genome for deterministic testing
     genome = Genome(key=2, config=None)
     genome.nodes = {
-        0: NodeGene(NodeTypes.INPUT, bias=1.0, activation=identity_activation),
-        1: NodeGene(NodeTypes.INPUT, bias=2.0, activation=identity_activation),
-        2: NodeGene(NodeTypes.HIDDEN, bias=3.0, activation=identity_activation),
-        3: NodeGene(NodeTypes.HIDDEN, bias=4.0, activation=identity_activation),
-        4: NodeGene(NodeTypes.OUTPUT, bias=5.0, activation=identity_activation),
-        5: NodeGene(NodeTypes.OUTPUT, bias=6.0, activation=identity_activation),
+        0: NodeGene(NodeType.INPUT, bias=1.0, activation=identity_activation),
+        1: NodeGene(NodeType.INPUT, bias=2.0, activation=identity_activation),
+        2: NodeGene(NodeType.HIDDEN, bias=3.0, activation=identity_activation),
+        3: NodeGene(NodeType.HIDDEN, bias=4.0, activation=identity_activation),
+        4: NodeGene(NodeType.OUTPUT, bias=5.0, activation=identity_activation),
+        5: NodeGene(NodeType.OUTPUT, bias=6.0, activation=identity_activation),
     }
     genome.connections = {
         (0, 2): ConnectionGene(0, 2, 1.0, True),
@@ -109,9 +109,9 @@ def test_forward_arch_1_in_order():
     # Manually create genome for deterministic testing
     genome = Genome(key=0, config=None)
     genome.nodes = {
-        0: NodeGene(type=NodeTypes.INPUT, bias=1., activation=identity_activation),
-        1: NodeGene(type=NodeTypes.HIDDEN, bias=2., activation=identity_activation),
-        2: NodeGene(type=NodeTypes.OUTPUT, bias=3., activation=identity_activation)
+        0: NodeGene(type=NodeType.INPUT, bias=1., activation=identity_activation),
+        1: NodeGene(type=NodeType.HIDDEN, bias=2., activation=identity_activation),
+        2: NodeGene(type=NodeType.OUTPUT, bias=3., activation=identity_activation)
     }
     genome.connections = {
         (0, 1): ConnectionGene(in_node=0, out_node=1, weight=1., expressed=True),
@@ -136,9 +136,9 @@ def test_forward_arch_1_out_of_order():
     # Manually create genome for deterministic testing
     genome = Genome(key=0, config=None)
     genome.nodes = {
-        0: NodeGene(type=NodeTypes.OUTPUT, bias=3., activation=identity_activation),
-        1: NodeGene(type=NodeTypes.INPUT, bias=1., activation=identity_activation),
-        2: NodeGene(type=NodeTypes.HIDDEN, bias=2., activation=identity_activation),
+        0: NodeGene(type=NodeType.OUTPUT, bias=3., activation=identity_activation),
+        1: NodeGene(type=NodeType.INPUT, bias=1., activation=identity_activation),
+        2: NodeGene(type=NodeType.HIDDEN, bias=2., activation=identity_activation),
     }
     genome.connections = {
         (2, 0): ConnectionGene(in_node=2, out_node=0, weight=3., expressed=True),
@@ -164,9 +164,9 @@ def test_forward_arch_2_in_order():
     # Manually create genome for deterministic testing
     genome = Genome(key=0, config=None)
     genome.nodes = {
-        0: NodeGene(type=NodeTypes.INPUT, bias=1., activation=identity_activation),
-        1: NodeGene(type=NodeTypes.HIDDEN, bias=2., activation=identity_activation),
-        2: NodeGene(type=NodeTypes.OUTPUT, bias=3., activation=identity_activation)
+        0: NodeGene(type=NodeType.INPUT, bias=1., activation=identity_activation),
+        1: NodeGene(type=NodeType.HIDDEN, bias=2., activation=identity_activation),
+        2: NodeGene(type=NodeType.OUTPUT, bias=3., activation=identity_activation)
     }
     genome.connections = {
         (0, 1): ConnectionGene(in_node=0, out_node=1, weight=1., expressed=True),
@@ -192,9 +192,9 @@ def test_forward_arch_2_out_of_order():
     # Manually create genome for deterministic testing
     genome = Genome(key=0, config=None)
     genome.nodes = {
-        0: NodeGene(type=NodeTypes.OUTPUT, bias=3., activation=identity_activation),
-        1: NodeGene(type=NodeTypes.INPUT, bias=1., activation=identity_activation),
-        2: NodeGene(type=NodeTypes.HIDDEN, bias=2., activation=identity_activation),
+        0: NodeGene(type=NodeType.OUTPUT, bias=3., activation=identity_activation),
+        1: NodeGene(type=NodeType.INPUT, bias=1., activation=identity_activation),
+        2: NodeGene(type=NodeType.HIDDEN, bias=2., activation=identity_activation),
     }
     genome.connections = {
         (2, 0): ConnectionGene(in_node=2, out_node=0, weight=3., expressed=True),

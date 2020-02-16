@@ -9,7 +9,7 @@ from neat.activations import ActivationFunctionSet
 from neat.config import ConfigParameter, write_pretty_params
 
 
-class NodeTypes(Enum):
+class NodeType(Enum):
     """Define the types for nodes in the network.
     """
     INPUT = 0
@@ -60,7 +60,7 @@ class NodeGene:
     """Defines a node gene used in the genome encoding.
 
     Attributes:
-        type (NodeTypes): The type of the node (either input, output or hidden).
+        type (NodeType): The type of the node (either input, output or hidden).
         bias (float): The bias value of the node.
         activation (function): The node activation function.
     """
@@ -69,7 +69,7 @@ class NodeGene:
         """Creates a new NodeGene object.
 
         Args:
-            type (NodeTypes): The type of the node (either input, output or hidden).
+            type (NodeType): The type of the node (either input, output or hidden).
             bias (float): The bias value of the node.
             activation (function): The node activation function.
         """
@@ -219,7 +219,7 @@ class Genome:
             #     activation=config.activation_defs.get(config.activation_func)
             # )
             self.nodes[key] = NodeGene(
-                type=NodeTypes.INPUT,
+                type=NodeType.INPUT,
                 bias=random.uniform(-3.0, 3.0),
                 activation=self.config.activation_defs.get(self.config.activation_func)
             )
@@ -233,7 +233,7 @@ class Genome:
             #     activation=config.activation_defs.get(config.activation_func)
             # )
             self.nodes[key] = NodeGene(
-                type=NodeTypes.OUTPUT,
+                type=NodeType.OUTPUT,
                 bias=random.uniform(-3.0, 3.0),
                 activation=self.config.activation_defs.get(self.config.activation_func)
             )
@@ -335,8 +335,8 @@ class Genome:
                 from which the weight of the new connection is chosen.
         """
         # Do not allow connections between output nodes, between input nodes
-        possible_inputs = [k for k, g in self.nodes.items() if g.type != NodeTypes.OUTPUT]
-        possible_outputs = [k for k, g in self.nodes.items() if g.type != NodeTypes.INPUT]
+        possible_inputs = [k for k, g in self.nodes.items() if g.type != NodeType.OUTPUT]
+        possible_outputs = [k for k, g in self.nodes.items() if g.type != NodeType.INPUT]
 
         in_node = random.choice(possible_inputs)
         out_node = random.choice(possible_outputs)
@@ -369,7 +369,7 @@ class Genome:
 
             assert new_node_id not in self.nodes
 
-            self.nodes[new_node_id] = NodeGene(type=NodeTypes.HIDDEN,
+            self.nodes[new_node_id] = NodeGene(type=NodeType.HIDDEN,
                                                bias=0.0,
                                                activation=activation)
 
@@ -509,9 +509,9 @@ class Genome:
                     self.nodes[key] = copy.deepcopy(gene2)
 
             # Add to input/output nodes if applicable
-            if gene1.type == NodeTypes.INPUT:
+            if gene1.type == NodeType.INPUT:
                 self.inputs.append(key)
-            elif gene1.type == NodeTypes.OUTPUT:
+            elif gene1.type == NodeType.OUTPUT:
                 self.outputs.append(key)
 
         # Update node_key_generator

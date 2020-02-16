@@ -32,18 +32,18 @@ class TestGenome:
     def test_create_node_gene(self):
         """Test the creation of node genes.
         """
-        node_gene = NodeGene(type=NodeTypes.INPUT,
+        node_gene = NodeGene(type=NodeType.INPUT,
                              bias=0.0,
                              activation=identity_activation)
-        assert node_gene.type == NodeTypes.INPUT
+        assert node_gene.type == NodeType.INPUT
         assert pytest.approx(0.0, node_gene.bias)
         assert identity_activation == node_gene.activation
 
     def test_create_connection_gene(self):
         """Test the creation of connection genes.
         """
-        in_node = NodeGene(NodeTypes.INPUT, bias=0.0, activation=identity_activation)
-        out_node = NodeGene(NodeTypes.HIDDEN, bias=0.0, activation=identity_activation)
+        in_node = NodeGene(NodeType.INPUT, bias=0.0, activation=identity_activation)
+        out_node = NodeGene(NodeType.HIDDEN, bias=0.0, activation=identity_activation)
         connection_gene = ConnectionGene(
             in_node=in_node,
             out_node=out_node,
@@ -93,7 +93,7 @@ class TestGenome:
         assert num_input_nodes * num_output_nodes == len(genome.connections)
 
         actual_node_types = [gene.type for k, gene in genome.nodes.items()]
-        expected_node_types = [NodeTypes.INPUT] * num_input_nodes + [NodeTypes.OUTPUT] * num_output_nodes
+        expected_node_types = [NodeType.INPUT] * num_input_nodes + [NodeType.OUTPUT] * num_output_nodes
         assert actual_node_types == expected_node_types
 
         three_std_dev = 3 * self.config.genome_config.bias_init_std_dev
@@ -304,7 +304,7 @@ class TestGenome:
         assert len(genome.nodes) == 3
 
         new_node_gene = genome.nodes[max(genome.nodes.keys())]
-        assert new_node_gene.type == NodeTypes.HIDDEN
+        assert new_node_gene.type == NodeType.HIDDEN
 
         old_connection_gene = genome.connections[(0, 1)]
         assert not old_connection_gene.expressed
@@ -423,9 +423,9 @@ class TestGenome:
 
         parent1 = Genome(key=0, config=self.config.genome_config)
         parent1.nodes = {
-            0: NodeGene(type=NodeTypes.INPUT, bias=1., activation=identity_activation),
-            1: NodeGene(type=NodeTypes.OUTPUT, bias=1., activation=identity_activation),
-            2: NodeGene(type=NodeTypes.HIDDEN, bias=1., activation=identity_activation),
+            0: NodeGene(type=NodeType.INPUT, bias=1., activation=identity_activation),
+            1: NodeGene(type=NodeType.OUTPUT, bias=1., activation=identity_activation),
+            2: NodeGene(type=NodeType.HIDDEN, bias=1., activation=identity_activation),
         }
         parent1.add_connection(0, 2, 1.)
         parent1.add_connection(2, 1, 1.)
@@ -433,10 +433,10 @@ class TestGenome:
 
         parent2 = Genome(key=1, config=self.config.genome_config)
         parent2.nodes = {
-            0: NodeGene(type=NodeTypes.INPUT, bias=2., activation=identity_activation),
-            1: NodeGene(type=NodeTypes.OUTPUT, bias=2., activation=identity_activation),
-            2: NodeGene(type=NodeTypes.HIDDEN, bias=2., activation=identity_activation),
-            3: NodeGene(type=NodeTypes.HIDDEN, bias=2., activation=identity_activation),
+            0: NodeGene(type=NodeType.INPUT, bias=2., activation=identity_activation),
+            1: NodeGene(type=NodeType.OUTPUT, bias=2., activation=identity_activation),
+            2: NodeGene(type=NodeType.HIDDEN, bias=2., activation=identity_activation),
+            3: NodeGene(type=NodeType.HIDDEN, bias=2., activation=identity_activation),
         }
         parent2.add_connection(0, 2, 2.)
         parent2.add_connection(0, 3, 2.)
@@ -465,9 +465,9 @@ class TestGenome:
 
         parent1 = Genome(key=0, config=self.config.genome_config)
         parent1.nodes = {
-            0: NodeGene(type=NodeTypes.INPUT, bias=1., activation=identity_activation),
-            1: NodeGene(type=NodeTypes.OUTPUT, bias=1., activation=identity_activation),
-            2: NodeGene(type=NodeTypes.HIDDEN, bias=1., activation=identity_activation),
+            0: NodeGene(type=NodeType.INPUT, bias=1., activation=identity_activation),
+            1: NodeGene(type=NodeType.OUTPUT, bias=1., activation=identity_activation),
+            2: NodeGene(type=NodeType.HIDDEN, bias=1., activation=identity_activation),
         }
         parent1.add_connection(0, 2, 1.)
         parent1.add_connection(2, 1, 1.)
@@ -475,10 +475,10 @@ class TestGenome:
 
         parent2 = Genome(key=1, config=self.config.genome_config)
         parent2.nodes = {
-            0: NodeGene(type=NodeTypes.INPUT, bias=2., activation=identity_activation),
-            1: NodeGene(type=NodeTypes.OUTPUT, bias=2., activation=identity_activation),
-            2: NodeGene(type=NodeTypes.HIDDEN, bias=2., activation=identity_activation),
-            3: NodeGene(type=NodeTypes.HIDDEN, bias=2., activation=identity_activation),
+            0: NodeGene(type=NodeType.INPUT, bias=2., activation=identity_activation),
+            1: NodeGene(type=NodeType.OUTPUT, bias=2., activation=identity_activation),
+            2: NodeGene(type=NodeType.HIDDEN, bias=2., activation=identity_activation),
+            3: NodeGene(type=NodeType.HIDDEN, bias=2., activation=identity_activation),
         }
         parent2.add_connection(0, 2, 2.)
         parent2.add_connection(0, 3, 2.)
@@ -501,9 +501,9 @@ class TestGenome:
 
         parent1 = Genome(key=0, config=self.config.genome_config)
         parent1.nodes = {
-            0: NodeGene(type=NodeTypes.INPUT, bias=1., activation=identity_activation),
-            1: NodeGene(type=NodeTypes.OUTPUT, bias=1., activation=identity_activation),
-            2: NodeGene(type=NodeTypes.HIDDEN, bias=1., activation=identity_activation),
+            0: NodeGene(type=NodeType.INPUT, bias=1., activation=identity_activation),
+            1: NodeGene(type=NodeType.OUTPUT, bias=1., activation=identity_activation),
+            2: NodeGene(type=NodeType.HIDDEN, bias=1., activation=identity_activation),
         }
         parent1.add_connection(0, 2, 1.)
         parent1.add_connection(2, 1, 1.)
@@ -511,10 +511,10 @@ class TestGenome:
 
         parent2 = Genome(key=1, config=self.config.genome_config)
         parent2.nodes = {
-            0: NodeGene(type=NodeTypes.INPUT, bias=2., activation=identity_activation),
-            1: NodeGene(type=NodeTypes.OUTPUT, bias=2., activation=identity_activation),
-            2: NodeGene(type=NodeTypes.HIDDEN, bias=2., activation=identity_activation),
-            3: NodeGene(type=NodeTypes.HIDDEN, bias=2., activation=identity_activation),
+            0: NodeGene(type=NodeType.INPUT, bias=2., activation=identity_activation),
+            1: NodeGene(type=NodeType.OUTPUT, bias=2., activation=identity_activation),
+            2: NodeGene(type=NodeType.HIDDEN, bias=2., activation=identity_activation),
+            3: NodeGene(type=NodeType.HIDDEN, bias=2., activation=identity_activation),
         }
         parent2.add_connection(0, 2, 2.)
         parent2.add_connection(0, 3, 2.)
@@ -538,9 +538,9 @@ class TestGenome:
 
         parent1 = Genome(key=0,config=self.config.genome_config)
         parent1.nodes = {
-            0: NodeGene(type=NodeTypes.INPUT, bias=1., activation=identity_activation),
-            1: NodeGene(type=NodeTypes.OUTPUT, bias=1., activation=identity_activation),
-            2: NodeGene(type=NodeTypes.HIDDEN, bias=1., activation=identity_activation),
+            0: NodeGene(type=NodeType.INPUT, bias=1., activation=identity_activation),
+            1: NodeGene(type=NodeType.OUTPUT, bias=1., activation=identity_activation),
+            2: NodeGene(type=NodeType.HIDDEN, bias=1., activation=identity_activation),
         }
         parent1.add_connection(0, 2, 1., expressed=False)
         parent1.add_connection(2, 1, 1.)
@@ -548,9 +548,9 @@ class TestGenome:
 
         parent2 = Genome(key=1, config=self.config.genome_config)
         parent2.nodes = {
-            0: NodeGene(type=NodeTypes.INPUT, bias=2., activation=identity_activation),
-            1: NodeGene(type=NodeTypes.OUTPUT, bias=2., activation=identity_activation),
-            2: NodeGene(type=NodeTypes.HIDDEN, bias=2., activation=identity_activation),
+            0: NodeGene(type=NodeType.INPUT, bias=2., activation=identity_activation),
+            1: NodeGene(type=NodeType.OUTPUT, bias=2., activation=identity_activation),
+            2: NodeGene(type=NodeType.HIDDEN, bias=2., activation=identity_activation),
         }
         parent2.add_connection(0, 2, 2.)
         parent2.add_connection(2, 1, 2., expressed=False)
@@ -572,9 +572,9 @@ class TestGenome:
 
         genome1 = Genome(key=0, config=self.config.genome_config)
         genome1.nodes = {
-            0: NodeGene(type=NodeTypes.INPUT, bias=1., activation=identity_activation),
-            1: NodeGene(type=NodeTypes.OUTPUT, bias=1., activation=identity_activation),
-            2: NodeGene(type=NodeTypes.HIDDEN, bias=1., activation=identity_activation),
+            0: NodeGene(type=NodeType.INPUT, bias=1., activation=identity_activation),
+            1: NodeGene(type=NodeType.OUTPUT, bias=1., activation=identity_activation),
+            2: NodeGene(type=NodeType.HIDDEN, bias=1., activation=identity_activation),
         }
         genome1.add_connection(0, 2, 1.)
         genome1.add_connection(2, 1, 1.)
@@ -582,10 +582,10 @@ class TestGenome:
 
         genome2 = Genome(key=1, config=self.config.genome_config)
         genome2.nodes = {
-            0: NodeGene(type=NodeTypes.INPUT, bias=2., activation=identity_activation),
-            1: NodeGene(type=NodeTypes.OUTPUT, bias=2., activation=identity_activation),
-            2: NodeGene(type=NodeTypes.HIDDEN, bias=2., activation=identity_activation),
-            3: NodeGene(type=NodeTypes.HIDDEN, bias=2., activation=identity_activation),
+            0: NodeGene(type=NodeType.INPUT, bias=2., activation=identity_activation),
+            1: NodeGene(type=NodeType.OUTPUT, bias=2., activation=identity_activation),
+            2: NodeGene(type=NodeType.HIDDEN, bias=2., activation=identity_activation),
+            3: NodeGene(type=NodeType.HIDDEN, bias=2., activation=identity_activation),
         }
         genome2.add_connection(0, 2, 2.)
         genome2.add_connection(0, 3, 2.)
