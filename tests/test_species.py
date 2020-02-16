@@ -65,7 +65,7 @@ class TestSpeciesSet:
 
         species_set = SpeciesSet(self.config, ReporterSet())
 
-        assert start_index == next(species_set.indexer)
+        assert start_index == next(species_set.species_key_generator)
         assert species == species_set.species
 
     def test_species_set_speciate_initial(self):
@@ -111,7 +111,7 @@ class TestSpeciesSet:
         expected_species1.update(representative=population[2], members={2: population[2], 3: population[3]})
 
         assert 2 == len(species_set.species)
-        assert 2 == next(species_set.indexer)
+        assert 2 == next(species_set.species_key_generator)
         assert expected_species0 == species_set.species[0]
         assert expected_species1 == species_set.species[1]
 
@@ -184,7 +184,7 @@ class TestSpeciesSet:
         expected_species2.update(representative=population[1], members={1: population[1]})
 
         assert 3 == len(species_set.species)
-        assert 3 == next(species_set.indexer)
+        assert 3 == next(species_set.species_key_generator)
         assert expected_species0 == species_set.species[0]
         assert expected_species1 == species_set.species[1]
         assert expected_species2 == species_set.species[2]
@@ -254,6 +254,6 @@ class TestSpeciesSet:
         expected_species1.update(representative=population[3], members={2: population[2], 3: population[3]})
 
         assert 2 == len(species_set.species)
-        assert 2 == next(species_set.indexer)
+        assert 2 == next(species_set.species_key_generator)
         assert expected_species0 == species_set.species[0]
         assert expected_species1 == species_set.species[1]

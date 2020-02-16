@@ -34,7 +34,7 @@ class Species:
     """Encapsulates all information about a particular species.
 
     Attributes:
-        key (int): The species ID.
+        key (int): A unique identifier for the species.
         created (int): The generation in which the species was created.
         last_improved (int): The last generation where the fitness of the
             species improved.
@@ -53,7 +53,7 @@ class Species:
         """Create a new Species object.
 
         Args:
-            key (int): The species ID.
+            key (int): A unique identifier for the species.
             generation (int): The current generation.
         """
         self.key = key
@@ -110,7 +110,7 @@ class SpeciesSet(DefaultClassConfig):
     Attributes:
         species_set_config (DefaultClassConfig): The speciation configuration.
         reporters (ReporterSet): The set of reporters that log events.
-        indexer (generator): Keeps track of the next species ID.
+        species_key_generator (generator): Keeps track of the next species ID.
         species (dict): A dictionary of species ID, species pairs.
         genome_to_species (dict): A dictionary of genome ID, species ID pairs.
     """
@@ -124,7 +124,7 @@ class SpeciesSet(DefaultClassConfig):
         """
         self.species_set_config = config
         self.reporters = reporters
-        self.indexer = count(0)
+        self.species_key_generator = count(0)
         self.species = {}
         self.genome_to_species = {}
 
@@ -156,54 +156,54 @@ class SpeciesSet(DefaultClassConfig):
 
         # Find the best new representatives for each species (closest to the
         # current representatives)
-        for species_id, species in self.species.items():
+        for species_key, species in self.species.items():
             best_representative = (None, None, math.inf)
-            for genome_id in unspeciated:
-                genome = population[genome_id]
+            for genome_key in unspeciated:
+                genome = population[genome_key]
                 distance = distances(species.representative, genome)
                 if distance < best_representative[2]:
-                    best_representative = (genome_id, genome, distance)
+                    best_representative = (genome_key, genome, distance)
 
             if best_representative[2] <= config.species_set_config.compatibility_threshold:
                 # Species has not become extinct
-                new_representatives[species_id] = best_representative[1]
-                new_members[species_id] = [best_representative[0]]
+                new_representatives[species_key] = best_representative[1]
+                new_members[species_key] = [best_representative[0]]
                 unspeciated.remove(best_representative[0])
 
         # Partition the remaining population into species
         while unspeciated:
-            genome_id = unspeciated.pop()
-            genome = population[genome_id]
+            genome_key = unspeciated.pop()
+            genome = population[genome_key]
 
             best_species = (None, math.inf)
-            for species_id, representative in new_representatives.items():
+            for species_key, representative in new_representatives.items():
                 distance = distances(representative, genome)
                 if distance < best_species[1]:
-                    best_species = (species_id, distance)
+                    best_species = (species_key, distance)
 
             if best_species[0] is not None and best_species[1] <= config.species_set_config.compatibility_threshold:
                 # Genome fits an existing species
-                new_members[best_species[0]].append(genome_id)
+                new_members[best_species[0]].append(genome_key)
             else:
                 # Genome belongs to a new species
-                species_id = next(self.indexer)
-                new_representatives[species_id] = genome
-                new_members[species_id] = [genome_id]
+                species_key = next(self.species_key_generator)
+                new_representatives[species_key] = genome
+                new_members[species_key] = [genome_key]
 
         # Update set of species with new representatives and members
         self.genome_to_species = {}
-        for species_id, representative in new_representatives.items():
-            species = self.species.get(species_id)
+        for species_key, representative in new_representatives.items():
+            species = self.species.get(species_key)
             if species is None:
                 # Species is new
-                species = Species(species_id, generation)
-                self.species[species_id] = species
+                species = Species(species_key, generation)
+                self.species[species_key] = species
 
-            members = new_members[species_id]
-            for genome_id in members:
-                self.genome_to_species[genome_id] = species_id
+            members = new_members[species_key]
+            for genome_key in members:
+                self.genome_to_species[genome_key] = species_key
 
-            member_dict = {id: population[id] for id in new_members[species_id]}
+            member_dict = {key: population[key] for key in new_members[species_key]}
             species.update(representative, member_dict)
 
         # Remove species without any members
@@ -217,25 +217,25 @@ class SpeciesSet(DefaultClassConfig):
                 'Mean genetic distance {0:.3f}, standard deviation {1:.3f}'.format(gdmean, gdstdev)
             )
 
-    def get_species_id(self, individual_id):
+    def get_species_key(self, genome_key):
         """Get the species ID of the species the given individual belongs to.
 
         Args:
-            individual_id (int): The genome ID of the individual to check.
+            genome_key (int): The unique key of the genome to check.
 
         Returns:
-            int: The species ID the individual belongs to.
+            int: The key of the species the individual belongs to.
         """
-        return self.genome_to_species[individual_id]
+        return self.genome_to_species[genome_key]
 
-    def get_species(self, individual_id):
+    def get_species(self, genome_key):
         """Get the species to given individual belongs to.
 
         Args:
-            individual_id (int): The genome ID of the individual to check.
+            genome_key (int): The unique key of the genome to check.
 
         Returns:
             Species: The species the individual belongs to.
         """
-        species_id = self.genome_to_species[individual_id]
-        return self.species[species_id]
+        species_key = self.genome_to_species[genome_key]
+        return self.species[species_key]
