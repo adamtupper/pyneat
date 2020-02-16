@@ -141,12 +141,10 @@ class GenomeConfig:
 class Genome:
     """Defines a genome used to encode a neural network.
 
-    TODO: Make node_key_generator private.
-
     Attributes:
-        key (int): The genome ID.
+        key (int): A unique identifier for the genome.
+        config (GenomeConfig): The genome configuration settings.
         fitness (float): The fitness of the genome.
-        node_key_generator (generator): A generator for new node IDs.
         nodes (dict): A dictionary of node ID (int), node gene pairs.
         connections (dict): A dictionary of connection gene ID (in node ID, out
             node ID), connection gene pairs.
@@ -169,7 +167,7 @@ class Genome:
         return GenomeConfig(param_dict)
 
     @classmethod
-    def write_config(cls, f, config):
+    def write_config(cls, filename, config):
         """Takes a file-like object and the configuration object created by
         parse_config. This method should write the configuration item
         definitions to the given file.
@@ -177,12 +175,12 @@ class Genome:
         Note: This is a required interface method.
 
         Args:
-            f (str): The name of the file to write the genome configuration to.
+            filename (str): The name of the file to write the genome configuration to.
             config (GenomeConfig): The genome configuration to save.
         """
-        config.save(f)
+        config.save(filename)
 
-    def __init__(self, key):
+    def __init__(self, key, config):
         """Creates a new Genome object.
 
         Note: This is a required interface method.
@@ -192,8 +190,10 @@ class Genome:
 
         Args:
             key (int): A unique identifier for the genome.
+            config (GenomeConfig): The genome configuration settings.
         """
         self.key = key
+        self.config = config
         self.fitness = None
         self.node_key_generator = count(0)
 
@@ -205,17 +205,13 @@ class Genome:
         self.inputs = []
         self.outputs = []
 
-    def configure_new(self, config):
+    def configure_new(self):
         """Configure a new genome based on the given configuration.
 
         Note: This is a required interface method.
-
-        Args:
-            config (GenomeConfig): The genome configuration.
         """
-
         # Create the required number of input and output nodes
-        for _ in range(config.num_inputs):
+        for _ in range(self.config.num_inputs):
             key = next(self.node_key_generator)
             # self.nodes[key] = NodeGene(
             #     type=NodeTypes.INPUT,
@@ -225,11 +221,11 @@ class Genome:
             self.nodes[key] = NodeGene(
                 type=NodeTypes.INPUT,
                 bias=random.uniform(-3.0, 3.0),
-                activation=config.activation_defs.get(config.activation_func)
+                activation=self.config.activation_defs.get(self.config.activation_func)
             )
             self.inputs.append(key)
 
-        for _ in range(config.num_outputs):
+        for _ in range(self.config.num_outputs):
             key = next(self.node_key_generator)
             # self.nodes[key] = NodeGene(
             #     type=NodeTypes.OUTPUT,
@@ -239,14 +235,14 @@ class Genome:
             self.nodes[key] = NodeGene(
                 type=NodeTypes.OUTPUT,
                 bias=random.uniform(-3.0, 3.0),
-                activation=config.activation_defs.get(config.activation_func)
+                activation=self.config.activation_defs.get(self.config.activation_func)
             )
             self.outputs.append(key)
 
         # Add initial connections
         for in_node in self.inputs:
             for out_node in self.outputs:
-                if random.random() < config.initial_conn_prob:
+                if random.random() < self.config.initial_conn_prob:
                     # self.add_connection(
                     #     in_node,
                     #     out_node,
@@ -299,36 +295,33 @@ class Genome:
         )
         self.connections[(in_node, out_node)] = new_connection_gene
 
-    def mutate(self, config):
+    def mutate(self):
         """Mutate the genome.
 
         Note: This is a required interface method.
 
          Mutates the genome according to the mutation parameter values specified
          in the genome configuration.
-
-        Args:
-            config (GenomeConfig): The genome configuration.
         """
-        if random.random() < config.weight_mutate_prob:
-            self.mutate_weights(config.weight_replace_prob,
-                                config.weight_init_std_dev,
-                                config.weight_perturb_std_dev,
-                                config.weight_min_value,
-                                config.weight_max_value)
+        if random.random() < self.config.weight_mutate_prob:
+            self.mutate_weights(self.config.weight_replace_prob,
+                                self.config.weight_init_std_dev,
+                                self.config.weight_perturb_std_dev,
+                                self.config.weight_min_value,
+                                self.config.weight_max_value)
 
-        if random.random() < config.bias_mutate_prob:
-            self.mutate_biases(config.bias_replace_prob,
-                               config.bias_init_std_dev,
-                               config.bias_perturb_std_dev,
-                               config.bias_min_value,
-                               config.bias_max_value)
+        if random.random() < self.config.bias_mutate_prob:
+            self.mutate_biases(self.config.bias_replace_prob,
+                               self.config.bias_init_std_dev,
+                               self.config.bias_perturb_std_dev,
+                               self.config.bias_min_value,
+                               self.config.bias_max_value)
 
-        if random.random() < config.conn_add_prob:
-            self.mutate_add_connection(config.weight_init_std_dev)
+        if random.random() < self.config.conn_add_prob:
+            self.mutate_add_connection(self.config.weight_init_std_dev)
 
-        if random.random() < config.node_add_prob:
-            activation_func = config.activation_defs.get(config.activation_func)
+        if random.random() < self.config.node_add_prob:
+            activation_func = self.config.activation_defs.get(self.config.activation_func)
             self.mutate_add_node(activation_func)
 
     def mutate_add_connection(self, std_dev):
@@ -465,7 +458,7 @@ class Genome:
                 gene.bias = max(min_val, gene.bias)
                 gene.bias = min(max_val, gene.bias)
 
-    def configure_crossover(self, genome1, genome2, config):
+    def configure_crossover(self, genome1, genome2):
         """Performs crossover between two genomes.
 
         Note: This is a required interface method.
@@ -477,7 +470,6 @@ class Genome:
         Args:
             genome1 (Genome): The first parent.
             genome2 (Genome): The second parent.
-            config (GenomeConfig): The genome configuration.
         """
         # Ensure genome1 is the fittest
         if genome1.fitness < genome2.fitness:
@@ -499,7 +491,7 @@ class Genome:
 
                 if (not gene1.expressed) or (not gene2.expressed):
                     # Probabilistically disable gene
-                    if random.random() < config.gene_disable_prob:
+                    if random.random() < self.config.gene_disable_prob:
                         self.connections[key].expressed = False
 
         # Inherit node genes
@@ -525,7 +517,7 @@ class Genome:
         # Update node_key_generator
         self.node_key_generator = count(max(self.nodes.keys()) + 1)
 
-    def distance(self, other, config):
+    def distance(self, other):
         """Computes the compatibility  (genetic) distance between two genomes.
 
         Note: This is a required interface method.
@@ -540,13 +532,12 @@ class Genome:
 
         Args:
             other (Genome): The other genome to compare itself to.
-            config (GenomeConfig): The genome configuration.
 
         Returns:
             float: The genetic distance between itself and the other genome.
         """
-        c1 = config.compatibility_disjoint_coefficient
-        c2 = config.compatibility_weight_coefficient
+        c1 = self.config.compatibility_disjoint_coefficient
+        c2 = self.config.compatibility_weight_coefficient
 
         # Find size of larger genome (count only expressed connections)
         N = max(len(self.nodes) + len([g for g in self.connections.values() if g.expressed]),

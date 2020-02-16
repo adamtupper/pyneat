@@ -34,8 +34,8 @@ class TestSpecies:
         species = Species(key=0, generation=1)
         new_representative = 0
         new_members = {
-            0: Genome(key=0),
-            1: Genome(key=1),
+            0: Genome(key=0, config=None),
+            1: Genome(key=1, config=None),
         }
 
         assert species.representative is None
@@ -84,7 +84,7 @@ class TestSpeciesSet:
         population = {}
         for i, weight in enumerate(weights):
             # Build genome
-            genome = Genome(key=i)
+            genome = Genome(key=i, config=self.config.genome_config)
             genome.nodes = {
                 0: NodeGene(type=NodeTypes.INPUT, bias=weight, activation=identity_activation),
                 1: NodeGene(type=NodeTypes.OUTPUT, bias=weight, activation=identity_activation)
@@ -131,7 +131,7 @@ class TestSpeciesSet:
         population = {}
         for i, weight in enumerate(weights):
             # Build genome
-            genome = Genome(key=i)
+            genome = Genome(key=i, config=self.config.genome_config)
             genome.nodes = {
                 0: NodeGene(type=NodeTypes.INPUT, bias=weight, activation=identity_activation),
                 1: NodeGene(type=NodeTypes.OUTPUT, bias=weight, activation=identity_activation)
@@ -205,7 +205,7 @@ class TestSpeciesSet:
         population = {}
         for i, weight in enumerate(weights):
             # Build genome
-            genome = Genome(key=i)
+            genome = Genome(key=i, config=self.config.genome_config)
             genome.nodes = {
                 0: NodeGene(type=NodeTypes.INPUT, bias=weight, activation=identity_activation),
                 1: NodeGene(type=NodeTypes.OUTPUT, bias=weight, activation=identity_activation)

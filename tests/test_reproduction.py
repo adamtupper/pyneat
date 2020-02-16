@@ -46,17 +46,17 @@ class TestReproduction:
         popn_size = 10
 
         # Build Species 1
-        genome1 = Genome(key=0)
+        genome1 = Genome(key=0, config=self.config.genome_config)
         genome1.fitness = 10
-        genome2 = Genome(key=1)
+        genome2 = Genome(key=1, config=self.config.genome_config)
         genome2.fitness = 20
         species1 = Species(key=1, generation=1)
         species1.update(representative=genome1, members={1: genome1, 2: genome2})
 
         # Build Species 2
-        genome3 = Genome(key=2)
+        genome3 = Genome(key=2, config=self.config.genome_config)
         genome3.fitness = 40
-        genome4 = Genome(key=3)
+        genome4 = Genome(key=3, config=self.config.genome_config)
         genome4.fitness = 30
         species2 = Species(key=2, generation=1)
         species2.update(representative=genome3, members={3: genome3, 4: genome4})

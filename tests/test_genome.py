@@ -59,7 +59,7 @@ class TestGenome:
     def test_create_genome(self):
         """Test the Genome constructor.
         """
-        genome = Genome(key=0)
+        genome = Genome(key=0, config=None)
 
         assert 0 == genome.key
         assert genome.fitness is None
@@ -81,8 +81,8 @@ class TestGenome:
 
         num_input_nodes = self.config.genome_config.num_inputs
         num_output_nodes = self.config.genome_config.num_outputs
-        genome = Genome(key=0)
-        genome.configure_new(self.config.genome_config)
+        genome = Genome(key=0, config=self.config.genome_config)
+        genome.configure_new()
 
         assert 0 == genome.key
         assert genome.fitness is None
@@ -115,7 +115,7 @@ class TestGenome:
     def test_copy(self):
         """Test copying a genome.
         """
-        genome = Genome(key=0)
+        genome = Genome(key=0, config=None)
         duplicate = genome.copy()
 
         assert genome == duplicate
@@ -124,7 +124,7 @@ class TestGenome:
     def test_add_connection(self):
         """Test adding connections to the genome.
         """
-        genome = Genome(key=0)
+        genome = Genome(key=0, config=None)
 
         # Add a dummy connection between non-existent nodes
         genome.add_connection(in_node=0, out_node=1, weight=1.0)
@@ -153,12 +153,12 @@ class TestGenome:
         self.config.genome_config.node_add_prob = 0.0
         self.config.genome_config.bias_mutate_prob = 0.0
 
-        genome = Genome(key=0)
-        genome.configure_new(self.config.genome_config)
+        genome = Genome(key=0, config=self.config.genome_config)
+        genome.configure_new()
 
         old_biases = [g.bias for g in genome.nodes.values()]
         old_weights = [g.weight for g in genome.connections.values()]
-        genome.mutate(self.config.genome_config)
+        genome.mutate()
 
         assert 3 == len(genome.nodes)
         assert 2 == len(genome.connections)
@@ -186,12 +186,12 @@ class TestGenome:
         self.config.genome_config.node_add_prob = 0.0
         self.config.genome_config.weight_mutate_prob = 0.0
 
-        genome = Genome(key=0)
-        genome.configure_new(self.config.genome_config)
+        genome = Genome(key=0, config=self.config.genome_config)
+        genome.configure_new()
 
         old_biases = [g.bias for g in genome.nodes.values()]
         old_weights = [g.weight for g in genome.connections.values()]
-        genome.mutate(self.config.genome_config)
+        genome.mutate()
 
         assert 3 == len(genome.nodes)
         assert 2 == len(genome.connections)
@@ -218,14 +218,14 @@ class TestGenome:
         self.config.genome_config.weight_mutate_prob = 0.0
         self.config.genome_config.node_add_prob = 0.0
 
-        genome = Genome(key=0)
-        genome.configure_new(self.config.genome_config)
+        genome = Genome(key=0, config=self.config.genome_config)
+        genome.configure_new()
         genome.connections = {}
 
         assert not genome.connections
 
         old_biases = [g.bias for g in genome.nodes.values()]
-        genome.mutate(self.config.genome_config)
+        genome.mutate()
 
         assert 2 == len(genome.nodes)
         assert 1 == len(genome.connections)
@@ -249,15 +249,15 @@ class TestGenome:
         self.config.genome_config.weight_mutate_prob = 0.0
         self.config.genome_config.conn_add_prob = 0.0
 
-        genome = Genome(key=0)
-        genome.configure_new(self.config.genome_config)
+        genome = Genome(key=0, config=self.config.genome_config)
+        genome.configure_new()
 
         num_node_genes = len(genome.nodes)
         num_connection_genes = len(genome.connections)
 
         old_biases = [g.bias for g in genome.nodes.values()]
         old_weights = [g.weight for g in genome.connections.values()]
-        genome.mutate(self.config.genome_config)
+        genome.mutate()
 
         assert num_node_genes + 1 == len(genome.nodes)
         assert num_connection_genes + 2 == len(genome.connections)
@@ -278,11 +278,11 @@ class TestGenome:
         self.config.genome_config.weight_mutate_prob = 0.0
         self.config.genome_config.conn_add_prob = 0.0
 
-        genome = Genome(key=0)
-        genome.configure_new(self.config.genome_config)
+        genome = Genome(key=0, config=self.config.genome_config)
+        genome.configure_new()
         expected = genome.copy()
 
-        genome.mutate(self.config.genome_config)
+        genome.mutate()
 
         assert expected == genome
 
@@ -296,8 +296,8 @@ class TestGenome:
         self.config.genome_config.init_conn_prob = 1.0
         self.config.genome_config.weight_init_std_dev = 1.0
 
-        genome = Genome(key=0)
-        genome.configure_new(self.config.genome_config)
+        genome = Genome(key=0, config=self.config.genome_config)
+        genome.configure_new()
 
         genome.mutate_add_node(activation=identity_activation)
         assert len(genome.connections) == 3
@@ -330,8 +330,8 @@ class TestGenome:
         self.config.genome_config.num_outputs = 1
         self.config.genome_config.initial_conn_prob = 1.0  # fully-connected
 
-        genome = Genome(key=0)
-        genome.configure_new(self.config.genome_config)
+        genome = Genome(key=0, config=self.config.genome_config)
+        genome.configure_new()
 
         # Manually add recurrent connections to saturate network
         genome.connections[(1, 1)] = ConnectionGene(1, 1, 0.0, True)
@@ -353,8 +353,8 @@ class TestGenome:
         self.config.genome_config.num_outputs = 1
         self.config.genome_config.initial_conn_prob = 0.0  # no connections
 
-        genome = Genome(key=0)
-        genome.configure_new(self.config.genome_config)
+        genome = Genome(key=0, config=self.config.genome_config)
+        genome.configure_new()
 
         genome.mutate_add_connection(std_dev=1.0)
         assert 1 == len(genome.connections)
@@ -370,8 +370,8 @@ class TestGenome:
         self.config.genome_config.num_outputs = 2
         self.config.genome_config.init_conn_prob = 1.0
 
-        genome = Genome(key=0)
-        genome.configure_new(self.config.genome_config)
+        genome = Genome(key=0, config=self.config.genome_config)
+        genome.configure_new()
 
         old_weights = [g.weight for g in genome.connections.values()]
         old_biases = [g.bias for g in genome.nodes.values()]
@@ -396,8 +396,8 @@ class TestGenome:
         self.config.genome_config.num_outputs = 2
         self.config.genome_config.init_conn_prob = 1.0
 
-        genome = Genome(key=0)
-        genome.configure_new(self.config.genome_config)
+        genome = Genome(key=0, config=self.config.genome_config)
+        genome.configure_new()
 
         old_weights = [g.weight for g in genome.connections.values()]
         old_biases = [g.bias for g in genome.nodes.values()]
@@ -421,7 +421,7 @@ class TestGenome:
         # Test configuration
         self.config.genome_config.gene_disable_prob = 0.0
 
-        parent1 = Genome(key=0)
+        parent1 = Genome(key=0, config=self.config.genome_config)
         parent1.nodes = {
             0: NodeGene(type=NodeTypes.INPUT, bias=1., activation=identity_activation),
             1: NodeGene(type=NodeTypes.OUTPUT, bias=1., activation=identity_activation),
@@ -431,7 +431,7 @@ class TestGenome:
         parent1.add_connection(2, 1, 1.)
         parent1.fitness = 1.
 
-        parent2 = Genome(key=1)
+        parent2 = Genome(key=1, config=self.config.genome_config)
         parent2.nodes = {
             0: NodeGene(type=NodeTypes.INPUT, bias=2., activation=identity_activation),
             1: NodeGene(type=NodeTypes.OUTPUT, bias=2., activation=identity_activation),
@@ -444,14 +444,14 @@ class TestGenome:
         parent2.add_connection(3, 1, 2.)
         parent2.fitness = 2.
 
-        child = Genome(key=2)
-        child.configure_crossover(parent1, parent2, self.config.genome_config)
+        child = Genome(key=2, config=self.config.genome_config)
+        child.configure_crossover(parent1, parent2)
         assert 4 == len(child.nodes)
         assert 4 == len(child.connections)
         assert 4 == next(child.node_key_generator)
 
-        child = Genome(key=2)
-        child.configure_crossover(parent2, parent1, self.config.genome_config)
+        child = Genome(key=2, config=self.config.genome_config)
+        child.configure_crossover(parent2, parent1)
         assert 4 == len(child.nodes)
         assert 4 == len(child.connections)
         assert 4 == next(child.node_key_generator)
@@ -463,7 +463,7 @@ class TestGenome:
         # Test configuration
         self.config.genome_config.gene_disable_prob = 0.0
 
-        parent1 = Genome(key=0)
+        parent1 = Genome(key=0, config=self.config.genome_config)
         parent1.nodes = {
             0: NodeGene(type=NodeTypes.INPUT, bias=1., activation=identity_activation),
             1: NodeGene(type=NodeTypes.OUTPUT, bias=1., activation=identity_activation),
@@ -473,7 +473,7 @@ class TestGenome:
         parent1.add_connection(2, 1, 1.)
         parent1.fitness = 1.
 
-        parent2 = Genome(key=1)
+        parent2 = Genome(key=1, config=self.config.genome_config)
         parent2.nodes = {
             0: NodeGene(type=NodeTypes.INPUT, bias=2., activation=identity_activation),
             1: NodeGene(type=NodeTypes.OUTPUT, bias=2., activation=identity_activation),
@@ -486,8 +486,8 @@ class TestGenome:
         parent2.add_connection(3, 1, 2.)
         parent2.fitness = 2.
 
-        child = Genome(key=2)
-        child.configure_crossover(parent2, parent1, self.config.genome_config)
+        child = Genome(key=2, config=self.config.genome_config)
+        child.configure_crossover(parent2, parent1)
         assert 4 == len(child.nodes)
         assert 4 == len(child.nodes)
         assert 4 == next(child.node_key_generator)
@@ -499,7 +499,7 @@ class TestGenome:
         # Test configuration
         self.config.genome_config.gene_disable_prob = 0.0
 
-        parent1 = Genome(key=0)
+        parent1 = Genome(key=0, config=self.config.genome_config)
         parent1.nodes = {
             0: NodeGene(type=NodeTypes.INPUT, bias=1., activation=identity_activation),
             1: NodeGene(type=NodeTypes.OUTPUT, bias=1., activation=identity_activation),
@@ -509,7 +509,7 @@ class TestGenome:
         parent1.add_connection(2, 1, 1.)
         parent1.fitness = 2.
 
-        parent2 = Genome(key=1)
+        parent2 = Genome(key=1, config=self.config.genome_config)
         parent2.nodes = {
             0: NodeGene(type=NodeTypes.INPUT, bias=2., activation=identity_activation),
             1: NodeGene(type=NodeTypes.OUTPUT, bias=2., activation=identity_activation),
@@ -522,8 +522,8 @@ class TestGenome:
         parent2.add_connection(3, 1, 2.)
         parent2.fitness = 1.
 
-        child = Genome(key=2)
-        child.configure_crossover(parent1, parent2, self.config.genome_config)
+        child = Genome(key=2, config=self.config.genome_config)
+        child.configure_crossover(parent1, parent2)
         assert 3 == len(child.nodes)
         assert 2 == len(child.connections)
         assert 3 == next(child.node_key_generator)
@@ -536,7 +536,7 @@ class TestGenome:
         # Test configuration
         self.config.genome_config.gene_disable_prob = 1.0
 
-        parent1 = Genome(key=0)
+        parent1 = Genome(key=0,config=self.config.genome_config)
         parent1.nodes = {
             0: NodeGene(type=NodeTypes.INPUT, bias=1., activation=identity_activation),
             1: NodeGene(type=NodeTypes.OUTPUT, bias=1., activation=identity_activation),
@@ -546,7 +546,7 @@ class TestGenome:
         parent1.add_connection(2, 1, 1.)
         parent1.fitness = 2.
 
-        parent2 = Genome(key=1)
+        parent2 = Genome(key=1, config=self.config.genome_config)
         parent2.nodes = {
             0: NodeGene(type=NodeTypes.INPUT, bias=2., activation=identity_activation),
             1: NodeGene(type=NodeTypes.OUTPUT, bias=2., activation=identity_activation),
@@ -556,8 +556,8 @@ class TestGenome:
         parent2.add_connection(2, 1, 2., expressed=False)
         parent2.fitness = 1.
 
-        child = Genome(key=2)
-        child.configure_crossover(parent1, parent2, self.config.genome_config)
+        child = Genome(key=2, config=self.config.genome_config)
+        child.configure_crossover(parent1, parent2)
         assert 3 == len(child.nodes)
         assert 2 == len(child.connections)
         assert all([not g.expressed for g in child.connections.values()])
@@ -570,7 +570,7 @@ class TestGenome:
         self.config.genome_config.compatibility_disjoint_coefficient = 1.0
         self.config.genome_config.compatibility_weight_coefficient = 1.0
 
-        genome1 = Genome(key=0)
+        genome1 = Genome(key=0, config=self.config.genome_config)
         genome1.nodes = {
             0: NodeGene(type=NodeTypes.INPUT, bias=1., activation=identity_activation),
             1: NodeGene(type=NodeTypes.OUTPUT, bias=1., activation=identity_activation),
@@ -580,7 +580,7 @@ class TestGenome:
         genome1.add_connection(2, 1, 1.)
         genome1.fitness = 2.
 
-        genome2 = Genome(key=1)
+        genome2 = Genome(key=1, config=self.config.genome_config)
         genome2.nodes = {
             0: NodeGene(type=NodeTypes.INPUT, bias=2., activation=identity_activation),
             1: NodeGene(type=NodeTypes.OUTPUT, bias=2., activation=identity_activation),
@@ -593,4 +593,4 @@ class TestGenome:
         genome2.add_connection(3, 1, 2.)
         genome2.fitness = 1.
 
-        assert pytest.approx(11 / 8, genome1.distance(genome2, self.config.genome_config))
+        assert pytest.approx(11 / 8, genome1.distance(genome2))

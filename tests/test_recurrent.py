@@ -12,7 +12,7 @@ def test_create_all_required():
     """Test the create method of the RNN class.
     """
     # Manually create genome for deterministic testing
-    genome = Genome(key=0)
+    genome = Genome(key=0, config=None)
     genome.nodes = {
         0: NodeGene(NodeTypes.INPUT, 1.0, activation=identity_activation),
         1: NodeGene(NodeTypes.OUTPUT, 2.0, activation=identity_activation)
@@ -35,7 +35,7 @@ def test_create_some_required():
     nodes.
     """
     # Manually create genome for deterministic testing
-    genome = Genome(key=0)
+    genome = Genome(key=0, config=None)
     genome.nodes = {
         0: NodeGene(NodeTypes.INPUT, bias=1.0, activation=identity_activation),
         1: NodeGene(NodeTypes.INPUT, bias=2.0, activation=identity_activation),
@@ -73,7 +73,7 @@ def test_reset():
     """Test the reset method.
     """
     # Manually create genome for deterministic testing
-    genome = Genome(key=2)
+    genome = Genome(key=2, config=None)
     genome.nodes = {
         0: NodeGene(NodeTypes.INPUT, bias=1.0, activation=identity_activation),
         1: NodeGene(NodeTypes.INPUT, bias=2.0, activation=identity_activation),
@@ -107,7 +107,7 @@ def test_forward_arch_1_in_order():
     Nodes are defined in topological order.
     """
     # Manually create genome for deterministic testing
-    genome = Genome(key=0)
+    genome = Genome(key=0, config=None)
     genome.nodes = {
         0: NodeGene(type=NodeTypes.INPUT, bias=1., activation=identity_activation),
         1: NodeGene(type=NodeTypes.HIDDEN, bias=2., activation=identity_activation),
@@ -134,7 +134,7 @@ def test_forward_arch_1_out_of_order():
     Nodes are not defined in topological order.
     """
     # Manually create genome for deterministic testing
-    genome = Genome(key=0)
+    genome = Genome(key=0, config=None)
     genome.nodes = {
         0: NodeGene(type=NodeTypes.OUTPUT, bias=3., activation=identity_activation),
         1: NodeGene(type=NodeTypes.INPUT, bias=1., activation=identity_activation),
@@ -162,7 +162,7 @@ def test_forward_arch_2_in_order():
     Nodes are defined in topological order.
     """
     # Manually create genome for deterministic testing
-    genome = Genome(key=0)
+    genome = Genome(key=0, config=None)
     genome.nodes = {
         0: NodeGene(type=NodeTypes.INPUT, bias=1., activation=identity_activation),
         1: NodeGene(type=NodeTypes.HIDDEN, bias=2., activation=identity_activation),
@@ -190,7 +190,7 @@ def test_forward_arch_2_out_of_order():
     Nodes are not defined in topological order.
     """
     # Manually create genome for deterministic testing
-    genome = Genome(key=0)
+    genome = Genome(key=0, config=None)
     genome.nodes = {
         0: NodeGene(type=NodeTypes.OUTPUT, bias=3., activation=identity_activation),
         1: NodeGene(type=NodeTypes.INPUT, bias=1., activation=identity_activation),

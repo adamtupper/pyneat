@@ -125,8 +125,8 @@ class Reproduction:
         genomes = {}
         for i in range(num_genomes):
             key = next(self.genome_indexer)
-            genome = genome_type(key)
-            genome.configure_new(genome_config)
+            genome = genome_type(key, genome_config)
+            genome.configure_new()
             genomes[key] = genome
             self.ancestors[key] = tuple()
 
@@ -239,7 +239,7 @@ class Reproduction:
                     # Offspring is generated through mutation alone
                     child = parent1.copy()
                     child.key = child_id
-                    child.mutate(config.genome_config)
+                    child.mutate()
                     self.ancestors[child_id] = (parent1,)
                 else:
                     # Offspring is generated through mutation and crossover
@@ -257,9 +257,9 @@ class Reproduction:
                         # Intra-species crossover
                         parent2_id, parent2 = random.choice(old_members)
 
-                    child = Genome(child_id)
-                    child.configure_crossover(parent1, parent2, config.genome_config)
-                    child.mutate(config.genome_config)
+                    child = Genome(child_id, config.genome_config)
+                    child.configure_crossover(parent1, parent2)
+                    child.mutate()
                     self.ancestors[child_id] = (parent1, parent2)
 
                 new_population[child_id] = child

@@ -6,7 +6,28 @@ import math
 import statistics
 
 from neat.config import ConfigParameter, DefaultClassConfig, Config
-from neat.species import GenomeDistanceCache
+
+
+class GenomeDistanceCache(object):
+    def __init__(self, config):
+        self.distances = {}
+        self.hits = 0
+        self.misses = 0
+
+    def __call__(self, genome0, genome1):
+        g0 = genome0.key
+        g1 = genome1.key
+        d = self.distances.get((g0, g1))
+        if d is None:
+            # Distance is not already computed.
+            d = genome0.distance(genome1)
+            self.distances[g0, g1] = d
+            self.distances[g1, g0] = d
+            self.misses += 1
+        else:
+            self.hits += 1
+
+        return d
 
 
 class Species:
