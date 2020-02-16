@@ -33,13 +33,13 @@ class ReproductionConfig:
         for p in self._params:
             setattr(self, p.name, p.interpret(params))
 
-    def save(self, f):
+    def save(self, filename):
         """Save the reproduction configuration.
 
         Args:
-            f (str): The filename to write the configuration to.
+            filename (str): The filename to write the configuration to.
         """
-        write_pretty_params(f, self, self._params)
+        write_pretty_params(filename, self, self._params)
 
 
 class Reproduction:
@@ -51,7 +51,7 @@ class Reproduction:
         reproduction_config (ReproductionConfig): The configuration for
             reproduction hyperparameters.
         reporters (ReporterSet): The set of reporters to log events via.
-        genome_indexer (generator): Keeps track of the next genome ID when
+        genome_key_generator (generator): Keeps track of the next genome key when
             generating offspring.
         stagnation (DefaultStagnation): Keeps track of which species have
             stagnated.
@@ -75,7 +75,7 @@ class Reproduction:
         return ReproductionConfig(param_dict)
 
     @classmethod
-    def write_config(cls, f, config):
+    def write_config(cls, filename, config):
         """Takes a file-like object and the configuration object created by
         parse_config. This method should write the configuration item
         definitions to the given file.
@@ -83,10 +83,10 @@ class Reproduction:
         Note: This is a required interface method.
 
         Args:
-            f (str): The filename of the file to write the configuration to.
+            filename (str): The filename of the file to write the configuration to.
             config (ReproductionConfig): The reproduction config to save.
         """
-        config.save(f)
+        config.save(filename)
 
     def __init__(self, config, reporters, stagnation):
         """Create a new Reproduction object.
@@ -102,7 +102,7 @@ class Reproduction:
         """
         self.reproduction_config = config
         self.reporters = reporters
-        self.genome_indexer = count(0)
+        self.genome_key_generator = count(0)
         self.stagnation = stagnation
         self.ancestors = {}
 
@@ -119,12 +119,12 @@ class Reproduction:
                 size).
 
         Returns:
-            dict: A dictionary of genome ID, genome pairs that make up the new
+            dict: A dictionary of genome key, genome pairs that make up the new
                 population.
         """
         genomes = {}
         for i in range(num_genomes):
-            key = next(self.genome_indexer)
+            key = next(self.genome_key_generator)
             genome = genome_type(key, genome_config)
             genome.configure_new()
             genomes[key] = genome
@@ -144,7 +144,7 @@ class Reproduction:
             generation (int): The number of the next generation.
 
         Returns:
-            dict: A dictionary of genome ID, genome pairs that make up the new
+            dict: A dictionary of genome key, genome pairs that make up the new
                 population.
         """
         species_set = species
@@ -181,7 +181,7 @@ class Reproduction:
         # TODO: Remove redundancy in parent pool and population generation
         # Generate parent pool for each species
         parent_pool = {}
-        for species_id, species in remaining_species.items():
+        for species_key, species in remaining_species.items():
             old_members = list(species.members.items())
 
             # Sort members in order of descending fitness
@@ -194,13 +194,13 @@ class Reproduction:
             cutoff = max(cutoff, 2)
             old_members = old_members[:cutoff]
 
-            parent_pool[species_id] = [m for m in old_members]
+            parent_pool[species_key] = [m for m in old_members]
 
         # Generate new population
         new_population = {}
         species_set.species = {}
-        for species_id, species in remaining_species.items():
-            num_offspring = offspring_numbers[species_id]
+        for species_key, species in remaining_species.items():
+            num_offspring = offspring_numbers[species_key]
             old_members = list(species.members.items())
             species.members = {}
             species_set.species[species.key] = species
@@ -211,8 +211,8 @@ class Reproduction:
             # Transfer elites to new generation if species is large enough
             num_members = len(old_members)  # len(species.members.keys())
             if num_members > elitism_threshold and num_offspring > 0:
-                for genome_id, genome in old_members[:num_elites]:
-                    new_population[genome_id] = genome
+                for genome_key, genome in old_members[:num_elites]:
+                    new_population[genome_key] = genome
                     num_offspring -= 1
 
                     if num_offspring == 0:
@@ -232,42 +232,42 @@ class Reproduction:
             while num_offspring > 0:
                 num_offspring -= 1
 
-                parent1_id, parent1 = random.choice(old_members)
-                child_id = next(self.genome_indexer)
+                parent1_key, parent1 = random.choice(old_members)
+                child_key = next(self.genome_key_generator)
 
                 if random.random() < self.reproduction_config.crossover_prob:
                     # Offspring is generated through mutation alone
                     child = parent1.copy()
-                    child.key = child_id
+                    child.key = child_key
                     child.mutate()
-                    self.ancestors[child_id] = (parent1,)
+                    self.ancestors[child_key] = (parent1,)
                 else:
                     # Offspring is generated through mutation and crossover
                     # TODO: Test check for a sufficient number of species
                     if random.random() < self.reproduction_config.inter_species_crossover_prob:
                         # Inter-species crossover
-                        candidates = [i for i in parent_pool.keys() if i != species_id]
+                        candidates = [i for i in parent_pool.keys() if i != species_key]
                         if len(candidates) > 1:
-                            other_species_id = random.choice(candidates)
-                            parent2_id, parent2 = random.choice(parent_pool[other_species_id])
+                            other_species_key = random.choice(candidates)
+                            parent2_key, parent2 = random.choice(parent_pool[other_species_key])
                         else:
                             # Fallback to intra-species crossover
-                            parent2_id, parent2 = random.choice(old_members)
+                            parent2_key, parent2 = random.choice(old_members)
                     else:
                         # Intra-species crossover
-                        parent2_id, parent2 = random.choice(old_members)
+                        parent2_key, parent2 = random.choice(old_members)
 
-                    child = Genome(child_id, config.genome_config)
+                    child = Genome(child_key, config.genome_config)
                     child.configure_crossover(parent1, parent2)
                     child.mutate()
-                    self.ancestors[child_id] = (parent1, parent2)
+                    self.ancestors[child_key] = (parent1, parent2)
 
-                new_population[child_id] = child
+                new_population[child_key] = child
 
         return new_population
 
     @staticmethod
-    def compute_num_offspring(remaining_species, popn_size):
+    def compute_num_offspring(remaining_species, pop_size):
         """Compute the number of offspring per species (proportional to fitness).
 
         Note: The largest remainder method is used to ensure the population size
@@ -276,50 +276,50 @@ class Reproduction:
         TODO: Investigate a more efficient implementation of offspring allocation
 
         Args:
-            remaining_species (dict): A dictionary ({species ID: species}) of
+            remaining_species (dict): A dictionary ({species key: species}) of
                 the remaining species after filtering for stagnation.
-            popn_size (int): The specified size of the population.
+            pop_size (int): The specified size of the population.
 
         Returns:
             dict: A dictionary of the number of offspring allowed for each
-                species of the form {species ID: number of offspring}.
+                species of the form {species key: number of offspring}.
         """
         # Find genome of lowest fitness
         lowest_fitness = math.inf
-        for species_id, species in remaining_species.items():
-            for genome_id, genome in species.members.items():
+        for species_key, species in remaining_species.items():
+            for genome_key, genome in species.members.items():
                 if genome.fitness < lowest_fitness:
                     lowest_fitness = genome.fitness
 
         # Calculate the sum of adjusted fitnesses for each species
         species_size = len(remaining_species.keys())
-        for species_id, species in remaining_species.items():
+        for species_key, species in remaining_species.items():
             species.adj_fitness = 0.0  # reset sum of the adjusted fitnesses
-            for genome_id, genome in species.members.items():
+            for genome_key, genome in species.members.items():
                 species.adj_fitness += (genome.fitness - lowest_fitness) / species_size
 
         # Calculate the number of offspring for each species
         offspring = {}
         adj_fitness_sum = sum([s.adj_fitness for s in remaining_species.values()])
-        for species_id, species in remaining_species.items():
+        for species_key, species in remaining_species.items():
             if adj_fitness_sum != 0:
-                offspring[species_id] = popn_size * (species.adj_fitness / adj_fitness_sum)
+                offspring[species_key] = pop_size * (species.adj_fitness / adj_fitness_sum)
             else:
                 # All members of all species have zero fitness
                 # Allocate each species an equal number of offspring
-                offspring[species_id] = popn_size / species_size
+                offspring[species_key] = pop_size / species_size
 
         # Ensure that the species sizes sum to population size
         # Sort offspring numbers by fractional remainder
-        sorted_ids = sorted(offspring.keys(), key=lambda k: offspring[k] - math.floor(offspring[k]))
-        offspring = {id: math.floor(n) for id, n in offspring.items()}
+        sorted_keys = sorted(offspring.keys(), key=lambda k: offspring[k] - math.floor(offspring[k]))
+        offspring = {key: math.floor(n) for key, n in offspring.items()}
 
         # Assign extra offspring to species based on fractional remainder
         idx = 0
-        while sum(offspring.values()) < popn_size:
-            offspring[sorted_ids[idx]] = offspring[sorted_ids[idx]] + 1
+        while sum(offspring.values()) < pop_size:
+            offspring[sorted_keys[idx]] = offspring[sorted_keys[idx]] + 1
             idx += 1
 
-        assert sum(offspring.values()) == popn_size
+        assert sum(offspring.values()) == pop_size
 
         return offspring
