@@ -129,13 +129,13 @@ class GenomeConfig:
         for p in self._params:
             setattr(self, p.name, p.interpret(params))
 
-    def save(self, f):
+    def save(self, filename):
         """Save the genome configuration.
 
         Args:
-            f (str): The filename to write the configuration to.
+            filename (str): The filename to write the configuration to.
         """
-        write_pretty_params(f, self, self._params)
+        write_pretty_params(filename, self, self._params)
 
 
 class Genome:
