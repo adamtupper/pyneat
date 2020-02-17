@@ -156,8 +156,8 @@ class Genome:
         config (GenomeConfig): The genome configuration settings.
         fitness (float): The fitness of the genome.
         nodes (dict): A dictionary of node key (int), node gene pairs.
-        connections (dict): A dictionary of connection gene key (in node key,
-            out node key), connection gene pairs.
+        connections (dict): A dictionary of connection gene key, connection gene
+            pairs.
         inputs (:list:`int`): The node keys of input nodes.
         outputs (:list:`int`): The node keys of output nodes.
         innovation_store (InnovationStore): The global innovation store used for
@@ -321,7 +321,7 @@ class Genome:
             weight=weight,
             expressed=expressed
         )
-        self.connections[(node_in, node_out)] = new_connection_gene
+        self.connections[key] = new_connection_gene
 
     def mutate(self):
         """Mutate the genome.
@@ -480,26 +480,26 @@ class Genome:
                 gene.bias = max(min_val, gene.bias)
                 gene.bias = min(max_val, gene.bias)
 
-    def configure_crossover(self, genome1, genome2):
+    def configure_crossover(self, parent1, parent2):
         """Performs crossover between two genomes.
 
         Note: This is a required interface method.
 
         If the two genomes have equal fitness then the joint and excess genes
-        are inherited from genome1. Since genome1 and genome2 are chosen at
+        are inherited from parent1. Since parent1 and parent2 are chosen at
         random, this choice is random.
 
         Args:
-            genome1 (Genome): The first parent.
-            genome2 (Genome): The second parent.
+            parent1 (Genome): The first parent.
+            parent2 (Genome): The second parent.
         """
-        # Ensure genome1 is the fittest
-        if genome1.fitness < genome2.fitness:
-            genome1, genome2 = genome2, genome1
+        # Ensure parent1 is the fittest
+        if parent1.fitness < parent2.fitness:
+            parent1, parent2 = parent2, parent1
 
         # Inherit connection genes
-        for key, gene1 in genome1.connections.items():
-            gene2 = genome2.connections.get(key)
+        for key, gene1 in parent1.connections.items():
+            gene2 = parent2.connections.get(key)
 
             if gene2 is None:
                 # gene1 is excess or disjoint
@@ -512,13 +512,13 @@ class Genome:
                     self.connections[key] = copy.deepcopy(gene2)
 
                 if (not gene1.expressed) or (not gene2.expressed):
-                    # Probabilistically disable gene
+                    # Probabilistically disable gene if disabled in at least one parent
                     if random.random() < self.config.gene_disable_prob:
                         self.connections[key].expressed = False
 
         # Inherit node genes
-        for key, gene1 in genome1.nodes.items():
-            gene2 = genome2.nodes.get(key)
+        for key, gene1 in parent1.nodes.items():
+            gene2 = parent2.nodes.get(key)
 
             if gene2 is None:
                 # gene1 is excess or disjoint
@@ -535,9 +535,6 @@ class Genome:
                 self.inputs.append(key)
             elif gene1.type == NodeType.OUTPUT:
                 self.outputs.append(key)
-
-        # Update node_key_generator
-        self.node_key_generator = count(max(self.nodes.keys()) + 1)
 
     def distance(self, other):
         """Computes the compatibility  (genetic) distance between two genomes.
