@@ -12,12 +12,12 @@ def test_create_all_required():
     """Test the create method of the RNN class.
     """
     # Manually create genome for deterministic testing
-    genome = Genome(key=0, config=None)
+    genome = Genome(key=0, config=None, innovation_store=None)
     genome.nodes = {
-        0: NodeGene(NodeType.INPUT, 1.0, activation=identity_activation),
-        1: NodeGene(NodeType.OUTPUT, 2.0, activation=identity_activation)
+        0: NodeGene(0, NodeType.INPUT, 1.0, activation=identity_activation),
+        1: NodeGene(1, NodeType.OUTPUT, 2.0, activation=identity_activation)
     }
-    genome.connections = {(0, 1): ConnectionGene(0, 1, 1.0, True)}
+    genome.connections = {2: ConnectionGene(2, 0, 1, 1.0, True)}
     genome.inputs = [0]
     genome.outputs = [1]
 
@@ -35,21 +35,21 @@ def test_create_some_required():
     nodes.
     """
     # Manually create genome for deterministic testing
-    genome = Genome(key=0, config=None)
+    genome = Genome(key=0, config=None, innovation_store=None)
     genome.nodes = {
-        0: NodeGene(NodeType.INPUT, bias=1.0, activation=identity_activation),
-        1: NodeGene(NodeType.INPUT, bias=2.0, activation=identity_activation),
-        2: NodeGene(NodeType.HIDDEN, bias=3.0, activation=identity_activation),
-        3: NodeGene(NodeType.HIDDEN, bias=4.0, activation=identity_activation),
-        4: NodeGene(NodeType.OUTPUT, bias=5.0, activation=identity_activation),
-        5: NodeGene(NodeType.OUTPUT, bias=6.0, activation=identity_activation),
+        0: NodeGene(0, NodeType.INPUT, bias=1.0, activation=identity_activation),
+        1: NodeGene(1, NodeType.INPUT, bias=2.0, activation=identity_activation),
+        2: NodeGene(2, NodeType.HIDDEN, bias=3.0, activation=identity_activation),
+        3: NodeGene(3, NodeType.HIDDEN, bias=4.0, activation=identity_activation),
+        4: NodeGene(4, NodeType.OUTPUT, bias=5.0, activation=identity_activation),
+        5: NodeGene(5, NodeType.OUTPUT, bias=6.0, activation=identity_activation),
     }
     genome.connections = {
-        (0, 2): ConnectionGene(0, 2, 1.0, True),
-        (0, 3): ConnectionGene(0, 3, 2.0, True),
-        (1, 3): ConnectionGene(1, 3, 3.0, True),
-        (2, 4): ConnectionGene(2, 4, 4.0, True),
-        (2, 5): ConnectionGene(2, 5, 5.0, True),
+        6: ConnectionGene(6, 0, 2, 1.0, True),
+        7: ConnectionGene(7, 0, 3, 2.0, True),
+        8: ConnectionGene(8, 1, 3, 3.0, True),
+        9: ConnectionGene(9, 2, 4, 4.0, True),
+        10: ConnectionGene(10, 2, 5, 5.0, True),
     }
     genome.inputs = [0, 1]
     genome.outputs = [4, 5]
@@ -73,21 +73,21 @@ def test_reset():
     """Test the reset method.
     """
     # Manually create genome for deterministic testing
-    genome = Genome(key=2, config=None)
+    genome = Genome(key=2, config=None, innovation_store=None)
     genome.nodes = {
-        0: NodeGene(NodeType.INPUT, bias=1.0, activation=identity_activation),
-        1: NodeGene(NodeType.INPUT, bias=2.0, activation=identity_activation),
-        2: NodeGene(NodeType.HIDDEN, bias=3.0, activation=identity_activation),
-        3: NodeGene(NodeType.HIDDEN, bias=4.0, activation=identity_activation),
-        4: NodeGene(NodeType.OUTPUT, bias=5.0, activation=identity_activation),
-        5: NodeGene(NodeType.OUTPUT, bias=6.0, activation=identity_activation),
+        0: NodeGene(0, NodeType.INPUT, bias=1.0, activation=identity_activation),
+        1: NodeGene(1, NodeType.INPUT, bias=2.0, activation=identity_activation),
+        2: NodeGene(2, NodeType.HIDDEN, bias=3.0, activation=identity_activation),
+        3: NodeGene(3, NodeType.HIDDEN, bias=4.0, activation=identity_activation),
+        4: NodeGene(4, NodeType.OUTPUT, bias=5.0, activation=identity_activation),
+        5: NodeGene(5, NodeType.OUTPUT, bias=6.0, activation=identity_activation),
     }
     genome.connections = {
-        (0, 2): ConnectionGene(0, 2, 1.0, True),
-        (0, 3): ConnectionGene(0, 3, 2.0, True),
-        (1, 3): ConnectionGene(1, 3, 3.0, True),
-        (2, 4): ConnectionGene(2, 4, 4.0, True),
-        (2, 5): ConnectionGene(2, 5, 5.0, True),
+        6: ConnectionGene(6, 0, 2, 1.0, True),
+        7: ConnectionGene(7, 0, 3, 2.0, True),
+        8: ConnectionGene(8, 1, 3, 3.0, True),
+        9: ConnectionGene(9, 2, 4, 4.0, True),
+        10: ConnectionGene(10, 2, 5, 5.0, True),
     }
 
     network = RNN.create(genome)
@@ -107,16 +107,16 @@ def test_forward_arch_1_in_order():
     Nodes are defined in topological order.
     """
     # Manually create genome for deterministic testing
-    genome = Genome(key=0, config=None)
+    genome = Genome(key=0, config=None, innovation_store=None)
     genome.nodes = {
-        0: NodeGene(type=NodeType.INPUT, bias=1., activation=identity_activation),
-        1: NodeGene(type=NodeType.HIDDEN, bias=2., activation=identity_activation),
-        2: NodeGene(type=NodeType.OUTPUT, bias=3., activation=identity_activation)
+        0: NodeGene(0, type=NodeType.INPUT, bias=1., activation=identity_activation),
+        1: NodeGene(1, type=NodeType.HIDDEN, bias=2., activation=identity_activation),
+        2: NodeGene(2, type=NodeType.OUTPUT, bias=3., activation=identity_activation)
     }
     genome.connections = {
-        (0, 1): ConnectionGene(node_in=0, node_out=1, weight=1., expressed=True),
-        (1, 1): ConnectionGene(node_in=1, node_out=1, weight=2., expressed=True),
-        (1, 2): ConnectionGene(node_in=1, node_out=2, weight=3., expressed=True)
+        3: ConnectionGene(3, node_in=0, node_out=1, weight=1., expressed=True),
+        4: ConnectionGene(4, node_in=1, node_out=1, weight=2., expressed=True),
+        5: ConnectionGene(5, node_in=1, node_out=2, weight=3., expressed=True)
     }
 
     network = RNN.create(genome)
@@ -134,16 +134,16 @@ def test_forward_arch_1_out_of_order():
     Nodes are not defined in topological order.
     """
     # Manually create genome for deterministic testing
-    genome = Genome(key=0, config=None)
+    genome = Genome(key=0, config=None, innovation_store=None)
     genome.nodes = {
-        0: NodeGene(type=NodeType.OUTPUT, bias=3., activation=identity_activation),
-        1: NodeGene(type=NodeType.INPUT, bias=1., activation=identity_activation),
-        2: NodeGene(type=NodeType.HIDDEN, bias=2., activation=identity_activation),
+        0: NodeGene(0, type=NodeType.OUTPUT, bias=3., activation=identity_activation),
+        1: NodeGene(1, type=NodeType.INPUT, bias=1., activation=identity_activation),
+        2: NodeGene(2, type=NodeType.HIDDEN, bias=2., activation=identity_activation),
     }
     genome.connections = {
-        (2, 0): ConnectionGene(node_in=2, node_out=0, weight=3., expressed=True),
-        (1, 2): ConnectionGene(node_in=1, node_out=2, weight=1., expressed=True),
-        (2, 2): ConnectionGene(node_in=2, node_out=2, weight=2., expressed=True)
+        3: ConnectionGene(3, node_in=2, node_out=0, weight=3., expressed=True),
+        4: ConnectionGene(4, node_in=1, node_out=2, weight=1., expressed=True),
+        5: ConnectionGene(5, node_in=2, node_out=2, weight=2., expressed=True)
     }
 
     network = RNN.create(genome)
@@ -162,16 +162,16 @@ def test_forward_arch_2_in_order():
     Nodes are defined in topological order.
     """
     # Manually create genome for deterministic testing
-    genome = Genome(key=0, config=None)
+    genome = Genome(key=0, config=None, innovation_store=None)
     genome.nodes = {
-        0: NodeGene(type=NodeType.INPUT, bias=1., activation=identity_activation),
-        1: NodeGene(type=NodeType.HIDDEN, bias=2., activation=identity_activation),
-        2: NodeGene(type=NodeType.OUTPUT, bias=3., activation=identity_activation)
+        0: NodeGene(0, type=NodeType.INPUT, bias=1., activation=identity_activation),
+        1: NodeGene(1, type=NodeType.HIDDEN, bias=2., activation=identity_activation),
+        2: NodeGene(2, type=NodeType.OUTPUT, bias=3., activation=identity_activation)
     }
     genome.connections = {
-        (0, 1): ConnectionGene(node_in=0, node_out=1, weight=1., expressed=True),
-        (1, 2): ConnectionGene(node_in=1, node_out=2, weight=3., expressed=True),
-        (2, 1): ConnectionGene(node_in=2, node_out=1, weight=2., expressed=True)
+        3: ConnectionGene(3, node_in=0, node_out=1, weight=1., expressed=True),
+        4: ConnectionGene(4, node_in=1, node_out=2, weight=3., expressed=True),
+        5: ConnectionGene(5, node_in=2, node_out=1, weight=2., expressed=True)
     }
 
     network = RNN.create(genome)
@@ -190,16 +190,16 @@ def test_forward_arch_2_out_of_order():
     Nodes are not defined in topological order.
     """
     # Manually create genome for deterministic testing
-    genome = Genome(key=0, config=None)
+    genome = Genome(key=0, config=None, innovation_store=None)
     genome.nodes = {
-        0: NodeGene(type=NodeType.OUTPUT, bias=3., activation=identity_activation),
-        1: NodeGene(type=NodeType.INPUT, bias=1., activation=identity_activation),
-        2: NodeGene(type=NodeType.HIDDEN, bias=2., activation=identity_activation),
+        0: NodeGene(0, type=NodeType.OUTPUT, bias=3., activation=identity_activation),
+        1: NodeGene(1, type=NodeType.INPUT, bias=1., activation=identity_activation),
+        2: NodeGene(2, type=NodeType.HIDDEN, bias=2., activation=identity_activation),
     }
     genome.connections = {
-        (2, 0): ConnectionGene(node_in=2, node_out=0, weight=3., expressed=True),
-        (1, 2): ConnectionGene(node_in=1, node_out=2, weight=1., expressed=True),
-        (0, 2): ConnectionGene(node_in=0, node_out=2, weight=2., expressed=True)
+        3: ConnectionGene(3, node_in=2, node_out=0, weight=3., expressed=True),
+        4: ConnectionGene(4, node_in=1, node_out=2, weight=1., expressed=True),
+        5: ConnectionGene(5, node_in=0, node_out=2, weight=2., expressed=True)
     }
 
     network = RNN.create(genome)

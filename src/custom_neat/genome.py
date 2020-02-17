@@ -314,6 +314,8 @@ class Genome:
                 phenotype, False otherwise.
         """
         key = self.innovation_store.get_innovation_key(node_in, node_out, InnovationType.NEW_CONNECTION)
+        assert key not in self.connections
+
         new_connection_gene = ConnectionGene(
             key=key,
             node_in=node_in,
@@ -370,8 +372,10 @@ class Genome:
         node_out = random.choice(possible_outputs)
 
         # Check for existing connection, enable if disabled
-        if (node_in, node_out) in self.connections.keys():
-            self.connections[(node_in, node_out)].expressed = True
+        mutation = (node_in, node_out, InnovationType.NEW_CONNECTION)
+        mutation_key = self.innovation_store.mutation_to_key.get(mutation)
+        if mutation_key in self.connections:
+            self.connections[mutation_key].expressed = True
             return
 
         # Add a new connection
@@ -398,6 +402,15 @@ class Genome:
             # random access (currently O(n)): https://github.com/robtandy/randomdict
             old_gene_key = random.choice(list(self.connections.keys()))
             old_connection_gene = self.connections[old_gene_key]
+
+            mutation = (old_connection_gene.node_in,
+                        old_connection_gene.node_out,
+                        InnovationType.NEW_NODE)
+            node_mutation_key = self.innovation_store.mutation_to_key.get(mutation)
+            if node_mutation_key in self.nodes:
+                # Skip if this mutation is already present in this genome
+                return
+
             old_connection_gene.expressed = False
 
             node_key = self.add_node(old_connection_gene.node_in,
@@ -548,6 +561,8 @@ class Genome:
         Update (11.02.20): Distance is measured as topological dissimilarity.
         It is implemented as a proportion of enabled and matching node and
         connection genes. 0 = topologically identical, 1 = no matching genes.
+
+        TODO: Decide how distance should be calculated.
 
         Args:
             other (Genome): The other genome to compare itself to.

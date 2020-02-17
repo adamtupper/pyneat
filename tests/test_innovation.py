@@ -52,12 +52,14 @@ class TestInnovation:
         """Test the InnovationRecord constructor correctly initialises
         innovation records.
         """
+        key = 0
         innovation_type = InnovationType.NEW_NODE
         node_in = 0
         node_out = 1
 
-        record = InnovationRecord(innovation_type, node_in, node_out)
+        record = InnovationRecord(key, innovation_type, node_in, node_out)
 
+        assert key == record.key
         assert innovation_type == record.innov_type
         assert node_in == record.node_in
         assert node_out == record.node_out
@@ -66,7 +68,7 @@ class TestInnovation:
         """Test the InnovationStore constructor correctly initialises
         innovation stores.
         """
-        innovation_store = InnovationStore
+        innovation_store = InnovationStore()
 
         assert {} == innovation_store.mutation_to_key
         assert {} == innovation_store.key_to_record

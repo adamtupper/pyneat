@@ -24,8 +24,8 @@ def required_for_output(input_nodes, output_nodes, connections):
     updated = True
 
     while updated:
-        new_nodes = {c.in_node for c in connections
-                     if c.out_node in required and c.in_node not in required and c.expressed}
+        new_nodes = {c.node_in for c in connections
+                     if c.node_out in required and c.node_in not in required and c.expressed}
 
         if new_nodes:
             required = required.union(new_nodes)

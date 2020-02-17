@@ -42,6 +42,7 @@ class InnovationRecord:
                 the time of the mutation occurring in the case of new node
                 mutations).
         """
+        self.key = key
         self.innov_type = innov_type
         self.node_in = node_in
         self.node_out = node_out

@@ -5,6 +5,7 @@ Tests for the genome encoding module.
 import itertools
 import configparser
 import os
+import random
 
 import pytest
 import neat
@@ -13,7 +14,7 @@ from neat.activations import identity_activation
 from custom_neat.genome import *
 from custom_neat.species import SpeciesSet
 from custom_neat.reproduction import Reproduction
-from custom_neat.innovation import InnovationStore
+from custom_neat.innovation import InnovationStore, InnovationType, InnovationRecord
 
 __author__ = "Adam Tupper"
 __copyright__ = "Adam Tupper"
@@ -295,8 +296,39 @@ class TestGenome:
 
         assert expected == genome
 
-    def test_mutate_add_node(self):
-        """Test the function for the 'add node' mutation.
+    def test_mutate_add_node_fail(self):
+        """Test the function for the 'add node' mutation fails when the
+        mutation is already present in the genome.
+        """
+        # Alter configuration for this test
+        self.config.genome_config.num_inputs = 1
+        self.config.genome_config.num_outputs = 1
+        self.config.genome_config.activation_func = 'identity'
+        self.config.genome_config.init_conn_prob = 1.0
+        self.config.genome_config.weight_init_std_dev = 1.0
+
+        # Populate the innovation store with the mutation that will attempt to
+        # be duplicated
+        innovation_store = InnovationStore()
+        innovation_store.key_to_record[3] = InnovationRecord(3, InnovationType.NEW_NODE, 0, 1)
+        innovation_store.mutation_to_key[(0, 1, InnovationType.NEW_NODE)] = 3
+
+        genome = Genome(key=0, config=self.config.genome_config, innovation_store=innovation_store)
+        genome.configure_new()
+
+        # Add the node that will attempt to be added via mutation
+        genome.nodes[3] = NodeGene(3, NodeType.HIDDEN, 0., identity_activation)
+
+        genome.mutate_add_node(activation=identity_activation)
+        assert len(genome.connections) == 1
+        assert len(genome.nodes) == 3
+
+        connection_gene = genome.connections[2]
+        assert connection_gene.expressed
+
+    def test_mutate_add_node_succeed(self):
+        """Test the function for the 'add node' mutation succeeds when the
+        mutation is not already present in the genome.
         """
         # Alter configuration for this test
         self.config.genome_config.num_inputs = 1
@@ -423,93 +455,133 @@ class TestGenome:
         assert all(old == new for (old, new) in zip(old_weights, new_weights))
         assert all(old != new for (old, new) in zip(old_biases, new_biases))
 
-    def test_crossover_ordered(self):
-        """Test that the crossover operator function works as expected when the
-        first parent passed has the higher fitness.
-            """
+    def test_crossover_a(self):
+        """Test that the crossover operator.
+        """
+        # Set seed for consistency (of mutual gene inheritance)
+        random.seed(3)
+
         # Test configuration
         self.config.genome_config.gene_disable_prob = 0.0
 
+        # Construct parent 1
+        parent1 = Genome(key=0, config=self.config.genome_config, innovation_store=None)
+        parent1.fitness = 2.
+        parent1.nodes = {
+            0: NodeGene(0, NodeType.INPUT, 1., identity_activation),
+            1: NodeGene(1, NodeType.INPUT, 1., identity_activation),
+            2: NodeGene(2, NodeType.OUTPUT, 1., identity_activation),
+            5: NodeGene(5, NodeType.HIDDEN, 1., identity_activation)
+        }
+        parent1.connections = {
+            3: ConnectionGene(key=3, node_in=0, node_out=2, weight=1., expressed=False),
+            4: ConnectionGene(key=4, node_in=1, node_out=2, weight=1., expressed=True),
+            6: ConnectionGene(key=6, node_in=0, node_out=5, weight=1., expressed=True),
+            7: ConnectionGene(key=7, node_in=5, node_out=2, weight=1., expressed=True)
+        }
+
+        # Construct parent 2
+        parent2 = Genome(key=1, config=self.config.genome_config, innovation_store=None)
+        parent2.fitness = 1.
+        parent2.nodes = {
+            0: NodeGene(0, NodeType.INPUT, 2., identity_activation),
+            1: NodeGene(1, NodeType.INPUT, 2., identity_activation),
+            2: NodeGene(2, NodeType.OUTPUT, 2., identity_activation),
+            8: NodeGene(8, NodeType.HIDDEN, 2., identity_activation),
+        }
+        parent2.connections = {
+            3: ConnectionGene(key=3, node_in=0, node_out=2, weight=2., expressed=True),
+            4: ConnectionGene(key=4, node_in=1, node_out=2, weight=2., expressed=False),
+            9: ConnectionGene(key=9, node_in=1, node_out=8, weight=2., expressed=True),
+            10: ConnectionGene(key=10, node_in=8, node_out=2, weight=2., expressed=True)
+        }
+
+        child = Genome(key=2, config=self.config.genome_config, innovation_store=None)
+        child.configure_crossover(parent1, parent2)
+        assert 4 == len(child.nodes)
+        assert 4 == len(child.connections)
+
+        # Check that the structure of the child matches the fitter parent, and
+        # that mutual genes were inherited from both parents.
+        assert [0, 1, 2, 5] == list(child.nodes.keys())
+        assert [3, 4, 6, 7] == list(child.connections.keys())
+        assert 2.0 in [g.weight for g in child.connections.values()]
+        assert 2.0 in [g.bias for g in child.nodes.values()]
+
+        child = Genome(key=2, config=self.config.genome_config, innovation_store=None)
+        child.configure_crossover(parent2, parent1)
+        assert 4 == len(child.nodes)
+        assert 4 == len(child.connections)
+
+        assert [0, 1, 2, 5] == list(child.nodes.keys())
+        assert [3, 4, 6, 7] == list(child.connections.keys())
+        assert 2.0 in [g.weight for g in child.connections.values()]
+        assert 2.0 in [g.bias for g in child.nodes.values()]
+
+    def test_crossover_b(self):
+        """Test that the crossover operator.
+        """
+        # Set seed for consistency (of mutual gene inheritance)
+        random.seed(3)
+
+        # Test configuration
+        self.config.genome_config.gene_disable_prob = 0.0
+
+        # Construct parent 1
         parent1 = Genome(key=0, config=self.config.genome_config, innovation_store=None)
         parent1.fitness = 1.
         parent1.nodes = {
             0: NodeGene(0, NodeType.INPUT, 1., identity_activation),
-            1: NodeGene(1, NodeType.OUTPUT, 1., identity_activation),
-            2: NodeGene(2, NodeType.HIDDEN, 1., identity_activation),
+            1: NodeGene(1, NodeType.INPUT, 1., identity_activation),
+            2: NodeGene(2, NodeType.OUTPUT, 1., identity_activation),
+            5: NodeGene(5, NodeType.HIDDEN, 1., identity_activation)
         }
         parent1.connections = {
-            2: ConnectionGene(key=2, node_in=0, node_out=1, weight=1., expressed=False),
-            4: ConnectionGene(key=4, node_in=0, node_out=3, weight=1., expressed=True),
-            5: ConnectionGene(key=5, node_in=3, node_out=1, weight=1., expressed=True),
+            3: ConnectionGene(key=3, node_in=0, node_out=2, weight=1., expressed=False),
+            4: ConnectionGene(key=4, node_in=1, node_out=2, weight=1., expressed=True),
+            6: ConnectionGene(key=6, node_in=0, node_out=5, weight=1., expressed=True),
+            7: ConnectionGene(key=7, node_in=5, node_out=2, weight=1., expressed=True)
         }
 
+        # Construct parent 2
         parent2 = Genome(key=1, config=self.config.genome_config, innovation_store=None)
         parent2.fitness = 2.
         parent2.nodes = {
             0: NodeGene(0, NodeType.INPUT, 2., identity_activation),
-            1: NodeGene(1, NodeType.OUTPUT, 2., identity_activation),
-            3: NodeGene(3, NodeType.HIDDEN, 2., identity_activation),
-            6: NodeGene(6, NodeType.HIDDEN, 2., identity_activation),
+            1: NodeGene(1, NodeType.INPUT, 2., identity_activation),
+            2: NodeGene(2, NodeType.OUTPUT, 2., identity_activation),
+            8: NodeGene(8, NodeType.HIDDEN, 2., identity_activation),
         }
         parent2.connections = {
-            2: ConnectionGene(key=2, node_in=0, node_out=1, weight=2., expressed=False),
-            4: ConnectionGene(key=4, node_in=0, node_out=3, weight=2., expressed=True),
-            5: ConnectionGene(key=5),
-            7: ConnectionGene(),
-            8: ConnectionGene(),
+            3: ConnectionGene(key=3, node_in=0, node_out=2, weight=2., expressed=True),
+            4: ConnectionGene(key=4, node_in=1, node_out=2, weight=2., expressed=False),
+            9: ConnectionGene(key=9, node_in=1, node_out=8, weight=2., expressed=True),
+            10: ConnectionGene(key=10, node_in=8, node_out=2, weight=2., expressed=True)
         }
-        parent2.add_connection(0, 2, 2.)
-        parent2.add_connection(0, 3, 2.)
-        parent2.add_connection(2, 1, 2.)
-        parent2.add_connection(3, 1, 2.)
 
-        child = Genome(key=2, config=self.config.genome_config)
+        child = Genome(key=2, config=self.config.genome_config, innovation_store=None)
         child.configure_crossover(parent1, parent2)
         assert 4 == len(child.nodes)
         assert 4 == len(child.connections)
-        assert 4 == next(child.node_key_generator)
 
-        child = Genome(key=2, config=self.config.genome_config)
+        # Check that the structure of the child matches the fitter parent, and
+        # that mutual genes were inherited from both parents.
+        assert [0, 1, 2, 8] == list(child.nodes.keys())
+        assert [3, 4, 9, 10] == list(child.connections.keys())
+        assert 1.0 in [g.weight for g in child.connections.values()]
+        assert 1.0 in [g.bias for g in child.nodes.values()]
+
+        child = Genome(key=2, config=self.config.genome_config, innovation_store=None)
         child.configure_crossover(parent2, parent1)
         assert 4 == len(child.nodes)
         assert 4 == len(child.connections)
-        assert 4 == next(child.node_key_generator)
 
-    def test_crossover_reversed(self):
-        """Test that the crossover operator function works as expected when the
-        second parent has the higher fitness.
-        """
-        # Test configuration
-        self.config.genome_config.gene_disable_prob = 0.0
-
-        parent1 = Genome(key=0, config=self.config.genome_config)
-        parent1.nodes = {
-            0: NodeGene(type=NodeType.INPUT, bias=1., activation=identity_activation),
-            1: NodeGene(type=NodeType.OUTPUT, bias=1., activation=identity_activation),
-            2: NodeGene(type=NodeType.HIDDEN, bias=1., activation=identity_activation),
-        }
-        parent1.add_connection(0, 2, 1.)
-        parent1.add_connection(2, 1, 1.)
-        parent1.fitness = 1.
-
-        parent2 = Genome(key=1, config=self.config.genome_config)
-        parent2.nodes = {
-            0: NodeGene(type=NodeType.INPUT, bias=2., activation=identity_activation),
-            1: NodeGene(type=NodeType.OUTPUT, bias=2., activation=identity_activation),
-            2: NodeGene(type=NodeType.HIDDEN, bias=2., activation=identity_activation),
-            3: NodeGene(type=NodeType.HIDDEN, bias=2., activation=identity_activation),
-        }
-        parent2.add_connection(0, 2, 2.)
-        parent2.add_connection(0, 3, 2.)
-        parent2.add_connection(2, 1, 2.)
-        parent2.add_connection(3, 1, 2.)
-        parent2.fitness = 2.
-
-        child = Genome(key=2, config=self.config.genome_config)
-        child.configure_crossover(parent2, parent1)
-        assert 4 == len(child.nodes)
-        assert 4 == len(child.nodes)
-        assert 4 == next(child.node_key_generator)
+        # Check that the structure of the child matches the fitter parent, and
+        # that mutual genes were inherited from both parents.
+        assert [0, 1, 2, 8] == list(child.nodes.keys())
+        assert [3, 4, 9, 10] == list(child.connections.keys())
+        assert 1.0 in [g.weight for g in child.connections.values()]
+        assert 1.0 in [g.bias for g in child.nodes.values()]
 
     def test_crossover_no_excess_or_disjoint(self):
         """Test that the crossover operator function works when the higher
@@ -518,34 +590,35 @@ class TestGenome:
         # Test configuration
         self.config.genome_config.gene_disable_prob = 0.0
 
-        parent1 = Genome(key=0, config=self.config.genome_config)
-        parent1.nodes = {
-            0: NodeGene(type=NodeType.INPUT, bias=1., activation=identity_activation),
-            1: NodeGene(type=NodeType.OUTPUT, bias=1., activation=identity_activation),
-            2: NodeGene(type=NodeType.HIDDEN, bias=1., activation=identity_activation),
-        }
-        parent1.add_connection(0, 2, 1.)
-        parent1.add_connection(2, 1, 1.)
+        parent1 = Genome(key=0, config=self.config.genome_config, innovation_store=None)
         parent1.fitness = 2.
-
-        parent2 = Genome(key=1, config=self.config.genome_config)
-        parent2.nodes = {
-            0: NodeGene(type=NodeType.INPUT, bias=2., activation=identity_activation),
-            1: NodeGene(type=NodeType.OUTPUT, bias=2., activation=identity_activation),
-            2: NodeGene(type=NodeType.HIDDEN, bias=2., activation=identity_activation),
-            3: NodeGene(type=NodeType.HIDDEN, bias=2., activation=identity_activation),
+        parent1.nodes = {
+            0: NodeGene(key=0, type=NodeType.INPUT, bias=1., activation=identity_activation),
+            1: NodeGene(key=1, type=NodeType.OUTPUT, bias=1., activation=identity_activation),
         }
-        parent2.add_connection(0, 2, 2.)
-        parent2.add_connection(0, 3, 2.)
-        parent2.add_connection(2, 1, 2.)
-        parent2.add_connection(3, 1, 2.)
-        parent2.fitness = 1.
+        parent1.connections = {
+            2: ConnectionGene(key=2, node_in=0, node_out=1, weight=1., expressed=True)
+        }
 
-        child = Genome(key=2, config=self.config.genome_config)
+        parent2 = Genome(key=1, config=self.config.genome_config, innovation_store=None)
+        parent2.fitness = 1.
+        parent2.nodes = {
+            0: NodeGene(key=0, type=NodeType.INPUT, bias=2., activation=identity_activation),
+            1: NodeGene(key=1, type=NodeType.OUTPUT, bias=2., activation=identity_activation),
+            3: NodeGene(key=3, type=NodeType.HIDDEN, bias=2., activation=identity_activation)
+        }
+        parent2.connections = {
+            2: ConnectionGene(key=2, node_in=0, node_out=1, weight=2., expressed=False),
+            4: ConnectionGene(key=4, node_in=0, node_out=3, weight=2., expressed=True),
+            5: ConnectionGene(key=5, node_in=3, node_out=1, weight=2., expressed=True)
+        }
+
+        child = Genome(key=2, config=self.config.genome_config, innovation_store=None)
         child.configure_crossover(parent1, parent2)
-        assert 3 == len(child.nodes)
-        assert 2 == len(child.connections)
-        assert 3 == next(child.node_key_generator)
+        assert 2 == len(child.nodes)
+        assert 1 == len(child.connections)
+        assert [0, 1] == list(child.nodes)
+        assert [2] == list(child.connections)
 
     def test_crossover_disable_mutual_genes(self):
         """Test that the crossover operator function works when the connection gene
@@ -555,61 +628,75 @@ class TestGenome:
         # Test configuration
         self.config.genome_config.gene_disable_prob = 1.0
 
-        parent1 = Genome(key=0,config=self.config.genome_config)
-        parent1.nodes = {
-            0: NodeGene(type=NodeType.INPUT, bias=1., activation=identity_activation),
-            1: NodeGene(type=NodeType.OUTPUT, bias=1., activation=identity_activation),
-            2: NodeGene(type=NodeType.HIDDEN, bias=1., activation=identity_activation),
-        }
-        parent1.add_connection(0, 2, 1., expressed=False)
-        parent1.add_connection(2, 1, 1.)
+        parent1 = Genome(key=0,config=self.config.genome_config, innovation_store=None)
         parent1.fitness = 2.
-
-        parent2 = Genome(key=1, config=self.config.genome_config)
-        parent2.nodes = {
-            0: NodeGene(type=NodeType.INPUT, bias=2., activation=identity_activation),
-            1: NodeGene(type=NodeType.OUTPUT, bias=2., activation=identity_activation),
-            2: NodeGene(type=NodeType.HIDDEN, bias=2., activation=identity_activation),
+        parent1.nodes = {
+            0: NodeGene(key=0, type=NodeType.INPUT, bias=1., activation=identity_activation),
+            1: NodeGene(key=1, type=NodeType.OUTPUT, bias=1., activation=identity_activation),
+            3: NodeGene(key=3, type=NodeType.HIDDEN, bias=1., activation=identity_activation)
         }
-        parent2.add_connection(0, 2, 2.)
-        parent2.add_connection(2, 1, 2., expressed=False)
-        parent2.fitness = 1.
+        parent1.connections = {
+            2: ConnectionGene(key=2, node_in=0, node_out=1, weight=1., expressed=False),
+            4: ConnectionGene(key=4, node_in=0, node_out=3, weight=1., expressed=False),
+            5: ConnectionGene(key=5, node_in=3, node_out=1, weight=1., expressed=True)
+        }
 
-        child = Genome(key=2, config=self.config.genome_config)
+        parent2 = Genome(key=1, config=self.config.genome_config, innovation_store=None)
+        parent2.fitness = 1.
+        parent2.nodes = {
+            0: NodeGene(key=0, type=NodeType.INPUT, bias=2., activation=identity_activation),
+            1: NodeGene(key=1, type=NodeType.OUTPUT, bias=2., activation=identity_activation),
+            3: NodeGene(key=3, type=NodeType.HIDDEN, bias=2., activation=identity_activation)
+        }
+        parent2.connections = {
+            2: ConnectionGene(key=2, node_in=0, node_out=1, weight=2., expressed=False),
+            4: ConnectionGene(key=4, node_in=0, node_out=3, weight=2., expressed=True),
+            5: ConnectionGene(key=5, node_in=3, node_out=1, weight=2., expressed=False)
+        }
+
+        child = Genome(key=2, config=self.config.genome_config, innovation_store=None)
         child.configure_crossover(parent1, parent2)
         assert 3 == len(child.nodes)
-        assert 2 == len(child.connections)
+        assert 3 == len(child.connections)
         assert all([not g.expressed for g in child.connections.values()])
-        assert 3 == next(child.node_key_generator)
 
     def test_distance(self):
         """Test the genetic distance method.
         """
         # Test configuration
         self.config.genome_config.compatibility_disjoint_coefficient = 1.0
-        self.config.genome_config.compatibility_weight_coefficient = 1.0
+        self.config.genome_config.compatibility_weight_coefficient = 0.0
 
-        genome1 = Genome(key=0, config=self.config.genome_config)
+        genome1 = Genome(key=0, config=self.config.genome_config, innovation_store=None)
         genome1.nodes = {
-            0: NodeGene(type=NodeType.INPUT, bias=1., activation=identity_activation),
-            1: NodeGene(type=NodeType.OUTPUT, bias=1., activation=identity_activation),
-            2: NodeGene(type=NodeType.HIDDEN, bias=1., activation=identity_activation),
+            0: NodeGene(0, NodeType.INPUT, 1., identity_activation),
+            1: NodeGene(1, NodeType.INPUT, 1., identity_activation),
+            2: NodeGene(2, NodeType.OUTPUT, 1., identity_activation),
+            5: NodeGene(5, NodeType.HIDDEN, 1., identity_activation)
         }
-        genome1.add_connection(0, 2, 1.)
-        genome1.add_connection(2, 1, 1.)
-        genome1.fitness = 2.
+        genome1.connections = {
+            3: ConnectionGene(key=3, node_in=0, node_out=2, weight=1., expressed=False),
+            4: ConnectionGene(key=4, node_in=1, node_out=2, weight=1., expressed=True),
+            6: ConnectionGene(key=6, node_in=0, node_out=5, weight=1., expressed=True),
+            7: ConnectionGene(key=7, node_in=5, node_out=2, weight=1., expressed=True)
+        }
 
-        genome2 = Genome(key=1, config=self.config.genome_config)
+        genome2 = Genome(key=1, config=self.config.genome_config, innovation_store=None)
         genome2.nodes = {
-            0: NodeGene(type=NodeType.INPUT, bias=2., activation=identity_activation),
-            1: NodeGene(type=NodeType.OUTPUT, bias=2., activation=identity_activation),
-            2: NodeGene(type=NodeType.HIDDEN, bias=2., activation=identity_activation),
-            3: NodeGene(type=NodeType.HIDDEN, bias=2., activation=identity_activation),
+            0: NodeGene(0, NodeType.INPUT, 2., identity_activation),
+            1: NodeGene(1, NodeType.INPUT, 2., identity_activation),
+            2: NodeGene(2, NodeType.OUTPUT, 2., identity_activation),
+            8: NodeGene(8, NodeType.HIDDEN, 2., identity_activation),
         }
-        genome2.add_connection(0, 2, 2.)
-        genome2.add_connection(0, 3, 2.)
-        genome2.add_connection(2, 1, 2.)
-        genome2.add_connection(3, 1, 2.)
-        genome2.fitness = 1.
+        genome2.connections = {
+            3: ConnectionGene(key=3, node_in=0, node_out=2, weight=2., expressed=True),
+            4: ConnectionGene(key=4, node_in=1, node_out=2, weight=2., expressed=False),
+            9: ConnectionGene(key=9, node_in=1, node_out=8, weight=2., expressed=True),
+            10: ConnectionGene(key=10, node_in=8, node_out=2, weight=2., expressed=True)
+        }
 
-        assert pytest.approx(11 / 8, genome1.distance(genome2))
+        N = max(len(genome1.nodes) + len([g for g in genome1.connections.values() if g.expressed]),
+                len(genome2.nodes) + len([g for g in genome2.connections.values() if g.expressed]))
+
+        assert genome1.distance(genome2) == 8 / N
+        assert genome2.distance(genome1) == 8 / N

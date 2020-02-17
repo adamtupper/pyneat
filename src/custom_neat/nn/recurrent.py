@@ -108,14 +108,14 @@ class RNN:
                 # Skip inactive connections
                 continue
 
-            if gene.in_node not in required or gene.out_node not in required:
+            if gene.node_in not in required or gene.node_out not in required:
                 # Skip connections to and from non-required nodes
                 continue
 
-            if gene.out_node not in node_inputs:
-                node_inputs[gene.out_node] = [(gene.in_node, gene.weight)]
+            if gene.node_out not in node_inputs:
+                node_inputs[gene.node_out] = [(gene.node_in, gene.weight)]
             else:
-                node_inputs[gene.out_node].append((gene.in_node, gene.weight))
+                node_inputs[gene.node_out].append((gene.node_in, gene.weight))
 
         # Gather information required to evaluate each node
         node_evals = []

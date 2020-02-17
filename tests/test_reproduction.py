@@ -12,6 +12,7 @@ from neat.stagnation import DefaultStagnation
 from custom_neat.reproduction import *
 from custom_neat.genome import *
 from custom_neat.species import *
+from custom_neat.innovation import InnovationStore
 
 
 class TestReproduction:
@@ -31,7 +32,7 @@ class TestReproduction:
         stagnation_scheme = DefaultStagnation(self.config.stagnation_config, self.reporters)
         reproduction_scheme = Reproduction(self.config, self.reporters, stagnation_scheme)
         pop_size = 10
-        genomes = reproduction_scheme.create_new(Genome, self.config.genome_config, pop_size)
+        genomes = reproduction_scheme.create_new(Genome, self.config.genome_config, pop_size, InnovationStore())
 
         assert 10 == len(genomes)
         assert 10 == len({id for id in genomes.keys()})
@@ -46,17 +47,17 @@ class TestReproduction:
         popn_size = 10
 
         # Build Species 1
-        genome1 = Genome(key=0, config=self.config.genome_config)
+        genome1 = Genome(key=0, config=self.config.genome_config, innovation_store=InnovationStore())
         genome1.fitness = 10
-        genome2 = Genome(key=1, config=self.config.genome_config)
+        genome2 = Genome(key=1, config=self.config.genome_config, innovation_store=InnovationStore())
         genome2.fitness = 20
         species1 = Species(key=1, generation=1)
         species1.update(representative=genome1, members={1: genome1, 2: genome2})
 
         # Build Species 2
-        genome3 = Genome(key=2, config=self.config.genome_config)
+        genome3 = Genome(key=2, config=self.config.genome_config, innovation_store=InnovationStore())
         genome3.fitness = 40
-        genome4 = Genome(key=3, config=self.config.genome_config)
+        genome4 = Genome(key=3, config=self.config.genome_config, innovation_store=InnovationStore())
         genome4.fitness = 30
         species2 = Species(key=2, generation=1)
         species2.update(representative=genome3, members={3: genome3, 4: genome4})
@@ -78,7 +79,7 @@ class TestReproduction:
         stagnation_scheme = DefaultStagnation(self.config.stagnation_config, self.reporters)
         reproduction_scheme = Reproduction(self.config.reproduction_config, self.reporters, stagnation_scheme)
         pop_size = 10
-        population = reproduction_scheme.create_new(Genome, self.config.genome_config, pop_size)
+        population = reproduction_scheme.create_new(Genome, self.config.genome_config, pop_size, InnovationStore())
         for genome in population.values():
             genome.fitness = 1
 
@@ -86,7 +87,7 @@ class TestReproduction:
         species_set.speciate(self.config, population, generation=1)
 
         with pytest.raises(AssertionError):
-            reproduction_scheme.reproduce(self.config, species_set, pop_size, generation=1)
+            reproduction_scheme.reproduce(self.config, species_set, pop_size, generation=1, innovation_store=InnovationStore())
 
     def test_reproduce_elitism(self):
         """Test that reproduce produces a population with the correct number of
@@ -99,7 +100,7 @@ class TestReproduction:
         stagnation_scheme = DefaultStagnation(self.config.stagnation_config, self.reporters)
         reproduction_scheme = Reproduction(self.config.reproduction_config, self.reporters, stagnation_scheme)
         pop_size = 10
-        population = reproduction_scheme.create_new(Genome, self.config.genome_config, pop_size)
+        population = reproduction_scheme.create_new(Genome, self.config.genome_config, pop_size, InnovationStore())
         for genome in population.values():
             genome.fitness = 1
 
@@ -115,7 +116,7 @@ class TestReproduction:
 
         assert 2 == len(species_set.species)
 
-        new_population = reproduction_scheme.reproduce(self.config, species_set, pop_size, generation=1)
+        new_population = reproduction_scheme.reproduce(self.config, species_set, pop_size, generation=1, innovation_store=InnovationStore())
 
         assert len(population) == len(new_population)
         old_genomes = population.values()
@@ -156,7 +157,7 @@ class TestReproduction:
         stagnation_scheme = DefaultStagnation(self.config.stagnation_config, self.reporters)
         reproduction_scheme = Reproduction(self.config.reproduction_config, self.reporters, stagnation_scheme)
         pop_size = 10
-        population = reproduction_scheme.create_new(Genome, self.config.genome_config, pop_size)
+        population = reproduction_scheme.create_new(Genome, self.config.genome_config, pop_size, InnovationStore())
         for genome in population.values():
             genome.fitness = 1
 
@@ -172,7 +173,7 @@ class TestReproduction:
 
         assert 2 == len(species_set.species)
 
-        new_population = reproduction_scheme.reproduce(self.config, species_set, pop_size,  generation=1)
+        new_population = reproduction_scheme.reproduce(self.config, species_set, pop_size,  generation=1, innovation_store=InnovationStore())
 
         assert len(population) == len(new_population)
         old_genomes = population.values()
@@ -198,7 +199,7 @@ class TestReproduction:
         stagnation_scheme = DefaultStagnation(self.config.stagnation_config, self.reporters)
         reproduction_scheme = Reproduction(self.config.reproduction_config, self.reporters, stagnation_scheme)
         pop_size = 10
-        population = reproduction_scheme.create_new(Genome, self.config.genome_config, pop_size)
+        population = reproduction_scheme.create_new(Genome, self.config.genome_config, pop_size, InnovationStore())
         for genome in population.values():
             genome.fitness = 1
 
@@ -214,7 +215,7 @@ class TestReproduction:
 
         assert 2 == len(species_set.species)
 
-        new_population = reproduction_scheme.reproduce(self.config, species_set, pop_size, generation=1)
+        new_population = reproduction_scheme.reproduce(self.config, species_set, pop_size, generation=1, innovation_store=InnovationStore())
 
         old_genomes = population.values()
         new_genomes = new_population.values()
@@ -270,7 +271,7 @@ class TestReproduction:
         stagnation_scheme = DefaultStagnation(self.config.stagnation_config, self.reporters)
         reproduction_scheme = Reproduction(self.config.reproduction_config, self.reporters, stagnation_scheme)
         pop_size = 10
-        population0 = reproduction_scheme.create_new(Genome, self.config.genome_config, pop_size)
+        population0 = reproduction_scheme.create_new(Genome, self.config.genome_config, pop_size, InnovationStore())
         for genome in population0.values():
             genome.fitness = 1
 
@@ -286,7 +287,7 @@ class TestReproduction:
 
         assert 2 == len(species_set.species)
 
-        population1 = reproduction_scheme.reproduce(self.config, species_set, pop_size, generation=1)
+        population1 = reproduction_scheme.reproduce(self.config, species_set, pop_size, generation=1, innovation_store=InnovationStore())
         species_set.speciate(self.config, population1, generation=10)
         for genome in population1.values():
             genome.fitness = 1
@@ -294,7 +295,7 @@ class TestReproduction:
         assert 2 == len(species_set.species)
 
         # Skip to generation 11 to stagnate all species
-        population2 = reproduction_scheme.reproduce(self.config, species_set, pop_size, generation=11)
+        population2 = reproduction_scheme.reproduce(self.config, species_set, pop_size, generation=11, innovation_store=InnovationStore())
         species_set.speciate(self.config, population2, generation=11)
         for genome in population2.values():
             genome.fitness = 1
