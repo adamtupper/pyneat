@@ -91,8 +91,8 @@ class TestSpeciesSet:
             }
             genome.connections = {
                 (0, 1): ConnectionGene(
-                    in_node=0,
-                    out_node=1,
+                    node_in=0,
+                    node_out=1,
                     weight=weight,
                     expressed=True
                 )
@@ -138,8 +138,8 @@ class TestSpeciesSet:
             }
             genome.connections = {
                 (0, 1): ConnectionGene(
-                    in_node=0,
-                    out_node=1,
+                    node_in=0,
+                    node_out=1,
                     weight=weight,
                     expressed=True
                 )
@@ -165,8 +165,8 @@ class TestSpeciesSet:
             }
             genome.connections = {
                 (0, 1): ConnectionGene(
-                    in_node=0,
-                    out_node=1,
+                    node_in=0,
+                    node_out=1,
                     weight=weight,
                     expressed=True
                 )
@@ -212,8 +212,8 @@ class TestSpeciesSet:
             }
             genome.connections = {
                 (0, 1): ConnectionGene(
-                    in_node=0,
-                    out_node=1,
+                    node_in=0,
+                    node_out=1,
                     weight=weight,
                     expressed=True
                 )
@@ -238,8 +238,8 @@ class TestSpeciesSet:
             }
             genome.connections = {
                 (0, 1): ConnectionGene(
-                    in_node=0,
-                    out_node=1,
+                    node_in=0,
+                    node_out=1,
                     weight=weight,
                     expressed=True
                 )

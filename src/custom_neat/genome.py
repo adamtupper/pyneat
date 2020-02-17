@@ -8,6 +8,8 @@ from enum import Enum
 from neat.activations import ActivationFunctionSet
 from neat.config import ConfigParameter, write_pretty_params
 
+from custom_neat.innovation import InnovationType
+
 
 class NodeType(Enum):
     """Define the types for nodes in the network.
@@ -21,25 +23,30 @@ class ConnectionGene:
     """Defines a connection gene used in the genome encoding.
 
     Attributes:
-        in_node (int): The ID of the node this connection from.
-        out_node (int): The ID of the node this connection is to.
+        key (int): The innovation key for this gene.
+        node_in (int): The key of the node this connection from.
+        node_out (int): The key of the node this connection is to.
         weight (float): The connection weight.
         expressed (bool): True if the connection is expressed (enabled) in the
             phenotype, False otherwise.
     """
 
-    def __init__(self, in_node, out_node, weight, expressed):
+    def __init__(self, key, node_in, node_out, weight, expressed):
         """Creates a new ConnectionGene object.
 
         Args:
-            in_node (int): The ID of the node this connection from.
-            out_node (int): The ID of the node this connection is to.
+            key (int): The innovation key for this gene.
+            node_in (int): The key of the node this connection from/the node
+                that leads into this connection.
+            node_out (int): The key of the node this connection is to/the node
+                that this connection leads into.
             weight (float): The connection weight.
             expressed (bool): True if the connection is expressed (enabled) in the
                 phenotype, False otherwise.
         """
-        self.in_node = in_node
-        self.out_node = out_node
+        self.key = key
+        self.node_in = node_in
+        self.node_out = node_out
         self.weight = weight
         self.expressed = expressed
 
@@ -52,27 +59,30 @@ class ConnectionGene:
         Returns:
             bool: True if the objects are equal, False otherwise.
         """
-        return (self.in_node, self.out_node, self.weight, self.expressed) == \
-               (other.in_node, other.out_node, other.weight, other.expressed)
+        return (self.key, self.node_in, self.node_out, self.weight, self.expressed) == \
+               (other.key, other.node_in, other.node_out, other.weight, other.expressed)
 
 
 class NodeGene:
     """Defines a node gene used in the genome encoding.
 
     Attributes:
+        key (int): The innovation key (also the node key) for this gene.
         type (NodeType): The type of the node (either input, output or hidden).
         bias (float): The bias value of the node.
         activation (function): The node activation function.
     """
 
-    def __init__(self, type, bias, activation):
+    def __init__(self, key, type, bias, activation):
         """Creates a new NodeGene object.
 
         Args:
+            key (int): The innovation key (also the node key) for this gene.
             type (NodeType): The type of the node (either input, output or hidden).
             bias (float): The bias value of the node.
             activation (function): The node activation function.
         """
+        self.key = key
         self.type = type
         self.bias = bias
         self.activation = activation
@@ -86,8 +96,8 @@ class NodeGene:
         Returns:
             bool: True if the objects are equal, False otherwise.
         """
-        return (self.type, self.bias, self.activation) == \
-               (other.type, other.bias, other.activation)
+        return (self.key, self.type, self.bias, self.activation) == \
+               (other.key, other.type, other.bias, other.activation)
 
 
 class GenomeConfig:
@@ -145,11 +155,13 @@ class Genome:
         key (int): A unique identifier for the genome.
         config (GenomeConfig): The genome configuration settings.
         fitness (float): The fitness of the genome.
-        nodes (dict): A dictionary of node ID (int), node gene pairs.
-        connections (dict): A dictionary of connection gene ID (in node ID, out
-            node ID), connection gene pairs.
-        inputs (:list:`int`): The node IDs of input nodes.
-        outputs (:list:`int`): The node IDs of output nodes.
+        nodes (dict): A dictionary of node key (int), node gene pairs.
+        connections (dict): A dictionary of connection gene key (in node key,
+            out node key), connection gene pairs.
+        inputs (:list:`int`): The node keys of input nodes.
+        outputs (:list:`int`): The node keys of output nodes.
+        innovation_store (InnovationStore): The global innovation store used for
+            tracking new structural mutations.
     """
     @classmethod
     def parse_config(cls, param_dict):
@@ -180,7 +192,7 @@ class Genome:
         """
         config.save(filename)
 
-    def __init__(self, key, config):
+    def __init__(self, key, config, innovation_store):
         """Creates a new Genome object.
 
         Note: This is a required interface method.
@@ -191,11 +203,13 @@ class Genome:
         Args:
             key (int): A unique identifier for the genome.
             config (GenomeConfig): The genome configuration settings.
+            innovation_store (InnovationStore): The global innovation store used
+                for tracking new structural mutations.
         """
         self.key = key
         self.config = config
+        self.innovation_store = innovation_store
         self.fitness = None
-        self.node_key_generator = count(0)
 
         # (gene key, gene) pairs for genes
         self.nodes = {}
@@ -208,51 +222,27 @@ class Genome:
     def configure_new(self):
         """Configure a new genome based on the given configuration.
 
+        The initial inputs and outputs for input and output nodes are specified
+        as negatives so that matching innovation keys are generated for
+        corresponding input and output nodes between genomes. Inputs nodes use
+        odd negative numbers, and output nodes use even negative numbers.
+
         Note: This is a required interface method.
         """
-        # Create the required number of input and output nodes
-        for _ in range(self.config.num_inputs):
-            key = next(self.node_key_generator)
-            # self.nodes[key] = NodeGene(
-            #     type=NodeTypes.INPUT,
-            #     bias=random.normalvariate(mu=0.0, sigma=config.bias_init_std_dev),
-            #     activation=config.activation_defs.get(config.activation_func)
-            # )
-            self.nodes[key] = NodeGene(
-                type=NodeType.INPUT,
-                bias=random.uniform(-3.0, 3.0),
-                activation=self.config.activation_defs.get(self.config.activation_func)
-            )
-            self.inputs.append(key)
+        # Create the required number of input nodes
+        for i in range(-1, -2 * self.config.num_inputs - 1, -2):
+            self.add_node(i, i, random.uniform(-3.0, 3.0), NodeType.INPUT)
 
-        for _ in range(self.config.num_outputs):
-            key = next(self.node_key_generator)
-            # self.nodes[key] = NodeGene(
-            #     type=NodeTypes.OUTPUT,
-            #     bias=random.normalvariate(mu=0.0, sigma=config.bias_init_std_dev),
-            #     activation=config.activation_defs.get(config.activation_func)
-            # )
-            self.nodes[key] = NodeGene(
-                type=NodeType.OUTPUT,
-                bias=random.uniform(-3.0, 3.0),
-                activation=self.config.activation_defs.get(self.config.activation_func)
-            )
-            self.outputs.append(key)
+        # Create the required number of output nodes
+        for i in range(-2, -2 * self.config.num_outputs - 1, -2):
+            self.add_node(i, i, random.uniform(-3.0, 3.0), NodeType.OUTPUT)
 
         # Add initial connections
-        for in_node in self.inputs:
-            for out_node in self.outputs:
+        for node_in in self.inputs:
+            for node_out in self.outputs:
                 if random.random() < self.config.initial_conn_prob:
-                    # self.add_connection(
-                    #     in_node,
-                    #     out_node,
-                    #     random.normalvariate(mu=0.0, sigma=config.weight_init_std_dev)
-                    # )
-                    self.add_connection(
-                        in_node,
-                        out_node,
-                        random.uniform(-3.0, 3.0)
-                    )
+                    # self.add_connection(node_in, node_out, random.normalvariate(mu=0.0, sigma=config.weight_init_std_dev))
+                    self.add_connection(node_in, node_out, random.uniform(-3.0, 3.0))
 
     def __eq__(self, other):
         """Check for genome equality.
@@ -276,24 +266,62 @@ class Genome:
         """
         return copy.deepcopy(self)
 
-    def add_connection(self, in_node, out_node, weight, expressed=True):
+    def add_node(self, node_in, node_out, bias, node_type):
+        """Add a new node positioned between two other nodes.
+
+        Args:
+            node_in (int): The key of the node that precedes this new node.
+            node_out (int): The key of the node that succeeds this new node.
+            bias (float): The bias value for the node.
+            node_type (NodeType): The type of node to be added.
+
+        Returns:
+            int: The key of the new node
+        """
+        key = self.innovation_store.get_innovation_key(node_in, node_out, InnovationType.NEW_NODE)
+        assert key not in self.nodes
+        # self.nodes[key] = NodeGene(
+        #     key=key
+        #     type=node_type,
+        #     bias=random.normalvariate(mu=0.0, sigma=config.bias_init_std_dev),
+        #     activation=config.activation_defs.get(config.activation_func)
+        # )
+        self.nodes[key] = NodeGene(
+            key=key,
+            type=node_type,
+            bias=bias,
+            activation=self.config.activation_defs.get(self.config.activation_func)
+        )
+
+        if node_type == NodeType.INPUT:
+            self.inputs.append(key)
+        elif node_type == NodeType.OUTPUT:
+            self.outputs.append(key)
+
+        return key
+
+    def add_connection(self, node_in, node_out, weight, expressed=True):
         """Add a connection between two nodes.
 
         Args:
-            in_node (int): The key of the input node for the new connection.
-            out_node (int): The key of the output node for the new connection.
+            node_in (int): The key of the node that leads into the new
+                connection.
+            node_out (int): The key of the node that the the new connection
+                leads into.
             weight (float): The weight of the connection. Must be a value
                 between [0, 1].
             expressed (bool): True if the connection should be expressed in the
                 phenotype, False otherwise.
         """
+        key = self.innovation_store.get_innovation_key(node_in, node_out, InnovationType.NEW_CONNECTION)
         new_connection_gene = ConnectionGene(
-            in_node=in_node,
-            out_node=out_node,
+            key=key,
+            node_in=node_in,
+            node_out=node_out,
             weight=weight,
             expressed=expressed
         )
-        self.connections[(in_node, out_node)] = new_connection_gene
+        self.connections[(node_in, node_out)] = new_connection_gene
 
     def mutate(self):
         """Mutate the genome.
@@ -338,18 +366,18 @@ class Genome:
         possible_inputs = [k for k, g in self.nodes.items() if g.type != NodeType.OUTPUT]
         possible_outputs = [k for k, g in self.nodes.items() if g.type != NodeType.INPUT]
 
-        in_node = random.choice(possible_inputs)
-        out_node = random.choice(possible_outputs)
+        node_in = random.choice(possible_inputs)
+        node_out = random.choice(possible_outputs)
 
         # Check for existing connection, enable if disabled
-        if (in_node, out_node) in self.connections.keys():
-            self.connections[(in_node, out_node)].expressed = True
+        if (node_in, node_out) in self.connections.keys():
+            self.connections[(node_in, node_out)].expressed = True
             return
 
         # Add a new connection
         # connection_weight = random.normalvariate(mu=0.0, sigma=std_dev)
         connection_weight = random.uniform(-3.0, 3.0)
-        self.add_connection(in_node, out_node, connection_weight)
+        self.add_connection(node_in, node_out, connection_weight)
 
     def mutate_add_node(self, activation):
         """Performs an 'add node' structural mutation.
@@ -365,13 +393,6 @@ class Genome:
         """
         if self.connections:
             # Only add a new node if there are existing connections to replace
-            new_node_id = next(self.node_key_generator)
-
-            assert new_node_id not in self.nodes
-
-            self.nodes[new_node_id] = NodeGene(type=NodeType.HIDDEN,
-                                               bias=0.0,
-                                               activation=activation)
 
             # NOTE: Gene dictionaries could be replaced with RandomDict() for faster
             # random access (currently O(n)): https://github.com/robtandy/randomdict
@@ -379,17 +400,18 @@ class Genome:
             old_connection_gene = self.connections[old_gene_key]
             old_connection_gene.expressed = False
 
-            self.add_connection(
-                in_node=old_connection_gene.in_node,
-                out_node=new_node_id,
-                weight=1.0
-            )
+            node_key = self.add_node(old_connection_gene.node_in,
+                                     old_connection_gene.node_out,
+                                     bias=0.0,
+                                     node_type=NodeType.HIDDEN)
 
-            self.add_connection(
-                in_node=new_node_id,
-                out_node=old_connection_gene.out_node,
-                weight=old_connection_gene.weight
-            )
+            self.add_connection(node_in=old_connection_gene.node_in,
+                                node_out=node_key,
+                                weight=1.0)
+
+            self.add_connection(node_in=node_key,
+                                node_out=old_connection_gene.node_out,
+                                weight=old_connection_gene.weight)
 
     def mutate_weights(self, replace_prob, init_std_dev, perturb_std_dev, min_val, max_val):
         """Performs weight mutations.

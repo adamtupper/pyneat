@@ -13,6 +13,7 @@ from neat.activations import identity_activation
 from custom_neat.genome import *
 from custom_neat.species import SpeciesSet
 from custom_neat.reproduction import Reproduction
+from custom_neat.innovation import InnovationStore
 
 __author__ = "Adam Tupper"
 __copyright__ = "Adam Tupper"
@@ -32,9 +33,11 @@ class TestGenome:
     def test_create_node_gene(self):
         """Test the creation of node genes.
         """
-        node_gene = NodeGene(type=NodeType.INPUT,
+        node_gene = NodeGene(key=0,
+                             type=NodeType.INPUT,
                              bias=0.0,
                              activation=identity_activation)
+        assert node_gene.key == 0
         assert node_gene.type == NodeType.INPUT
         assert pytest.approx(0.0, node_gene.bias)
         assert identity_activation == node_gene.activation
@@ -42,28 +45,32 @@ class TestGenome:
     def test_create_connection_gene(self):
         """Test the creation of connection genes.
         """
-        in_node = NodeGene(NodeType.INPUT, bias=0.0, activation=identity_activation)
-        out_node = NodeGene(NodeType.HIDDEN, bias=0.0, activation=identity_activation)
+        in_node = 0
+        out_node = 1
+        key = 2
         connection_gene = ConnectionGene(
-            in_node=in_node,
-            out_node=out_node,
+            key=key,
+            node_in=in_node,
+            node_out=out_node,
             weight=1.0,
             expressed=True
         )
 
-        assert connection_gene.in_node == in_node
-        assert connection_gene.out_node == out_node
+        assert connection_gene.node_in == in_node
+        assert connection_gene.node_out == out_node
+        assert connection_gene.key == key
         assert connection_gene.weight == pytest.approx(1.0)
         assert connection_gene.expressed
 
     def test_create_genome(self):
         """Test the Genome constructor.
         """
-        genome = Genome(key=0, config=None)
+        innovation_store = InnovationStore()
+        genome = Genome(key=0, config=None, innovation_store=innovation_store)
 
+        assert innovation_store == genome.innovation_store
         assert 0 == genome.key
         assert genome.fitness is None
-        assert 0 == next(genome.node_key_generator)
         assert {} == genome.nodes
         assert {} == genome.connections
         assert [] == genome.inputs
@@ -81,7 +88,8 @@ class TestGenome:
 
         num_input_nodes = self.config.genome_config.num_inputs
         num_output_nodes = self.config.genome_config.num_outputs
-        genome = Genome(key=0, config=self.config.genome_config)
+        innovation_store = InnovationStore()
+        genome = Genome(key=0, config=self.config.genome_config, innovation_store=innovation_store)
         genome.configure_new()
 
         assert 0 == genome.key
@@ -115,7 +123,7 @@ class TestGenome:
     def test_copy(self):
         """Test copying a genome.
         """
-        genome = Genome(key=0, config=None)
+        genome = Genome(key=0, config=None, innovation_store=InnovationStore())
         duplicate = genome.copy()
 
         assert genome == duplicate
@@ -124,17 +132,18 @@ class TestGenome:
     def test_add_connection(self):
         """Test adding connections to the genome.
         """
-        genome = Genome(key=0, config=None)
+        genome = Genome(key=0, config=None, innovation_store=InnovationStore())
 
         # Add a dummy connection between non-existent nodes
-        genome.add_connection(in_node=0, out_node=1, weight=1.0)
+        genome.add_connection(node_in=0, node_out=1, weight=1.0)
         assert 1 == len(genome.connections)
 
         new_gene = genome.connections[(0, 1)]
-        assert 0 == new_gene.in_node
-        assert 1 == new_gene.out_node
+        assert 0 == new_gene.node_in
+        assert 1 == new_gene.node_out
         assert -3.0 <= new_gene.weight <= 3.0  # assert it is within 3 std dev of mean
         assert new_gene.expressed
+        assert 0 == new_gene.key
 
     def test_mutate_only_weights(self):
         """Test the mutation function behaves as expected when weight mutations
@@ -153,7 +162,7 @@ class TestGenome:
         self.config.genome_config.node_add_prob = 0.0
         self.config.genome_config.bias_mutate_prob = 0.0
 
-        genome = Genome(key=0, config=self.config.genome_config)
+        genome = Genome(key=0, config=self.config.genome_config, innovation_store=InnovationStore())
         genome.configure_new()
 
         old_biases = [g.bias for g in genome.nodes.values()]
@@ -186,7 +195,7 @@ class TestGenome:
         self.config.genome_config.node_add_prob = 0.0
         self.config.genome_config.weight_mutate_prob = 0.0
 
-        genome = Genome(key=0, config=self.config.genome_config)
+        genome = Genome(key=0, config=self.config.genome_config, innovation_store=InnovationStore())
         genome.configure_new()
 
         old_biases = [g.bias for g in genome.nodes.values()]
@@ -218,7 +227,7 @@ class TestGenome:
         self.config.genome_config.weight_mutate_prob = 0.0
         self.config.genome_config.node_add_prob = 0.0
 
-        genome = Genome(key=0, config=self.config.genome_config)
+        genome = Genome(key=0, config=self.config.genome_config, innovation_store=InnovationStore())
         genome.configure_new()
         genome.connections = {}
 
@@ -249,7 +258,7 @@ class TestGenome:
         self.config.genome_config.weight_mutate_prob = 0.0
         self.config.genome_config.conn_add_prob = 0.0
 
-        genome = Genome(key=0, config=self.config.genome_config)
+        genome = Genome(key=0, config=self.config.genome_config, innovation_store=InnovationStore())
         genome.configure_new()
 
         num_node_genes = len(genome.nodes)
@@ -278,7 +287,7 @@ class TestGenome:
         self.config.genome_config.weight_mutate_prob = 0.0
         self.config.genome_config.conn_add_prob = 0.0
 
-        genome = Genome(key=0, config=self.config.genome_config)
+        genome = Genome(key=0, config=self.config.genome_config, innovation_store=InnovationStore())
         genome.configure_new()
         expected = genome.copy()
 
@@ -296,7 +305,7 @@ class TestGenome:
         self.config.genome_config.init_conn_prob = 1.0
         self.config.genome_config.weight_init_std_dev = 1.0
 
-        genome = Genome(key=0, config=self.config.genome_config)
+        genome = Genome(key=0, config=self.config.genome_config, innovation_store=InnovationStore())
         genome.configure_new()
 
         genome.mutate_add_node(activation=identity_activation)
@@ -309,15 +318,15 @@ class TestGenome:
         old_connection_gene = genome.connections[(0, 1)]
         assert not old_connection_gene.expressed
 
-        new_connection_gene_a = genome.connections[(0, 2)]
-        assert new_connection_gene_a.in_node == 0
-        assert new_connection_gene_a.out_node == 2
+        new_connection_gene_a = genome.connections[(0, 3)]
+        assert new_connection_gene_a.node_in == 0
+        assert new_connection_gene_a.node_out == 3
         assert -3.0 <= new_connection_gene_a.weight <= 3.0  # assert weight is within 3 std dev of mean
         assert new_connection_gene_a.expressed
 
-        new_connection_gene_b = genome.connections[(2, 1)]
-        assert new_connection_gene_b.in_node == 2
-        assert new_connection_gene_b.out_node == 1
+        new_connection_gene_b = genome.connections[(3, 1)]
+        assert new_connection_gene_b.node_in == 3
+        assert new_connection_gene_b.node_out == 1
         assert -3.0 <= new_connection_gene_b.weight <= 3.0  # assert weight is within 3 std dev of mean
         assert new_connection_gene_b.expressed
 
@@ -330,13 +339,13 @@ class TestGenome:
         self.config.genome_config.num_outputs = 1
         self.config.genome_config.initial_conn_prob = 1.0  # fully-connected
 
-        genome = Genome(key=0, config=self.config.genome_config)
+        genome = Genome(key=0, config=self.config.genome_config, innovation_store=InnovationStore())
         genome.configure_new()
 
         # Manually add recurrent connections to saturate network
-        genome.connections[(1, 1)] = ConnectionGene(1, 1, 0.0, True)
-        genome.connections[(0, 0)] = ConnectionGene(0, 0, 0.0, True)
-        genome.connections[(1, 0)] = ConnectionGene(0, 0, 0.0, True)
+        genome.connections[(1, 1)] = ConnectionGene(3, 1, 1, 0.0, True)
+        genome.connections[(0, 0)] = ConnectionGene(4, 0, 0, 0.0, True)
+        genome.connections[(1, 0)] = ConnectionGene(5, 0, 0, 0.0, True)
 
         genome.mutate_add_connection(std_dev=1.0)
         assert 4 == len(genome.connections)
@@ -353,14 +362,14 @@ class TestGenome:
         self.config.genome_config.num_outputs = 1
         self.config.genome_config.initial_conn_prob = 0.0  # no connections
 
-        genome = Genome(key=0, config=self.config.genome_config)
+        genome = Genome(key=0, config=self.config.genome_config, innovation_store=InnovationStore())
         genome.configure_new()
 
         genome.mutate_add_connection(std_dev=1.0)
         assert 1 == len(genome.connections)
 
-        assert 0 == genome.connections[(0, 1)].in_node
-        assert 1 == genome.connections[(0, 1)].out_node
+        assert 0 == genome.connections[(0, 1)].node_in
+        assert 1 == genome.connections[(0, 1)].node_out
 
     def test_mutate_weights(self):
         """Test the mutation of genome connection weights.
@@ -370,7 +379,7 @@ class TestGenome:
         self.config.genome_config.num_outputs = 2
         self.config.genome_config.init_conn_prob = 1.0
 
-        genome = Genome(key=0, config=self.config.genome_config)
+        genome = Genome(key=0, config=self.config.genome_config, innovation_store=InnovationStore())
         genome.configure_new()
 
         old_weights = [g.weight for g in genome.connections.values()]
@@ -396,7 +405,7 @@ class TestGenome:
         self.config.genome_config.num_outputs = 2
         self.config.genome_config.init_conn_prob = 1.0
 
-        genome = Genome(key=0, config=self.config.genome_config)
+        genome = Genome(key=0, config=self.config.genome_config, innovation_store=InnovationStore())
         genome.configure_new()
 
         old_weights = [g.weight for g in genome.connections.values()]
@@ -420,21 +429,21 @@ class TestGenome:
             """
         # Test configuration
         self.config.genome_config.gene_disable_prob = 0.0
+        innovation_store = InnovationStore()
 
-        parent1 = Genome(key=0, config=self.config.genome_config)
-        parent1.nodes = {
-            0: NodeGene(type=NodeType.INPUT, bias=1., activation=identity_activation),
-            1: NodeGene(type=NodeType.OUTPUT, bias=1., activation=identity_activation),
-            2: NodeGene(type=NodeType.HIDDEN, bias=1., activation=identity_activation),
-        }
-        parent1.add_connection(0, 2, 1.)
-        parent1.add_connection(2, 1, 1.)
+        parent1 = Genome(key=0, config=self.config.genome_config, innovation_store=innovation_store)
+        for node_config in ((-1, -1, NodeType.INPUT), (-2, -2, NodeType.OUTPUT), (0, 1, NodeType.HIDDEN)):
+            node_in, node_out, node_type = node_config
+            parent1.add_node(node_in, node_out, 1.0, node_type)
+        for connection_config in ((0, 2, 1.0), (2, 1, 1.0)):
+            node_out, node_in, weight = connection_config
+            parent1.add_connection(node_in, node_out, weight)
         parent1.fitness = 1.
 
         parent2 = Genome(key=1, config=self.config.genome_config)
         parent2.nodes = {
-            0: NodeGene(type=NodeType.INPUT, bias=2., activation=identity_activation),
-            1: NodeGene(type=NodeType.OUTPUT, bias=2., activation=identity_activation),
+            0: NodeGene(key=0, type=NodeType.INPUT, bias=2., activation=identity_activation),
+            1: NodeGene(key=1, type=NodeType.OUTPUT, bias=2., activation=identity_activation),
             2: NodeGene(type=NodeType.HIDDEN, bias=2., activation=identity_activation),
             3: NodeGene(type=NodeType.HIDDEN, bias=2., activation=identity_activation),
         }

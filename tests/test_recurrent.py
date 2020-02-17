@@ -114,9 +114,9 @@ def test_forward_arch_1_in_order():
         2: NodeGene(type=NodeType.OUTPUT, bias=3., activation=identity_activation)
     }
     genome.connections = {
-        (0, 1): ConnectionGene(in_node=0, out_node=1, weight=1., expressed=True),
-        (1, 1): ConnectionGene(in_node=1, out_node=1, weight=2., expressed=True),
-        (1, 2): ConnectionGene(in_node=1, out_node=2, weight=3., expressed=True)
+        (0, 1): ConnectionGene(node_in=0, node_out=1, weight=1., expressed=True),
+        (1, 1): ConnectionGene(node_in=1, node_out=1, weight=2., expressed=True),
+        (1, 2): ConnectionGene(node_in=1, node_out=2, weight=3., expressed=True)
     }
 
     network = RNN.create(genome)
@@ -141,9 +141,9 @@ def test_forward_arch_1_out_of_order():
         2: NodeGene(type=NodeType.HIDDEN, bias=2., activation=identity_activation),
     }
     genome.connections = {
-        (2, 0): ConnectionGene(in_node=2, out_node=0, weight=3., expressed=True),
-        (1, 2): ConnectionGene(in_node=1, out_node=2, weight=1., expressed=True),
-        (2, 2): ConnectionGene(in_node=2, out_node=2, weight=2., expressed=True)
+        (2, 0): ConnectionGene(node_in=2, node_out=0, weight=3., expressed=True),
+        (1, 2): ConnectionGene(node_in=1, node_out=2, weight=1., expressed=True),
+        (2, 2): ConnectionGene(node_in=2, node_out=2, weight=2., expressed=True)
     }
 
     network = RNN.create(genome)
@@ -169,9 +169,9 @@ def test_forward_arch_2_in_order():
         2: NodeGene(type=NodeType.OUTPUT, bias=3., activation=identity_activation)
     }
     genome.connections = {
-        (0, 1): ConnectionGene(in_node=0, out_node=1, weight=1., expressed=True),
-        (1, 2): ConnectionGene(in_node=1, out_node=2, weight=3., expressed=True),
-        (2, 1): ConnectionGene(in_node=2, out_node=1, weight=2., expressed=True)
+        (0, 1): ConnectionGene(node_in=0, node_out=1, weight=1., expressed=True),
+        (1, 2): ConnectionGene(node_in=1, node_out=2, weight=3., expressed=True),
+        (2, 1): ConnectionGene(node_in=2, node_out=1, weight=2., expressed=True)
     }
 
     network = RNN.create(genome)
@@ -197,9 +197,9 @@ def test_forward_arch_2_out_of_order():
         2: NodeGene(type=NodeType.HIDDEN, bias=2., activation=identity_activation),
     }
     genome.connections = {
-        (2, 0): ConnectionGene(in_node=2, out_node=0, weight=3., expressed=True),
-        (1, 2): ConnectionGene(in_node=1, out_node=2, weight=1., expressed=True),
-        (0, 2): ConnectionGene(in_node=0, out_node=2, weight=2., expressed=True)
+        (2, 0): ConnectionGene(node_in=2, node_out=0, weight=3., expressed=True),
+        (1, 2): ConnectionGene(node_in=1, node_out=2, weight=1., expressed=True),
+        (0, 2): ConnectionGene(node_in=0, node_out=2, weight=2., expressed=True)
     }
 
     network = RNN.create(genome)

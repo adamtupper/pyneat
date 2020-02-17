@@ -1,13 +1,11 @@
 """Implements the core of the evolutionary algorithm.
-
-This implementation is identical to NEAT-Python. The only difference is when
-checkpoints are saved. This is done after fitness evaluation as opposed to
-after reproduction.
 """
 from __future__ import print_function
 
 from neat.math_util import mean
 from neat.reporting import ReporterSet
+
+from custom_neat.innovation import InnovationStore
 
 
 class CompleteExtinctionException(Exception):
@@ -15,22 +13,51 @@ class CompleteExtinctionException(Exception):
 
 
 class Population(object):
-    """
-    This class implements the core evolution algorithm:
+    """This class implements the core evolution algorithm.
+
+    The steps of the algorithm are as follows:
         1. Evaluate fitness of all genomes.
         2. Check to see if the termination criterion is satisfied; exit if it is.
         3. Generate the next generation from the current population.
         4. Partition the new generation into species based on genetic similarity.
         5. Go to 1.
+
+    Attributes:
+        reporters (ReporterSet): The set of reporters used for logging.
+        config (CustomConfig): The global configuration settings for the entire
+            algorithm.
+        reproduction (Reproduction): The reproduction scheme for generating
+            genomes.
+        innovation_store (InnovationStore): The store for innovation records for
+            tracking structural mutations.
+        fitness_criterion (function): The fitness function to assess the
+            population with to test for termination.
+        population (dict): The population of individuals. A dictionary of
+            genome key, genome pairs.
+        species (SpeciesSet): The speciation scheme for dividing the population
+            into species.
+        generation (int): The generation number.
+        best_genome (Genome): The best genome discovered so far (according to
+            fitness).
     """
 
     def __init__(self, config, initial_state=None):
+        """Create a new population.
+
+        Args:
+            config (CustomConfig): The global configuration settings.
+            initial_state (tuple): An optional starting point for the algorithm
+                to continue from. Contains a Population, SpeciesSet and a
+                generation number.
+        """
         self.reporters = ReporterSet()
         self.config = config
         stagnation = config.stagnation_type(config.stagnation_config, self.reporters)
         self.reproduction = config.reproduction_type(config.reproduction_config,
                                                      self.reporters,
                                                      stagnation)
+        self.innovation_store = InnovationStore()
+
         if config.fitness_criterion == 'max':
             self.fitness_criterion = max
         elif config.fitness_criterion == 'min':
@@ -45,7 +72,8 @@ class Population(object):
             # Create a population from scratch, then partition into species.
             self.population = self.reproduction.create_new(config.genome_type,
                                                            config.genome_config,
-                                                           config.pop_size)
+                                                           config.pop_size,
+                                                           self.innovation_store)
             self.species = config.species_set_type(config.species_set_config, self.reporters)
             self.generation = 0
             self.species.speciate(config, self.population, self.generation)
@@ -55,15 +83,24 @@ class Population(object):
         self.best_genome = None
 
     def add_reporter(self, reporter):
+        """Add a new reporter to the reporter set.
+
+        Args:
+            reporter (Reporter): The reporter to add to the reporter set.
+        """
         self.reporters.add(reporter)
 
     def remove_reporter(self, reporter):
+        """Remove a reporter from the reporter set.
+
+        Args:
+            reporter (Reporter): The reporter to remove from the reporter set.
+        """
         self.reporters.remove(reporter)
 
     def run(self, fitness_function, n=None):
-        """
-        Runs NEAT's genetic algorithm for at most n generations.  If n
-        is None, run until solution is found or extinction occurs.
+        """Runs NEAT's genetic algorithm for at most n generations.  If n is
+        None, run until solution is found or extinction occurs.
 
         The user-provided fitness_function must take only two arguments:
             1. The population as a list of (genome id, genome) tuples.
@@ -78,6 +115,14 @@ class Population(object):
         It is assumed that fitness_function does not modify the list of genomes,
         the genomes themselves (apart from updating the fitness member),
         or the configuration object.
+
+        Args:
+            fitness_function (function): The fitness function to assess genomes
+                with.
+            n (int): The maximum number of generations to run for.
+
+        Returns:
+            Genome: The best genome found during the run(s).
         """
 
         if self.config.no_fitness_termination and (n is None):
@@ -119,8 +164,11 @@ class Population(object):
             self.reporters.end_generation(self.config, self.population, self.species)
 
             # Create the next generation from the current generation.
-            self.population = self.reproduction.reproduce(self.config, self.species,
-                                                          self.config.pop_size, self.generation)
+            self.population = self.reproduction.reproduce(self.config,
+                                                          self.species,
+                                                          self.config.pop_size,
+                                                          self.generation,
+                                                          self.innovation_store)
 
             # Check for complete extinction.
             if not self.species.species:
@@ -131,7 +179,8 @@ class Population(object):
                 if self.config.reset_on_extinction:
                     self.population = self.reproduction.create_new(self.config.genome_type,
                                                                    self.config.genome_config,
-                                                                   self.config.pop_size)
+                                                                   self.config.pop_size,
+                                                                   self.innovation_store)
                 else:
                     raise CompleteExtinctionException()
 

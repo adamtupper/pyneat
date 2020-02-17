@@ -106,7 +106,7 @@ class Reproduction:
         self.stagnation = stagnation
         self.ancestors = {}
 
-    def create_new(self, genome_type, genome_config, num_genomes):
+    def create_new(self, genome_type, genome_config, num_genomes, innovation_store):
         """Create a brand new population.
 
         Note: This is a required interface method.
@@ -117,6 +117,8 @@ class Reproduction:
             genome_config (GenomeConfig): The genome configuration.
             num_genomes (int): The number of genomes to create (population
                 size).
+            innovation_store (InnovationStore): The population-wide innovation
+                store used for tracking new structural mutations.
 
         Returns:
             dict: A dictionary of genome key, genome pairs that make up the new
@@ -125,14 +127,14 @@ class Reproduction:
         genomes = {}
         for i in range(num_genomes):
             key = next(self.genome_key_generator)
-            genome = genome_type(key, genome_config)
+            genome = genome_type(key, genome_config, innovation_store)
             genome.configure_new()
             genomes[key] = genome
             self.ancestors[key] = tuple()
 
         return genomes
 
-    def reproduce(self, config, species, pop_size, generation):
+    def reproduce(self, config, species, pop_size, generation, innovation_store):
         """Produces the next generation of genomes.
 
         Note: This is a required interface method.
@@ -142,6 +144,8 @@ class Reproduction:
             species (SpeciesSet): The current allocation of genomes to species.
             pop_size (int): The desired size of the population.
             generation (int): The number of the next generation.
+            innovation_store (InnovationStore): The population-wide innovation
+                store used for tracking new structural mutations.
 
         Returns:
             dict: A dictionary of genome key, genome pairs that make up the new
@@ -257,7 +261,7 @@ class Reproduction:
                         # Intra-species crossover
                         parent2_key, parent2 = random.choice(old_members)
 
-                    child = Genome(child_key, config.genome_config)
+                    child = Genome(child_key, config.genome_config, innovation_store)
                     child.configure_crossover(parent1, parent2)
                     child.mutate()
                     self.ancestors[child_key] = (parent1, parent2)
