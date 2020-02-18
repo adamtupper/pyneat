@@ -262,9 +262,11 @@ class Genome:
         """Create a copy of the genome.
 
         Returns:
-            Genome: A copy of itself.
+            Genome: A copy of itself, but with the same innovation store.
         """
-        return copy.deepcopy(self)
+        copied_genome = copy.deepcopy(self)
+        copied_genome.innovation_store = self.innovation_store
+        return copied_genome
 
     def add_node(self, node_in, node_out, bias, node_type):
         """Add a new node positioned between two other nodes.

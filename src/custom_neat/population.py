@@ -176,6 +176,7 @@ class Population(object):
             #     node_keys = list(genome.nodes.keys())
             #     if len(node_keys + connection_keys) != len(set(node_keys) ^ set(connection_keys)):
             #         print('STOP')
+            assert len(set([g.innovation_store for g in self.population.values()])) == 1
 
             # Check for complete extinction.
             if not self.species.species:

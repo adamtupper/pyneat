@@ -700,3 +700,12 @@ class TestGenome:
 
         assert genome1.distance(genome2) == 8 / N
         assert genome2.distance(genome1) == 8 / N
+
+    def test_copy_keep_innov_store(self):
+        """Test that the copy function works correctly, maintaining the same
+        innovation store for all genomes.
+        """
+        genome = Genome(key=0, config=self.config.genome_config, innovation_store=InnovationStore())
+        genome_copy = genome.copy()
+
+        assert genome.innovation_store == genome_copy.innovation_store
