@@ -170,6 +170,13 @@ class Population(object):
                                                           self.generation,
                                                           self.innovation_store)
 
+            # # Check for genomes with non-unique innovation keys
+            # for key, genome in self.population.items():
+            #     connection_keys = list(genome.connections.keys())
+            #     node_keys = list(genome.nodes.keys())
+            #     if len(node_keys + connection_keys) != len(set(node_keys) ^ set(connection_keys)):
+            #         print('STOP')
+
             # Check for complete extinction.
             if not self.species.species:
                 self.reporters.complete_extinction()

@@ -120,7 +120,8 @@ class RNN:
         # Gather information required to evaluate each node
         node_evals = []
         for node_idx, inputs in node_inputs.items():
-            node_gene = genome.nodes[node_idx]
+            node_gene = genome.nodes.get(node_idx)
+            assert node_gene is not None
             node_evals.append((node_idx, node_gene.bias, node_gene.activation, inputs))
 
         return RNN(input_nodes, output_nodes, node_evals)

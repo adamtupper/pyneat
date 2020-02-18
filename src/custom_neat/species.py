@@ -217,7 +217,7 @@ class SpeciesSet(DefaultClassConfig):
                 'Mean genetic distance {0:.3f}, standard deviation {1:.3f}'.format(gdmean, gdstdev)
             )
 
-    def get_species_key(self, genome_key):
+    def get_species_id(self, genome_key):
         """Get the species ID of the species the given individual belongs to.
 
         Args:

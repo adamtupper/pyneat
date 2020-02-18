@@ -80,12 +80,14 @@ class InnovationStore:
             int: The innovation key for the mutation.
         """
         key = self.mutation_to_key.get((node_in, node_out, innovation_type))
-        if key:
+        if key is not None:
             # This mutation has already occurred, return the existing key
             return key
 
         # Generate a new key and create a new record
         key = next(self._innovation_key_generator)
+        if key in self.key_to_record:
+            print('STOP')
         record = InnovationRecord(key, innovation_type, node_in, node_out)
         self.key_to_record[key] = record
         self.mutation_to_key[(node_in, node_out, innovation_type)] = key
