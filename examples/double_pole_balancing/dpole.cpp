@@ -158,7 +158,23 @@ static PyMethodDef functions[] = {
     {NULL, NULL, 0}
 };
 
-PyMODINIT_FUNC initdpole(void)
+
+static struct PyModuleDef moduledef = {
+    PyModuleDef_HEAD_INIT,
+    "dpole",                                    // m_name
+    "Integrate double cart-pole equations.",    // m_doc
+    -1,                                         // m_size
+    functions,                                  // m_methods
+    NULL,                                       // m_reload
+    NULL,                                       // m_traverse
+    NULL,                                       // m_clear
+    NULL,                                       // m_free
+};
+
+PyMODINIT_FUNC PyInit_dpole(void)
 {
-    Py_InitModule3("dpole", functions, "Integrate double cart-pole equations.");
+    PyObject *m;
+
+    m = PyModule_Create(&moduledef);
+    return m;
 }
