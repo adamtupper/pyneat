@@ -26,7 +26,7 @@ class CartPole(object):
     def run(self, testing=False):
         """ Runs the cart-pole experiment and evaluates the population. """
 
-        if (self.__markov):
+        if self.__markov:
             # markov experiment: full system's information is provided to the network
             for chromo in self.__population:
                 # chromosome to phenotype
@@ -38,13 +38,12 @@ class CartPole(object):
                 if testing:
                     # cart's position, first pole's angle, second pole's angle
                     # print "\nInitial conditions:"
-                    print
-                    "%f \t %f \t %f" % (self.__state[0], self.__state[2], self.__state[4])
+                    print(f"{self.__state[0]:.2f} \t {self.__state[2]:.2f} \t {self.__state[4]:.2f}")
                     pass
 
                 steps = 0
 
-                while (steps < 100000):
+                while steps < 100000:
                     inputs = [self.__state[0] / 4.80,  # cart's initial position
                               self.__state[1] / 2.00,  # cart's initial speed
                               self.__state[2] / 0.52,  # pole_1 initial angle
@@ -59,12 +58,10 @@ class CartPole(object):
                     # advances one time step
                     self.__state = integrate(action, self.__state, 1)
 
-                    if (self.__outside_bounds()):
+                    if self.__outside_bounds():
                         # network failed to solve the task
                         if testing:
-                            print
-                            "Failed at step %d \t %+1.2f \t %+1.2f \t %+1.2f" \
-                            % (steps, self.__state[0], self.__state[2], self.__state[4])
+                            print(f"Failed at step {steps} \t {self.__state[0]:.2f} \t {self.__state[2]:.2f} \t {self.__state[4]:.2f}")
                             sys.exit(0)
                         else:
                             break
@@ -92,8 +89,7 @@ class CartPole(object):
 
             best = max(self.__population)  # selects the best network
             if self.print_status:
-                print
-                "\t\nBest chromosome of generation: %d" % best.id
+                print(f"\t\nBest chromosome of generation: {best.id}")
 
             # ** *******************#
             #  GENERALIZATION TEST  #
@@ -105,33 +101,28 @@ class CartPole(object):
             self.__initial_state()  # reset initial state
             # long non-markovian test
             if self.print_status:
-                print
-                "Starting the 100k test..."
+                print("Starting the 100k test...")
             score = self.__non_markov(best_net, 100000, testing)[1]
 
             if score > 99999:
                 if self.print_status:
-                    print
-                    "\tWinner passed the 100k test! Starting the generalization test..."
+                    print("\tWinner passed the 100k test! Starting the generalization test...")
                 # second: now let's try 625 different initial conditions
                 balanced = self.__generalization_test(best_net, testing)
 
                 if balanced > 200:
                     if self.print_status:
-                        print
-                        "\tWinner passed the generalization test with score: %d\n" % balanced
+                        print(f"\tWinner passed the generalization test with score: {balanced}\n")
                     # set chromosome's fitness to 100k (and ceases the simulation)
                     best.fitness = 100000
                     best.score = balanced
                 else:
                     if self.print_status:
-                        print
-                        "\tWinner failed the generalization test with score: %d\n" % balanced
+                        print(f"\tWinner failed the generalization test with score: {balanced}\n")
 
             else:
                 if self.print_status:
-                    print
-                    "\tWinner failed at the 100k test with score %d\n " % score
+                    print(f"\tWinner failed at the 100k test with score {score}\n")
 
     def __non_markov(self, network, max_steps, testing):
         # variables used in Gruau's fitness function
@@ -142,7 +133,7 @@ class CartPole(object):
         last_values = []
 
         steps = 0
-        while (steps < max_steps):
+        while steps < max_steps:
             inputs = [self.__state[0] / 4.80,  # cart's initial position
                       self.__state[2] / 0.52,  # pole_1 initial angle
                       self.__state[4] / 0.52]  # pole_2 initial angle
@@ -153,12 +144,10 @@ class CartPole(object):
             action = 0.5 * (output[0] + 1.0)  # maps [-1,1] onto [0,1]
             self.__state = integrate(action, self.__state, 1)
 
-            if (self.__outside_bounds()):
+            if self.__outside_bounds():
                 # network failed to solve the task
                 if testing:
-                    print
-                    "Failed at step %d \t %+1.2f \t %+1.2f \t %+1.2f" \
-                    % (steps, self.__state[0], self.__state[2], self.__state[4])
+                    print(f"Failed at step {steps} \t {self.__state[0]:.2f} \t {self.__state[2]:.2f} \t {self.__state[4]:.2f}")
                     break
                 else:
                     # print "Failed at step %d" %steps
@@ -205,12 +194,10 @@ class CartPole(object):
                         if (score > 999):
                             balanced += 1
                             if self.print_status:
-                                print
-                                "Test %d succeeded with score: %d" % (test_number, score)
+                                print(f"Test {test_number} succeeded with score: {score}")
                         else:
                             if self.print_status:
-                                print
-                                "Test %d failed with score...: %d" % (test_number, score)
+                                print(f"Test {test_number} failed with score...: {score}")
         return balanced
 
     def __initial_state(self):

@@ -3,7 +3,7 @@
 # ******************************** #
 import math
 import random
-import cPickle as pickle
+import pickle
 from neat import config, population, chromosome, genome, visualize
 from cart_pole import CartPole
 
@@ -41,8 +41,8 @@ if __name__ == "__main__":
     # Visualizes speciation
     #visualize.plot_species(pop.species_log)
 
-    print 'Number of evaluations: %d' %winner.id
-    print 'Winner score: %d' %winner.score
+    print(f'Number of evaluations: {winner.id}')
+    print(f'Winner score: {winner.score}')
     from time import strftime
     date = strftime("%Y_%m_%d_%Hh%Mm%Ss")
     # saves the winner
