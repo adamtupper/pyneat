@@ -4,7 +4,7 @@
 import sys
 from random import randint
 from dpole import integrate  # wrapped from C++
-from neat.nn import nn_pure as nn
+from custom_neat.nn.recurrent import RNN
 
 
 # from neat.nn import nn_cpp as nn
@@ -28,10 +28,10 @@ class CartPole(object):
 
         if self.__markov:
             # markov experiment: full system's information is provided to the network
-            for chromo in self.__population:
-                # chromosome to phenotype
-                assert chromo.sensors == 6, "There must be 6 inputs to the network"
-                net = nn.create_phenotype(chromo)
+            for genome in self.__population:
+                # genome to phenotype
+                assert len(genome.inputs) == 6, "There must be 6 inputs to the network"
+                net = RNN.create(genome)
 
                 self.__initial_state()
 
@@ -52,7 +52,7 @@ class CartPole(object):
                               self.__state[5] / 2.00]  # pole_2 initial angular velocity
 
                     # activate the neural network
-                    output = net.pactivate(inputs)
+                    output = net.forward(inputs)
                     # maps [-1,1] onto [0,1]
                     action = 0.5 * (output[0] + 1.0)
                     # advances one time step
@@ -67,37 +67,37 @@ class CartPole(object):
                             break
                     steps += 1
 
-                chromo.fitness = float(steps)  # the higher the better
+                genome.fitness = float(steps)  # the higher the better
                 # if self.print_status:
-                #    print "Chromosome %3d evaluated with score: %d " %(chromo.id, chromo.fitness)
+                #    print "Chromosome %3d evaluated with score: %d " %(genome.id, genome.fitness)
 
         else:
             # non-markovian: no velocity information is provided (only 3 inputs)
-            for chromo in self.__population:
-                assert chromo.sensors == 3, "There must be 3 inputs to the network"
-                net = nn.create_phenotype(chromo)
+            for genome in self.__population:
+                assert len(genome.inputs) == 3, "There must be 3 inputs to the network"
+                net = RNN.create(genome)
                 self.__initial_state()
 
-                chromo.fitness, score = self.__non_markov(net, 1000, testing)
+                genome.fitness, score = self.__non_markov(net, 1000, testing)
+                genome.score = score
 
-                # print "Chromosome %3d %s evaluated with fitness %2.5f and score: %s" %(chromo.id, chromo.size(), chromo.fitness, score)
+                # print "Chromosome %3d %s evaluated with fitness %2.5f and score: %s" %(genome.id, genome.size(), genome.fitness, score)
 
             # we need to make sure that the found solution is robust enough and good at
             # generalizing for several different initial conditions, so the champion
             # from each generation (i.e., the one with the highest F) passes for a
             # generalization test (the criteria here was defined by Gruau)
-
-            best = max(self.__population)  # selects the best network
+            best = max(self.__population, key=lambda g: g.fitness)  # selects the best network
             if self.print_status:
-                print(f"\t\nBest chromosome of generation: {best.id}")
+                print(f"\t\nBest chromosome of generation: {best.key}")
 
             # ** *******************#
             #  GENERALIZATION TEST  #
             # **********************#
 
             # first: can it balance for at least 100k steps?
-            best_net = nn.create_phenotype(best)
-            best_net.flush()
+            best_net = RNN.create(best)
+            best_net.reset()
             self.__initial_state()  # reset initial state
             # long non-markovian test
             if self.print_status:
@@ -139,7 +139,7 @@ class CartPole(object):
                       self.__state[4] / 0.52]  # pole_2 initial angle
 
             # activate the neural network
-            output = network.pactivate(inputs)
+            output = network.forward(inputs)
             # advances one time step
             action = 0.5 * (output[0] + 1.0)  # maps [-1,1] onto [0,1]
             self.__state = integrate(action, self.__state, 1)
@@ -189,7 +189,7 @@ class CartPole(object):
                                         0.0]
 
                         test_number += 1
-                        best_net.flush()
+                        best_net.reset()
                         score = self.__non_markov(best_net, 1000, testing)[1]
                         if (score > 999):
                             balanced += 1
