@@ -116,7 +116,7 @@ def plot_species(statistics, view=False, filename='speciation.svg'):
     plt.close()
 
 
-def draw_net(config, genome, view=False, filename=None, node_names=None, show_disabled=True, prune_unused=False,
+def draw_net(genome, view=False, filename=None, node_names=None, show_disabled=True, prune_unused=False,
              node_colors=None, fmt='svg'):
     """ Receives a genome and draws a neural network with arbitrary topology. """
     # Attributes for network nodes.
@@ -143,17 +143,19 @@ def draw_net(config, genome, view=False, filename=None, node_names=None, show_di
     dot = graphviz.Digraph(format=fmt, node_attr=node_attrs)
 
     inputs = set()
-    for k in genome.inputs:  # Modified
+    for k in genome.inputs:
+        ng = genome.nodes[k]
         inputs.add(k)
         name = node_names.get(k, str(k))
-        input_attrs = {'style': 'filled', 'shape': 'box', 'fillcolor': node_colors.get(k, 'lightgray')}
+        input_attrs = {'label': f'({k}) {ng.bias:.2f}', 'style': 'filled', 'shape': 'box', 'fillcolor': node_colors.get(k, 'lightgray')}
         dot.node(name, _attributes=input_attrs)
 
     outputs = set()
-    for k in genome.outputs:  # Modified
+    for k in genome.outputs:
+        ng = genome.nodes[k]
         outputs.add(k)
         name = node_names.get(k, str(k))
-        node_attrs = {'style': 'filled', 'fillcolor': node_colors.get(k, 'lightblue')}
+        node_attrs = {'label': f'({k}) {ng.bias:.2f}\nf={genome.fitness if genome.fitness else 0:.3f}', 'shape': 'ellipse', 'style': 'filled', 'fillcolor': node_colors.get(k, 'lightblue')}
 
         dot.node(name, _attributes=node_attrs)
 
@@ -175,24 +177,21 @@ def draw_net(config, genome, view=False, filename=None, node_names=None, show_di
     else:
         used_nodes = set(genome.nodes.keys())
 
-    for n in used_nodes:
-        if n in inputs or n in outputs:
+    for k in used_nodes:
+        if k in inputs or k in outputs:
             continue
-
-        attrs = {'style': 'filled', 'fillcolor': node_colors.get(n, 'white')}
-        dot.node(str(n), _attributes=attrs)
+        ng = genome.nodes[k]
+        attrs = {'label': f'({k}) {ng.bias:.2f}', 'shape': 'ellipse', 'style': 'filled', 'fillcolor': node_colors.get(k, 'white')}
+        dot.node(str(k), _attributes=attrs)
 
     for key, cg in genome.connections.items():  # Modified
         if cg.expressed or show_disabled:  # Modified
-            #if cg.input not in used_nodes or cg.output not in used_nodes:
-            #    continue
-            input, output = key
-            a = node_names.get(input, str(input))
-            b = node_names.get(output, str(output))
+            a = node_names.get(cg.node_in, str(cg.node_in))
+            b = node_names.get(cg.node_out, str(cg.node_out))
             style = 'solid' if cg.expressed else 'dotted'
-            color = 'green' if cg.weight > 0 else 'red'
-            width = str(0.1 + abs(cg.weight / 5.0))
-            dot.edge(a, b, _attributes={'style': style, 'color': color, 'penwidth': width})
+            # color = 'green' if cg.weight > 0 else 'red'
+            # width = str(0.1 + abs(cg.weight / 5.0))
+            dot.edge(a, b, _attributes={'label': f'({key})\n{cg.weight:.2f}', 'fontsize': '9', 'style': style,})
 
     dot.render(filename, view=view)
 

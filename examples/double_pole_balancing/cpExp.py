@@ -40,6 +40,8 @@ if __name__ == "__main__":
 
     if not os.path.exists('results/checkpoints/'):
         os.makedirs('results/checkpoints/')
+    if not os.path.exists('results/genomes/'):
+        os.makedirs('results/genomes/')
 
     config = CustomConfig(Genome, Reproduction, SpeciesSet, neat.DefaultStagnation, 'dpnv_config.ini')
 
@@ -71,6 +73,10 @@ if __name__ == "__main__":
     max_generations = config.max_generations
     generation = 0
     while generation < max_generations:
+        # Draw genomes
+        for key, genome in population.population.items():
+            visualize.draw_net(genome, filename=f'results/genomes/genome_{key}')
+
         batch_size = 1
         best = population.run(fitness_function=evaluate_population, n=batch_size)
 
@@ -108,5 +114,5 @@ if __name__ == "__main__":
     # file = open('winner_'+date, 'w')
     # pickle.dump(winner, file)
     # file.close()
-
+    pickle.dump(population, open('results/population.pickle', 'wb'))
     #print winner
