@@ -20,20 +20,25 @@
 neat-python==0.92
 
 # OpenAI Gym and dependencies
-gym==0.15.4
-box2d-py==2.3.8
-atari_py~=0.2.0
-opencv-python==4.1.2.30
+#gym==0.15.4
+#box2d-py==2.3.8
+#atari_py~=0.2.0
+#opencv-python==4.1.2.30
 
 # Ray
 # ray==0.8.0
 
 # Numpy
-numpy==1.17
+#numpy==1.17
 
 # AtariARI
-git+git://github.com/mila-iqia/atari-representation-learning.git
+#git+git://github.com/mila-iqia/atari-representation-learning.git
 
 # Visualisation
 # pygraphviz==1.5
-# graphviz
+graphviz
+matplotlib
+
+# Tests
+pytest
+pytest-cov
