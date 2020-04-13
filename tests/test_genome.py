@@ -665,7 +665,7 @@ class TestGenome:
         """
         # Test configuration
         self.config.genome_config.compatibility_disjoint_coefficient = 1.0
-        self.config.genome_config.compatibility_weight_coefficient = 0.0
+        self.config.genome_config.compatibility_weight_coefficient = 3.0
 
         genome1 = Genome(key=0, config=self.config.genome_config, innovation_store=None)
         genome1.nodes = {
@@ -695,11 +695,8 @@ class TestGenome:
             10: ConnectionGene(key=10, node_in=8, node_out=2, weight=2., expressed=True)
         }
 
-        N = max(len(genome1.nodes) + len([g for g in genome1.connections.values() if g.expressed]),
-                len(genome2.nodes) + len([g for g in genome2.connections.values() if g.expressed]))
-
-        assert genome1.distance(genome2) == 8 / N
-        assert genome2.distance(genome1) == 8 / N
+        assert genome1.distance(genome2) == 9.0
+        assert genome2.distance(genome1) == 9.0
 
     def test_copy_keep_innov_store(self):
         """Test that the copy function works correctly, maintaining the same
