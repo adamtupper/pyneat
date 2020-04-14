@@ -376,11 +376,10 @@ class TestGenome:
 
         # Manually add recurrent connections to saturate network
         genome.connections[(1, 1)] = ConnectionGene(3, 1, 1, 0.0, True)
-        genome.connections[(0, 0)] = ConnectionGene(4, 0, 0, 0.0, True)
         genome.connections[(1, 0)] = ConnectionGene(5, 0, 0, 0.0, True)
 
         genome.mutate_add_connection(std_dev=1.0)
-        assert 4 == len(genome.connections)
+        assert len(genome.connections) == 4
 
     def test_mutate_add_connection_succeed(self):
         """Test the function for the 'add connection' mutation when there are
@@ -397,11 +396,15 @@ class TestGenome:
         genome = Genome(key=0, config=self.config.genome_config, innovation_store=InnovationStore())
         genome.configure_new()
 
-        genome.mutate_add_connection(std_dev=1.0)
-        assert 1 == len(genome.connections)
+        # Make sure there are no connections to start with
+        assert len(genome.connections) == 0
 
-        assert 0 == genome.connections[2].node_in
-        assert 1 == genome.connections[2].node_out
+        genome.mutate_add_connection(std_dev=1.0)
+        # Make sure only one connection was added
+        assert len(genome.connections) == 1
+
+        # Make sure the a recurrent connection was not added to an input node
+        assert genome.connections[2].node_out != 0
 
     def test_mutate_weights(self):
         """Test the mutation of genome connection weights.
@@ -669,34 +672,35 @@ class TestGenome:
 
         genome1 = Genome(key=0, config=self.config.genome_config, innovation_store=None)
         genome1.nodes = {
-            0: NodeGene(0, NodeType.INPUT, 1., identity_activation),
-            1: NodeGene(1, NodeType.INPUT, 1., identity_activation),
-            2: NodeGene(2, NodeType.OUTPUT, 1., identity_activation),
-            5: NodeGene(5, NodeType.HIDDEN, 1., identity_activation)
+            0: NodeGene(0, NodeType.INPUT, -1.64, identity_activation),
+            1: NodeGene(1, NodeType.INPUT, 2.82, identity_activation),
+            2: NodeGene(2, NodeType.INPUT, 2.06, identity_activation),
+            3: NodeGene(3, NodeType.OUTPUT, -2.86, identity_activation)
         }
         genome1.connections = {
-            3: ConnectionGene(key=3, node_in=0, node_out=2, weight=1., expressed=False),
-            4: ConnectionGene(key=4, node_in=1, node_out=2, weight=1., expressed=True),
-            6: ConnectionGene(key=6, node_in=0, node_out=5, weight=1., expressed=True),
-            7: ConnectionGene(key=7, node_in=5, node_out=2, weight=1., expressed=True)
+            4: ConnectionGene(key=4, node_in=0, node_out=3, weight=1.94, expressed=True),
+            5: ConnectionGene(key=5, node_in=1, node_out=3, weight=-0.36, expressed=True),
+            6: ConnectionGene(key=6, node_in=2, node_out=3, weight=-0.61, expressed=True)
         }
 
         genome2 = Genome(key=1, config=self.config.genome_config, innovation_store=None)
         genome2.nodes = {
-            0: NodeGene(0, NodeType.INPUT, 2., identity_activation),
-            1: NodeGene(1, NodeType.INPUT, 2., identity_activation),
-            2: NodeGene(2, NodeType.OUTPUT, 2., identity_activation),
-            8: NodeGene(8, NodeType.HIDDEN, 2., identity_activation),
+            0: NodeGene(0, NodeType.INPUT, 0.32, identity_activation),
+            1: NodeGene(1, NodeType.INPUT, 3.41, identity_activation),
+            2: NodeGene(2, NodeType.INPUT, 0.92, identity_activation),
+            3: NodeGene(3, NodeType.OUTPUT, -1.6, identity_activation),
+            7: NodeGene(7, NodeType.OUTPUT, 0.0, identity_activation),
         }
         genome2.connections = {
-            3: ConnectionGene(key=3, node_in=0, node_out=2, weight=2., expressed=True),
-            4: ConnectionGene(key=4, node_in=1, node_out=2, weight=2., expressed=False),
-            9: ConnectionGene(key=9, node_in=1, node_out=8, weight=2., expressed=True),
-            10: ConnectionGene(key=10, node_in=8, node_out=2, weight=2., expressed=True)
+            4: ConnectionGene(key=4, node_in=0, node_out=3, weight=2.69, expressed=True),
+            5: ConnectionGene(key=5, node_in=1, node_out=3, weight=-0.18, expressed=False),
+            6: ConnectionGene(key=6, node_in=2, node_out=3, weight=1.18, expressed=True),
+            8: ConnectionGene(key=8, node_in=1, node_out=7, weight=1.0, expressed=True),
+            9: ConnectionGene(key=9, node_in=7, node_out=3, weight=-0.18, expressed=True)
         }
 
-        assert genome1.distance(genome2) == 9.0
-        assert genome2.distance(genome1) == 9.0
+        assert genome1.distance(genome2) == pytest.approx(6.2871, abs=1e-3)
+        assert genome2.distance(genome1) == pytest.approx(6.2871, abs=1e-3)
 
     def test_copy_keep_innov_store(self):
         """Test that the copy function works correctly, maintaining the same

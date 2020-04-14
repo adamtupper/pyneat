@@ -231,18 +231,20 @@ class Genome:
         """
         # Create the required number of input nodes
         for i in range(-1, -2 * self.config.num_inputs - 1, -2):
-            self.add_node(i, i, random.uniform(-3.0, 3.0), NodeType.INPUT)
+            # self.add_node(i, i, random.uniform(-3.0, 3.0), NodeType.INPUT)
+            self.add_node(i, i, random.normalvariate(mu=0.0, sigma=self.config.bias_init_std_dev), NodeType.INPUT)
 
         # Create the required number of output nodes
         for i in range(-2, -2 * self.config.num_outputs - 1, -2):
-            self.add_node(i, i, random.uniform(-3.0, 3.0), NodeType.OUTPUT)
+            # self.add_node(i, i, random.uniform(-3.0, 3.0), NodeType.OUTPUT)
+            self.add_node(i, i, random.normalvariate(mu=0.0, sigma=self.config.bias_init_std_dev), NodeType.OUTPUT)
 
         # Add initial connections
         for node_in in self.inputs:
             for node_out in self.outputs:
                 if random.random() < self.config.initial_conn_prob:
-                    # self.add_connection(node_in, node_out, random.normalvariate(mu=0.0, sigma=config.weight_init_std_dev))
-                    self.add_connection(node_in, node_out, random.uniform(-3.0, 3.0))
+                    self.add_connection(node_in, node_out, random.normalvariate(mu=0.0, sigma=self.config.weight_init_std_dev))
+                    # self.add_connection(node_in, node_out, random.uniform(-3.0, 3.0))
 
     def __eq__(self, other):
         """Check for genome equality.
@@ -362,28 +364,39 @@ class Genome:
         A single connection with a random weight is added between two previously
         unconnected nodes.
 
+        TODO: Decide on whether to allow recurrent connections on input nodes.
+
         Args:
             std_dev (float): The standard deviation for the normal distribution
                 from which the weight of the new connection is chosen.
         """
-        # Do not allow connections between output nodes, between input nodes
-        possible_inputs = [k for k, g in self.nodes.items() if g.type != NodeType.OUTPUT]
+        possible_inputs = [k for k, g in self.nodes.items()]
         possible_outputs = [k for k, g in self.nodes.items() if g.type != NodeType.INPUT]
 
-        node_in = random.choice(possible_inputs)
-        node_out = random.choice(possible_outputs)
+        max_retries = 100
+        attempts = 0
+        while attempts < max_retries:
+            node_in = random.choice(possible_inputs)
+            node_out = random.choice(possible_outputs)
 
-        # Check for existing connection, enable if disabled
-        mutation = (node_in, node_out, InnovationType.NEW_CONNECTION)
-        mutation_key = self.innovation_store.mutation_to_key.get(mutation)
-        if mutation_key in self.connections:
-            self.connections[mutation_key].expressed = True
-            return
+            # Check for existing connection
+            mutation = (node_in, node_out, InnovationType.NEW_CONNECTION)
+            mutation_key = self.innovation_store.mutation_to_key.get(mutation)
+            connection_gene = self.connections.get(mutation_key, None)
 
-        # Add a new connection
-        # connection_weight = random.normalvariate(mu=0.0, sigma=std_dev)
-        connection_weight = random.uniform(-3.0, 3.0)
-        self.add_connection(node_in, node_out, connection_weight)
+            if connection_gene and not connection_gene.expressed:
+                # Enable if disabled
+                self.connections[mutation_key].expressed = True
+                return
+
+            elif not connection_gene:
+                # Add a new connection
+                connection_weight = random.normalvariate(mu=0.0, sigma=std_dev)
+                # connection_weight = random.uniform(-3.0, 3.0)
+                self.add_connection(node_in, node_out, connection_weight)
+                return
+
+            attempts += 1  # Failed to find a spot to add/enable a connection, try again.
 
     def mutate_add_node(self, activation):
         """Performs an 'add node' structural mutation.
@@ -453,12 +466,12 @@ class Genome:
         for key, gene in self.connections.items():
             if random.random() < replace_prob:
                 # Replace weight
-                # gene.weight = random.normalvariate(mu=0.0, sigma=init_std_dev)
-                gene.weight = random.uniform(-3.0, 3.0)
+                gene.weight = random.normalvariate(mu=0.0, sigma=init_std_dev)
+                # gene.weight = random.uniform(-1.0, 1.0)
             else:
                 # Perturb weight
-                # gene.weight += random.normalvariate(mu=0.0, sigma=perturb_std_dev)
-                gene.weight += random.uniform(-perturb_std_dev, perturb_std_dev)
+                gene.weight += random.normalvariate(mu=0.0, sigma=perturb_std_dev)
+                # gene.weight += random.uniform(-perturb_std_dev, perturb_std_dev)
                 gene.weight = max(min_val, gene.weight)
                 gene.weight = min(max_val, gene.weight)
 
@@ -485,13 +498,13 @@ class Genome:
         for key, gene in self.nodes.items():
             if random.random() < replace_prob:
                 # Replace bias
-                # gene.bias = random.normalvariate(mu=0.0, sigma=init_std_dev)
-                gene.bias = random.uniform(-3.0, 3.0)
+                gene.bias = random.normalvariate(mu=0.0, sigma=init_std_dev)
+                # gene.bias = random.uniform(-1.0, 1.0)
             else:
                 # Perturb bias
                 # TODO: Rename config param to reflect normal dist limits
-                # gene.bias += random.normalvariate(mu=0.0, sigma=perturb_std_dev)
-                gene.bias += random.uniform(-perturb_std_dev, perturb_std_dev)
+                gene.bias += random.normalvariate(mu=0.0, sigma=perturb_std_dev)
+                # gene.bias += random.uniform(-perturb_std_dev, perturb_std_dev)
                 gene.bias = max(min_val, gene.bias)
                 gene.bias = min(max_val, gene.bias)
 
@@ -584,27 +597,31 @@ class Genome:
         non_matching_nodes = set(self.nodes.keys()) ^ set(other.nodes.keys())
         matching_nodes = all_nodes - non_matching_nodes
 
-        avg_bias_diff = 0.0
+        sum_bias_diff = 0.0
         for key in matching_nodes:
-            avg_bias_diff += abs(self.nodes[key].bias - other.nodes[key].bias)
+            sum_bias_diff += abs(self.nodes[key].bias - other.nodes[key].bias)
 
-        if matching_nodes:
-            avg_bias_diff = avg_bias_diff / len(matching_nodes)
+        # if matching_nodes:
+        #     avg_bias_diff = avg_bias_diff / len(matching_nodes)
 
         # Connection gene distance (count only expressed connections)
         all_connections = set(self.connections.keys()).union(set(other.connections.keys()))
         non_matching_connections = set(self.connections.keys()) ^ set(other.connections.keys())
         matching_connections = all_connections - non_matching_connections
 
-        avg_weight_diff = 0.0
+        sum_weight_diff = 0.0
         for key in matching_connections:
-            avg_weight_diff += abs(self.connections[key].weight - other.connections[key].weight)
+            sum_weight_diff += abs(self.connections[key].weight - other.connections[key].weight)
 
-        if matching_connections:
-            avg_weight_diff = avg_weight_diff / len(matching_connections)
+        # if matching_connections:
+        #     avg_weight_diff = avg_weight_diff / len(matching_connections)
 
         gene_dist = c1 * (len(non_matching_nodes) + len(non_matching_connections)) / N
-        weight_dist = c2 * (avg_weight_diff + avg_bias_diff) / 2
+
+        if len(matching_nodes) + len(matching_connections) > 0:
+            weight_dist = c2 * (sum_weight_diff + sum_bias_diff) / (len(matching_nodes) + len(matching_connections))
+        else:
+            weight_dist = 0
 
         return gene_dist + weight_dist
 
