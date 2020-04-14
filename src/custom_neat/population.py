@@ -6,6 +6,7 @@ from neat.math_util import mean
 from neat.reporting import ReporterSet
 
 from custom_neat.innovation import InnovationStore
+import visualize
 
 
 class CompleteExtinctionException(Exception):
@@ -139,6 +140,10 @@ class Population(object):
 
             # Evaluate all genomes using the user-provided function.
             fitness_function(list(self.population.items()), self.config)
+
+            # # Draw genomes
+            # for key, genome in self.population.items():
+            #     visualize.draw_net(genome, filename=f'results/run-0/genomes/genome_{key}')
 
             # Gather and report statistics.
             best = None
