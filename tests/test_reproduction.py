@@ -67,6 +67,8 @@ class TestReproduction:
         offspring_numbers = reproduction_scheme.compute_num_offspring(remaining_species, popn_size)
 
         assert 10 == sum(offspring_numbers.values())
+        assert offspring_numbers[1] == 2
+        assert offspring_numbers[2] == 8
 
     def test_reproduce_too_many_elites(self):
         """Test that reproduce works as expected when too many elites are specified.

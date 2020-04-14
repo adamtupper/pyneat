@@ -314,8 +314,8 @@ class Reproduction:
                     lowest_fitness = genome.fitness
 
         # Calculate the sum of adjusted fitnesses for each species
-        species_size = len(remaining_species.keys())
         for species_key, species in remaining_species.items():
+            species_size = len(species.members)
             species.adj_fitness = 0.0  # reset sum of the adjusted fitnesses
             for genome_key, genome in species.members.items():
                 species.adj_fitness += (genome.fitness - lowest_fitness) / species_size
@@ -329,11 +329,11 @@ class Reproduction:
             else:
                 # All members of all species have zero fitness
                 # Allocate each species an equal number of offspring
-                offspring[species_key] = pop_size / species_size
+                offspring[species_key] = pop_size / len(remaining_species)
 
         # Ensure that the species sizes sum to population size
-        # Sort offspring numbers by fractional remainder
-        sorted_keys = sorted(offspring.keys(), key=lambda k: offspring[k] - math.floor(offspring[k]))
+        # Sort offspring numbers (in descending order) by fractional remainder
+        sorted_keys = sorted(offspring.keys(), key=lambda k: offspring[k] - math.floor(offspring[k]), reverse=True)
         offspring = {key: math.floor(n) for key, n in offspring.items()}
 
         # Assign extra offspring to species based on fractional remainder
