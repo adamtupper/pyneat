@@ -15,6 +15,25 @@ from custom_neat.genome import Genome
 
 class ReproductionConfig:
     """Sets up and hold configuration information for the Reproduction class.
+
+    Config Parameters:
+        crossover_prob (float): The probability that a child is generated via
+            crossover (as opposed to mutation alone). Crossover is only an
+            option if there is more than one remaining parent in the parent
+            pool for the species in question.
+        inter_species_crossover_prob (float): The probability (given crossover)
+            that the child is instead generating using parents from different
+            species. Relies on their being more than one species.
+        elitism (int): The number of elites from each species to be copied to
+            the next generation. The size of a species must surpass the
+            min_species_size (elitism_threshold) for elitism to occur. Soon to
+            be renamed num_elites.
+        min_species_size (int): Elitism will only be applied for a species if
+            the number of allocated offspring exceeds this threshold. Soon to be
+            renamed elitism_threshold.
+        survival_threshold (float): The proportion of members of each species
+            that are added to the parent pool and are allowed to reproduce. The
+            fitessed members are kept.
     """
 
     def __init__(self, params):
@@ -139,6 +158,13 @@ class Reproduction:
 
         Note: This is a required interface method.
 
+        The steps are broadly as follows:
+            1. Filter stagnant species.
+            2. Compute the number of offspring for each remaining species.
+            3. Generate the parent pool for each remaining species (eliminate
+                the lowest performing members).
+            4. Generate the new population.
+
         Args:
             config (Config): The experiment configuration.
             species (SpeciesSet): The current allocation of genomes to species.
@@ -152,8 +178,8 @@ class Reproduction:
                 population.
         """
         species_set = species
-        num_elites = self.reproduction_config.elitism
-        elitism_threshold = self.reproduction_config.min_species_size
+        num_elites = self.reproduction_config.elitism  # TODO: Refactor elitism -> num_elites
+        elitism_threshold = self.reproduction_config.min_species_size  # TODO: Refactor min_species_size -> elitism_threshold
         survival_threshold = self.reproduction_config.survival_threshold
 
         # Ensure that the number of elites cannot exceed the minimum species
@@ -178,11 +204,10 @@ class Reproduction:
         # Compute number of offspring per remaining species
         offspring_numbers = self.compute_num_offspring(remaining_species, pop_size)
 
-        # Report average fitness metrics
+        # Report average fitness metrics (of remaining species)
         mean_fitness = statistics.mean(all_fitnesses)
         self.reporters.info("Mean fitness: {:.3f}".format(mean_fitness))
 
-        # TODO: Remove redundancy in parent pool and population generation
         # Generate parent pool for each species
         parent_pool = {}
         for species_key, species in remaining_species.items():
@@ -193,78 +218,71 @@ class Reproduction:
 
             # Eliminate the lowest performing members of the species
             cutoff = int(math.ceil(survival_threshold) * len(old_members))
-
-            # Ensure that there are always at least two parents remaining
-            cutoff = max(cutoff, 2)
-            old_members = old_members[:cutoff]
-
-            parent_pool[species_key] = [m for m in old_members]
+            parents = old_members[:cutoff]
+            parent_pool[species_key] = parents
 
         # Generate new population
         new_population = {}
         species_set.species = {}
         for species_key, species in remaining_species.items():
             num_offspring = offspring_numbers[species_key]
-            old_members = list(species.members.items())
+            if num_offspring == 0:
+                continue
+
             species.members = {}
-            species_set.species[species.key] = species
+            species_set.species[species_key] = species
+            parents = parent_pool[species_key]
 
-            # Sort members in order of descending fitness
-            old_members.sort(reverse=True, key=lambda x: x[1].fitness)
+            # Add elite(s)
+            if num_offspring > elitism_threshold:
+                for i in range(num_elites):
+                    """
+                    TODO: Should elites be assigned new genome keys?
+                    
+                    This is the current implementation, but it might be better
+                    for history tracking (when performing analysis) to keep the
+                    same key. With regards to algorithm performance/correctness
+                    this doesn't matter.
+                    """
+                    elite_key, elite = parents[i]
+                    child_key = next(self.genome_key_generator)
+                    child = elite.copy()
+                    child.key = child_key
 
-            # Transfer elites to new generation if species is large enough
-            num_members = len(old_members)  # len(species.members.keys())
-            if num_members > elitism_threshold and num_offspring > 0:
-                for genome_key, genome in old_members[:num_elites]:
-                    new_population[genome_key] = genome
+                    self.ancestors[child_key] = (elite,)
+                    new_population[child_key] = child
+
                     num_offspring -= 1
-
                     if num_offspring == 0:
                         break
 
-            if num_offspring <= 0:
-                # No more offspring required for this species
-                continue
-
-            # Eliminate the lowest performing members of the species
-            cutoff = int(math.ceil(survival_threshold) * len(old_members))
-
-            # Ensure that there are always at least two parents remaining
-            cutoff = max(cutoff, 2)
-            old_members = old_members[:cutoff]
-
+            # Produce offspring through mutation/crossover
             while num_offspring > 0:
                 num_offspring -= 1
-
-                parent1_key, parent1 = random.choice(old_members)
                 child_key = next(self.genome_key_generator)
 
-                if random.random() < self.reproduction_config.crossover_prob:
-                    # Offspring is generated through mutation alone
-                    child = parent1.copy()
-                    child.key = child_key
-                    child.mutate()
-                    self.ancestors[child_key] = (parent1,)
-                else:
-                    # Offspring is generated through mutation and crossover
-                    # TODO: Test check for a sufficient number of species
+                if (len(parents) > 1) and (random.random() < self.reproduction_config.crossover_prob):
+                    # Child is generated through mutation and crossover
+                    (parent1_key, parent1), (parent2_key, parent2) = random.sample(parents, 2)
+
                     if random.random() < self.reproduction_config.inter_species_crossover_prob:
-                        # Inter-species crossover
+                        # Inter-species crossover (replace the 2nd parent with one from another species)
                         candidates = [i for i in parent_pool.keys() if i != species_key]
                         if len(candidates) > 1:
                             other_species_key = random.choice(candidates)
                             parent2_key, parent2 = random.choice(parent_pool[other_species_key])
-                        else:
-                            # Fallback to intra-species crossover
-                            parent2_key, parent2 = random.choice(old_members)
-                    else:
-                        # Intra-species crossover
-                        parent2_key, parent2 = random.choice(old_members)
 
                     child = Genome(child_key, config.genome_config, innovation_store)
                     child.configure_crossover(parent1, parent2)
                     child.mutate()
                     self.ancestors[child_key] = (parent1, parent2)
+                else:
+                    # Child is generated through mutation alone
+                    parent_key, parent = random.choice(parents)
+                    child = parent.copy()
+                    child.key = child_key
+                    child.mutate()
+                    self.ancestors[child_key] = (parent,)
 
                 new_population[child_key] = child
 

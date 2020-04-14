@@ -121,7 +121,7 @@ class TestReproduction:
         assert len(population) == len(new_population)
         old_genomes = population.values()
         new_genomes = new_population.values()
-        assert 2 == len([1 for (old, new) in itertools.product(old_genomes, new_genomes) if old == new])
+        assert 2 == len([1 for (old, new) in itertools.product(old_genomes, new_genomes) if old.nodes == new.nodes and old.connections == new.connections])
 
     def test_reproduce_no_elitism(self):
         """Test that reproduce produces a population with all new genomes if the
@@ -130,34 +130,12 @@ class TestReproduction:
         self.config.reproduction_config.elitism = 0
         self.config.reproduction_config.min_species_size = 4
         self.config.reproduction_config.survival_threshold = 0.8
-        # config = configparser.ConfigParser()
-        # config[NETWORK] = {
-        #     NUM_INPUTS: 1,
-        #     NUM_OUTPUTS: 1,
-        # }
-        # config[NEAT] = {
-        #     POPULATION_SIZE: 10,
-        #     ELITES: 0,
-        #     ELITISM_THRESHOLD: 4,
-        #     SURVIVAL_THRESHOLD: 0.8,
-        #     CROSSOVER_PROB: 0.0,
-        #     CONNECTION_GENE_DISABLE_PROB: 0.0,
-        #     INTER_SPECIES_CROSSOVER_PROB: 0.0,
-        #     WEIGHT_MUTATION_PROB: 1.0,
-        #     WEIGHT_REPLACE_PROB: 0.0,
-        #     WEIGHT_PERTURB_STD_DEV: 0.2,
-        #     ADD_CONNECTION_PROB: 0.0,
-        #     ADD_NODE_PROB: 0.0,
-        #     DIST_COEFF_1: 1.0,
-        #     DIST_COEFF_2: 1.0,
-        #     SPECIATION_THRESHOLD: 10.0,
-        #     STAGNATION_THRESHOLD: 10,
-        # }
 
         stagnation_scheme = DefaultStagnation(self.config.stagnation_config, self.reporters)
         reproduction_scheme = Reproduction(self.config.reproduction_config, self.reporters, stagnation_scheme)
         pop_size = 10
-        population = reproduction_scheme.create_new(Genome, self.config.genome_config, pop_size, InnovationStore())
+        innovation_store = InnovationStore()
+        population = reproduction_scheme.create_new(Genome, self.config.genome_config, pop_size, innovation_store)
         for genome in population.values():
             genome.fitness = 1
 
@@ -173,7 +151,7 @@ class TestReproduction:
 
         assert 2 == len(species_set.species)
 
-        new_population = reproduction_scheme.reproduce(self.config, species_set, pop_size,  generation=1, innovation_store=InnovationStore())
+        new_population = reproduction_scheme.reproduce(self.config, species_set, pop_size,  generation=1, innovation_store=innovation_store)
 
         assert len(population) == len(new_population)
         old_genomes = population.values()
