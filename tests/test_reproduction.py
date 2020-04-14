@@ -102,7 +102,8 @@ class TestReproduction:
         stagnation_scheme = DefaultStagnation(self.config.stagnation_config, self.reporters)
         reproduction_scheme = Reproduction(self.config.reproduction_config, self.reporters, stagnation_scheme)
         pop_size = 10
-        population = reproduction_scheme.create_new(Genome, self.config.genome_config, pop_size, InnovationStore())
+        innovation_store = InnovationStore()
+        population = reproduction_scheme.create_new(Genome, self.config.genome_config, pop_size, innovation_store)
         for genome in population.values():
             genome.fitness = 1
 
@@ -118,7 +119,7 @@ class TestReproduction:
 
         assert 2 == len(species_set.species)
 
-        new_population = reproduction_scheme.reproduce(self.config, species_set, pop_size, generation=1, innovation_store=InnovationStore())
+        new_population = reproduction_scheme.reproduce(self.config, species_set, pop_size, generation=1, innovation_store=innovation_store)
 
         assert len(population) == len(new_population)
         old_genomes = population.values()
