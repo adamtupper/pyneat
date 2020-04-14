@@ -155,7 +155,7 @@ def draw_net(genome, view=False, filename=None, node_names=None, show_disabled=T
         ng = genome.nodes[k]
         outputs.add(k)
         name = node_names.get(k, str(k))
-        node_attrs = {'label': f'({k}) {ng.bias:.2f}\nf={genome.fitness if genome.fitness else 0:.3f}', 'shape': 'ellipse', 'style': 'filled', 'fillcolor': node_colors.get(k, 'lightblue')}
+        node_attrs = {'label': f'({k}) {ng.bias:.2f}\nf={genome.fitness if genome.fitness else 0:.4f}', 'shape': 'ellipse', 'style': 'filled', 'fillcolor': node_colors.get(k, 'lightblue')}
 
         dot.node(name, _attributes=node_attrs)
 
