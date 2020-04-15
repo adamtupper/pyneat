@@ -6,7 +6,7 @@ import random
 import pickle
 import os
 
-from cart_pole import CartPole
+from cart_pole_ctrnn import CartPole
 
 import neat
 

@@ -239,12 +239,22 @@ class Genome:
             # self.add_node(i, i, random.uniform(-3.0, 3.0), NodeType.OUTPUT)
             self.add_node(i, i, random.normalvariate(mu=0.0, sigma=self.config.bias_init_std_dev), NodeType.OUTPUT)
 
+        # Add hidden node (to match Stanley et al.'s evolved solution)
+        self.add_node(1, 3, random.normalvariate(mu=0.0, sigma=self.config.bias_init_std_dev), NodeType.HIDDEN)
+
         # Add initial connections
         for node_in in self.inputs:
             for node_out in self.outputs:
                 if random.random() < self.config.initial_conn_prob:
                     self.add_connection(node_in, node_out, random.normalvariate(mu=0.0, sigma=self.config.weight_init_std_dev))
                     # self.add_connection(node_in, node_out, random.uniform(-3.0, 3.0))
+
+        # Add extra connections (to match Stanley et al.'s evolved solution)
+        self.add_connection(1, 4, random.normalvariate(mu=0.0, sigma=self.config.weight_init_std_dev))
+        self.add_connection(2, 4, random.normalvariate(mu=0.0, sigma=self.config.weight_init_std_dev))
+        self.add_connection(4, 3, random.normalvariate(mu=0.0, sigma=self.config.weight_init_std_dev))
+        self.add_connection(4, 4, random.normalvariate(mu=0.0, sigma=self.config.weight_init_std_dev))
+        self.add_connection(3, 3, random.normalvariate(mu=0.0, sigma=self.config.weight_init_std_dev))
 
     def __eq__(self, other):
         """Check for genome equality.
