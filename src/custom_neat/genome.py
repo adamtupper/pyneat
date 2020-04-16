@@ -384,25 +384,34 @@ class Genome:
         Note: This is a required interface method.
 
         Mutates the genome according to the mutation parameter values specified
-        in the genome configuration.
+        in the genome configuration. If any structural mutations are performed,
+        weight and bias mutations will not be performed (as per the original
+        implementation of NEAT).
         """
-        if random.random() < self.config.weight_mutate_prob:
-            self.mutate_weights()
-
-        if random.random() < self.config.bias_mutate_prob:
-            self.mutate_biases()
+        connection_added = False
+        node_added = False
 
         if random.random() < self.config.conn_add_prob:
-            self.mutate_add_connection()
+            connection_added = self.mutate_add_connection()
 
         if random.random() < self.config.node_add_prob:
-            self.mutate_add_node()
+            node_added = self.mutate_add_node()
+
+        if not (connection_added or node_added):
+            if random.random() < self.config.weight_mutate_prob:
+                self.mutate_weights()
+
+            if random.random() < self.config.bias_mutate_prob:
+                self.mutate_biases()
 
     def mutate_add_connection(self):
         """Performs an 'add connection' structural mutation.
         
         A single connection with a random weight is added between two previously
         unconnected nodes.
+
+        Returns:
+            bool: True if a connection was added, False otherwise.
         """
         possible_inputs = [k for k, g in self.nodes.items()]
         possible_outputs = [k for k, g in self.nodes.items() if g.type != NodeType.INPUT]
@@ -421,15 +430,17 @@ class Genome:
             if connection_gene and not connection_gene.expressed:
                 # Enable if disabled
                 self.connections[mutation_key].expressed = True
-                return
+                return True
 
             elif not connection_gene:
                 # Add a new connection
                 connection_weight = random.uniform(-1.0, 1.0) * self.config.weight_perturb_power
                 self.add_connection(node_in, node_out, connection_weight)
-                return
+                return True
 
             attempts += 1  # Failed to find a spot to add/enable a connection, try again.
+
+        return False
 
     def mutate_add_node(self):
         """Performs an 'add node' structural mutation.
@@ -439,6 +450,9 @@ class Genome:
         connection genes are added. The new connection leading into the new node
         receives a weight of 1.0 and the connection leading out of the new node
         receives the old connection weight.
+
+        Returns:
+            bool: True is a node was added, False otherwise.
         """
         if self.connections:
             # Only add a new node if there are existing connections to replace
@@ -455,7 +469,7 @@ class Genome:
             if node_mutation_key in self.nodes:
                 # Skip if this mutation is already present in this genome
                 # TODO: Decide whether we should retry if the node to be added already exists
-                return
+                return False
 
             old_connection_gene.expressed = False
 
@@ -471,6 +485,8 @@ class Genome:
             self.add_connection(node_in=node_key,
                                 node_out=old_connection_gene.node_out,
                                 weight=old_connection_gene.weight)
+
+            return True
 
     def mutate_weights(self):
         """Mutates (perturbs) or replaces each connection weight in the genome.
