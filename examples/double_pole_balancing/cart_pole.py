@@ -54,7 +54,8 @@ class CartPole(object):
                     # activate the neural network
                     output = net.forward(inputs)
                     # maps [-1,1] onto [0,1]
-                    action = 0.5 * (output[0] + 1.0)
+                    # action = 0.5 * (output[0] + 1.0)
+                    action = output
                     # advances one time step
                     self.__state = integrate(action, self.__state, 1)
 
