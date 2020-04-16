@@ -1,6 +1,5 @@
 """This module defines the genome encoding used by NEAT.
 """
-from itertools import count
 import random
 import copy
 from enum import Enum
@@ -102,6 +101,50 @@ class NodeGene:
 
 class GenomeConfig:
     """Sets up and holds configuration information for the Genome class.
+
+    Config Parameters:
+        num_inputs (float): The number of inputs each network should have.
+        num_outputs (float): The number of outputs each network should have.
+        initial_conn_prob (float): The initial connection probability of each
+            potential connection between inputs and outputs. 0.0 = no
+            connections, i.e. all inputs are disconnected from the outputs.
+            1.0 = fully connected, i.e. all inputs are connected to all outputs.
+        activation_func (str): The name of the activation function to be used by
+            all nodes. Must be present in the set of possible activation
+            functions.
+        compatibility_disjoint_coefficient (float): The disjoint and excess
+            coefficient to be used when calculating genome distance.
+        compatibility_weight_coefficient (float): The weight and bias
+            coefficient to be used when calculation genome distance.
+        conn_add_prob (float): The probability of adding a new connection when
+            performing mutations.
+        node_add_prob (float): The probability of adding a new node when
+            performing mutations.
+        weight_mutate_prob (float): The probability of mutating the connection
+            weights of a genome when performing mutations.
+        weight_replace_prob (float): The probability of replacing, instead of
+            perturbing, a connection weight when performing weight mutations.
+        weight_init_power (float): Sets the range of possible values for weight
+            replacements and new weight initialisations.
+        weight_perturb_power (float): Sets the range of possible values for
+            weight perturbations.
+        weight_min_value (float): Sets the minimum allowed value for connection
+            weights.
+        weight_max_value (float): Sets the maximum allowed value for connection
+            weights.
+        bias_mutate_prob (float): The probability of mutating the node biases of
+            a genome when performing mutations.
+        bias_replace_prob (float): The probability of replacing, instead of
+            perturbing, a node bias when performing bias mutations.
+        bias_init_power (float): Sets the range of possible values for bias
+            replacements and new bias initialisations.
+        bias_perturb_power (float): Sets the range of possible values for bias
+            perturbations.
+        bias_min_value (float): Sets the minimum allowed value for node biases.
+        bias_max_value (float): Sets the maximum allowed value for node biases.
+        gene_disable_prob (float): The probability of disabling a gene in the
+            child that is disabled in either of the parents when performing
+            crossover.
     """
 
     def __init__(self, params):
@@ -115,25 +158,25 @@ class GenomeConfig:
 
         self._params = [ConfigParameter('num_inputs', int),
                         ConfigParameter('num_outputs', int),
+                        ConfigParameter('initial_conn_prob', float),
+                        ConfigParameter('activation_func', str),
                         ConfigParameter('compatibility_disjoint_coefficient', float),
                         ConfigParameter('compatibility_weight_coefficient', float),
                         ConfigParameter('conn_add_prob', float),
                         ConfigParameter('node_add_prob', float),
-                        ConfigParameter('initial_conn_prob', float),
                         ConfigParameter('weight_mutate_prob', float),
                         ConfigParameter('weight_replace_prob', float),
-                        ConfigParameter('weight_init_std_dev', float),
-                        ConfigParameter('weight_perturb_std_dev', float),
+                        ConfigParameter('weight_init_power', float),
+                        ConfigParameter('weight_perturb_power', float),
                         ConfigParameter('weight_min_value', float),
                         ConfigParameter('weight_max_value', float),
                         ConfigParameter('bias_mutate_prob', float),
                         ConfigParameter('bias_replace_prob', float),
-                        ConfigParameter('bias_init_std_dev', float),
-                        ConfigParameter('bias_perturb_std_dev', float),
+                        ConfigParameter('bias_init_power', float),
+                        ConfigParameter('bias_perturb_power', float),
                         ConfigParameter('bias_min_value', float),
                         ConfigParameter('bias_max_value', float),
-                        ConfigParameter('gene_disable_prob', float),
-                        ConfigParameter('activation_func', str)]
+                        ConfigParameter('gene_disable_prob', float)]
 
         # Use the configuration data to interpret the supplied parameters
         for p in self._params:
@@ -231,30 +274,31 @@ class Genome:
         """
         # Create the required number of input nodes
         for i in range(-1, -2 * self.config.num_inputs - 1, -2):
-            # self.add_node(i, i, random.uniform(-3.0, 3.0), NodeType.INPUT)
-            self.add_node(i, i, random.normalvariate(mu=0.0, sigma=self.config.bias_init_std_dev), NodeType.INPUT)
+            bias = random.uniform(-1.0, 1.0) * self.config.bias_init_power
+            self.add_node(i, i, bias, NodeType.INPUT)
 
         # Create the required number of output nodes
         for i in range(-2, -2 * self.config.num_outputs - 1, -2):
-            # self.add_node(i, i, random.uniform(-3.0, 3.0), NodeType.OUTPUT)
-            self.add_node(i, i, random.normalvariate(mu=0.0, sigma=self.config.bias_init_std_dev), NodeType.OUTPUT)
+            bias = random.uniform(-1.0, 1.0) * self.config.bias_init_power
+            self.add_node(i, i, bias, NodeType.OUTPUT)
 
-        # Add hidden node (to match Stanley et al.'s evolved solution)
-        self.add_node(1, 3, random.normalvariate(mu=0.0, sigma=self.config.bias_init_std_dev), NodeType.HIDDEN)
+        # Add a hidden node (only for debugging, to match Stanley et al.'s evolved DPNV solution)
+        # bias = random.uniform(-1.0, 1.0) * self.config.bias_init_power
+        # self.add_node(1, 3, bias, NodeType.HIDDEN)
 
         # Add initial connections
         for node_in in self.inputs:
             for node_out in self.outputs:
                 if random.random() < self.config.initial_conn_prob:
-                    self.add_connection(node_in, node_out, random.normalvariate(mu=0.0, sigma=self.config.weight_init_std_dev))
-                    # self.add_connection(node_in, node_out, random.uniform(-3.0, 3.0))
+                    weight = random.uniform(-1.0, 1.0) * self.config.weight_init_power
+                    self.add_connection(node_in, node_out, weight)
 
-        # Add extra connections (to match Stanley et al.'s evolved solution)
-        self.add_connection(1, 4, random.normalvariate(mu=0.0, sigma=self.config.weight_init_std_dev))
-        self.add_connection(2, 4, random.normalvariate(mu=0.0, sigma=self.config.weight_init_std_dev))
-        self.add_connection(4, 3, random.normalvariate(mu=0.0, sigma=self.config.weight_init_std_dev))
-        self.add_connection(4, 4, random.normalvariate(mu=0.0, sigma=self.config.weight_init_std_dev))
-        self.add_connection(3, 3, random.normalvariate(mu=0.0, sigma=self.config.weight_init_std_dev))
+        # Add extra connections (only for debugging, to match Stanley et al.'s evolved DPNV solution)
+        # self.add_connection(1, 4, random.uniform(-1.0, 1.0) * self.config.weight_init_power)
+        # self.add_connection(2, 4, random.uniform(-1.0, 1.0) * self.config.weight_init_power)
+        # self.add_connection(4, 3, random.uniform(-1.0, 1.0) * self.config.weight_init_power)
+        # self.add_connection(4, 4, random.uniform(-1.0, 1.0) * self.config.weight_init_power)
+        # self.add_connection(3, 3, random.uniform(-1.0, 1.0) * self.config.weight_init_power)
 
     def __eq__(self, other):
         """Check for genome equality.
@@ -294,12 +338,7 @@ class Genome:
         """
         key = self.innovation_store.get_innovation_key(node_in, node_out, InnovationType.NEW_NODE)
         assert key not in self.nodes
-        # self.nodes[key] = NodeGene(
-        #     key=key
-        #     type=node_type,
-        #     bias=random.normalvariate(mu=0.0, sigma=config.bias_init_std_dev),
-        #     activation=config.activation_defs.get(config.activation_func)
-        # )
+
         self.nodes[key] = NodeGene(
             key=key,
             type=node_type,
@@ -344,41 +383,26 @@ class Genome:
 
         Note: This is a required interface method.
 
-         Mutates the genome according to the mutation parameter values specified
-         in the genome configuration.
+        Mutates the genome according to the mutation parameter values specified
+        in the genome configuration.
         """
         if random.random() < self.config.weight_mutate_prob:
-            self.mutate_weights(self.config.weight_replace_prob,
-                                self.config.weight_init_std_dev,
-                                self.config.weight_perturb_std_dev,
-                                self.config.weight_min_value,
-                                self.config.weight_max_value)
+            self.mutate_weights()
 
         if random.random() < self.config.bias_mutate_prob:
-            self.mutate_biases(self.config.bias_replace_prob,
-                               self.config.bias_init_std_dev,
-                               self.config.bias_perturb_std_dev,
-                               self.config.bias_min_value,
-                               self.config.bias_max_value)
+            self.mutate_biases()
 
         if random.random() < self.config.conn_add_prob:
-            self.mutate_add_connection(self.config.weight_init_std_dev)
+            self.mutate_add_connection()
 
         if random.random() < self.config.node_add_prob:
-            activation_func = self.config.activation_defs.get(self.config.activation_func)
-            self.mutate_add_node(activation_func)
+            self.mutate_add_node()
 
-    def mutate_add_connection(self, std_dev):
+    def mutate_add_connection(self):
         """Performs an 'add connection' structural mutation.
         
         A single connection with a random weight is added between two previously
         unconnected nodes.
-
-        TODO: Decide on whether to allow recurrent connections on input nodes.
-
-        Args:
-            std_dev (float): The standard deviation for the normal distribution
-                from which the weight of the new connection is chosen.
         """
         possible_inputs = [k for k, g in self.nodes.items()]
         possible_outputs = [k for k, g in self.nodes.items() if g.type != NodeType.INPUT]
@@ -401,14 +425,13 @@ class Genome:
 
             elif not connection_gene:
                 # Add a new connection
-                connection_weight = random.normalvariate(mu=0.0, sigma=std_dev)
-                # connection_weight = random.uniform(-3.0, 3.0)
+                connection_weight = random.uniform(-1.0, 1.0) * self.config.weight_perturb_power
                 self.add_connection(node_in, node_out, connection_weight)
                 return
 
             attempts += 1  # Failed to find a spot to add/enable a connection, try again.
 
-    def mutate_add_node(self, activation):
+    def mutate_add_node(self):
         """Performs an 'add node' structural mutation.
 
         An existing connection is split and the new node is placed where the old
@@ -416,9 +439,6 @@ class Genome:
         connection genes are added. The new connection leading into the new node
         receives a weight of 1.0 and the connection leading out of the new node
         receives the old connection weight.
-
-        Args:
-            activation (function): The activation function for the new node.
         """
         if self.connections:
             # Only add a new node if there are existing connections to replace
@@ -434,6 +454,7 @@ class Genome:
             node_mutation_key = self.innovation_store.mutation_to_key.get(mutation)
             if node_mutation_key in self.nodes:
                 # Skip if this mutation is already present in this genome
+                # TODO: Decide whether we should retry if the node to be added already exists
                 return
 
             old_connection_gene.expressed = False
@@ -451,72 +472,55 @@ class Genome:
                                 node_out=old_connection_gene.node_out,
                                 weight=old_connection_gene.weight)
 
-    def mutate_weights(self, replace_prob, init_std_dev, perturb_std_dev, min_val, max_val):
-        """Performs weight mutations.
+    def mutate_weights(self):
+        """Mutates (perturbs) or replaces each connection weight in the genome.
 
-        Mutates (perturbs) each connection weight in the genome with some
-        probability. Weights are either perturbed by an amount drawn from a
-        normal distribution with mean=0 and standard deviation=perturb_std_dev
-        or are replaced with a random value from the initialising normal
-        distribution with mean=0 and standard_deviation=init_std_dev.
+        Each weight is either replaced (with some probability, specified in the
+        genome config) or perturbed.
 
-        TODO: Investigate how much perturbed weights/biases are changed by in other implementations.
-
-        Args:
-            replace_prob (float):  The probability of a weight being replaced as
-                opposed to perturbed. Must be a value in the range [0, 1].
-            init_std_dev (float): The standard deviation of the normal
-                distribution from which to draw a replacement weight.
-            perturb_std_dev (float): The standard deviation of the normal
-                distribution from which to draw the amount to perturb each
-                weight.
-            min_val (float): The minimum allowed weight value.
-            max_val (float): The maximum allowed weight value.
+        Replaced weights are drawn from a uniform distribution with range
+        [-weight_replace_power, weight_replace_power). Perturbations are drawn
+        from a uniform distribution with range
+        [-weight_perturb_power, weight_perturb_power).
         """
         for key, gene in self.connections.items():
-            if random.random() < replace_prob:
+            if random.random() < self.config.weight_replace_prob:
                 # Replace weight
-                gene.weight = random.normalvariate(mu=0.0, sigma=init_std_dev)
-                # gene.weight = random.uniform(-1.0, 1.0)
+                gene.weight = random.uniform(-1.0, 1.0) * self.config.weight_init_power
             else:
                 # Perturb weight
-                gene.weight += random.normalvariate(mu=0.0, sigma=perturb_std_dev)
-                # gene.weight += random.uniform(-perturb_std_dev, perturb_std_dev)
-                gene.weight = max(min_val, gene.weight)
-                gene.weight = min(max_val, gene.weight)
+                gene.weight += random.uniform(-1.0, 1.0) * self.config.weight_perturb_power
 
-    def mutate_biases(self, replace_prob, init_std_dev, perturb_std_dev, min_val, max_val):
-        """Performs bias mutations.
+                # Ensure weight remains within the desired range
+                gene.weight = max(self.config.weight_min_value, gene.weight)
+                gene.weight = min(self.config.weight_max_value, gene.weight)
 
-        Mutates (perturbs) each node bias in the genome with some probability.
-        Biases are either perturbed by an amount drawn from a normal
-        distribution with mean=0 and standard deviation=perturb_std_dev or are
-        replaced with a random value from the initialising normal distribution
-        with mean=0 and standard_deviation=init_std_dev.
+            assert self.config.weight_min_value <= gene.weight <= self.config.weight_max_value
 
-        Args:
-            replace_prob (float):  The probability of a bias being replaced as
-                opposed to perturbed. Must be a value in the range [0, 1].
-            init_std_dev (float): The standard deviation of the normal
-                distribution from which to draw a replacement bias.
-            perturb_std_dev (float): The standard deviation of the normal
-                distribution from which to draw the amount to perturb each
-                bias.
-            min_val (float): The minimum allowed bias value.
-            max_val (float): The maximum allowed bias value.
+    def mutate_biases(self):
+        """Mutates (perturbs) or replaces each node bias in the genome.
+
+        Each bias is either replaced (with some probability, specified in the
+        genome config) or perturbed.
+
+        Replaced biases are drawn from a uniform distribution with range
+        [-bias_replace_power, bias_replace_power). Perturbations are drawn
+        from a uniform distribution with range
+        [-bias_perturb_power, bias_perturb_power).
         """
         for key, gene in self.nodes.items():
-            if random.random() < replace_prob:
+            if random.random() < self.config.bias_replace_prob:
                 # Replace bias
-                gene.bias = random.normalvariate(mu=0.0, sigma=init_std_dev)
-                # gene.bias = random.uniform(-1.0, 1.0)
+                gene.bias = random.uniform(-1.0, 1.0) * self.config.bias_init_power
             else:
                 # Perturb bias
-                # TODO: Rename config param to reflect normal dist limits
-                gene.bias += random.normalvariate(mu=0.0, sigma=perturb_std_dev)
-                # gene.bias += random.uniform(-perturb_std_dev, perturb_std_dev)
-                gene.bias = max(min_val, gene.bias)
-                gene.bias = min(max_val, gene.bias)
+                gene.bias += random.uniform(-1.0, 1.0) * self.config.bias_perturb_power
+
+                # Ensure bias remains within the desired range
+                gene.bias = max(self.config.bias_min_value, gene.bias)
+                gene.bias = min(self.config.bias_max_value, gene.bias)
+
+            assert self.config.bias_min_value <= gene.bias <= self.config.bias_max_value
 
     def configure_crossover(self, parent1, parent2):
         """Performs crossover between two genomes.

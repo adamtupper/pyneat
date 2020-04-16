@@ -83,8 +83,8 @@ class TestGenome:
         # Alter relevant configuration parameters for this test
         self.config.genome_config.num_inputs = 2
         self.config.genome_config.num_outputs = 1
-        self.config.genome_config.bias_init_std_dev = 1.0
-        self.config.genome_config.weight_init_std_dev = 1.0
+        self.config.genome_config.bias_init_power = 1.0
+        self.config.genome_config.weight_init_power = 1.0
         self.config.genome_config.init_conn_prob = 1.0  # fully-connected
 
         num_input_nodes = self.config.genome_config.num_inputs
@@ -105,13 +105,13 @@ class TestGenome:
         expected_node_types = [NodeType.INPUT] * num_input_nodes + [NodeType.OUTPUT] * num_output_nodes
         assert actual_node_types == expected_node_types
 
-        three_std_dev = 3 * self.config.genome_config.bias_init_std_dev
+        limit = self.config.genome_config.bias_init_power
         biases = [gene.bias for k, gene in genome.nodes.items()]
-        assert all(-three_std_dev <= b <= three_std_dev for b in biases)
+        assert all(-limit <= b <= limit for b in biases)
 
-        three_std_dev = 3 * self.config.genome_config.weight_init_std_dev
+        limit = self.config.genome_config.weight_init_power
         weights = [gene.weight for k, gene in genome.connections.items()]
-        assert all(-three_std_dev <= w <= three_std_dev for w in weights)
+        assert all(-limit <= w <= limit for w in weights)
 
         assert all([gene.expressed for k, gene in genome.connections.items()])
 
@@ -157,7 +157,7 @@ class TestGenome:
 
         self.config.genome_config.weight_mutate_prob = 1.0
         self.config.genome_config.weight_replace_prob = 0.5
-        self.config.genome_config.weight_perturb_std_dev = 0.2
+        self.config.genome_config.weight_perturb_power = 0.2
 
         self.config.genome_config.conn_add_prob = 0.0
         self.config.genome_config.node_add_prob = 0.0
@@ -190,7 +190,7 @@ class TestGenome:
 
         self.config.genome_config.bias_mutate_prob = 1.0
         self.config.genome_config.bias_replace_prob = 0.5
-        self.config.genome_config.bias_perturb_std_dev = 0.2
+        self.config.genome_config.bias_perturb_power = 0.2
 
         self.config.genome_config.conn_add_prob = 0.0
         self.config.genome_config.node_add_prob = 0.0
@@ -305,7 +305,7 @@ class TestGenome:
         self.config.genome_config.num_outputs = 1
         self.config.genome_config.activation_func = 'identity'
         self.config.genome_config.init_conn_prob = 1.0
-        self.config.genome_config.weight_init_std_dev = 1.0
+        self.config.genome_config.weight_init_power = 1.0
 
         # Populate the innovation store with the mutation that will attempt to
         # be duplicated
@@ -319,7 +319,7 @@ class TestGenome:
         # Add the node that will attempt to be added via mutation
         genome.nodes[3] = NodeGene(3, NodeType.HIDDEN, 0., identity_activation)
 
-        genome.mutate_add_node(activation=identity_activation)
+        genome.mutate_add_node()
         assert len(genome.connections) == 1
         assert len(genome.nodes) == 3
 
@@ -335,12 +335,12 @@ class TestGenome:
         self.config.genome_config.num_outputs = 1
         self.config.genome_config.activation_func = 'identity'
         self.config.genome_config.init_conn_prob = 1.0
-        self.config.genome_config.weight_init_std_dev = 1.0
+        self.config.genome_config.weight_init_power = 1.0
 
         genome = Genome(key=0, config=self.config.genome_config, innovation_store=InnovationStore())
         genome.configure_new()
 
-        genome.mutate_add_node(activation=identity_activation)
+        genome.mutate_add_node()
         assert len(genome.connections) == 3
         assert len(genome.nodes) == 3
 
@@ -350,16 +350,18 @@ class TestGenome:
         old_connection_gene = genome.connections[2]
         assert not old_connection_gene.expressed
 
+        limit = self.config.genome_config.weight_init_power
+
         new_connection_gene_a = genome.connections[4]
         assert new_connection_gene_a.node_in == 0
         assert new_connection_gene_a.node_out == 3
-        assert -3.0 <= new_connection_gene_a.weight <= 3.0  # assert weight is within 3 std dev of mean
+        assert -limit <= new_connection_gene_a.weight <= limit  # assert weight is within the limits
         assert new_connection_gene_a.expressed
 
         new_connection_gene_b = genome.connections[5]
         assert new_connection_gene_b.node_in == 3
         assert new_connection_gene_b.node_out == 1
-        assert -3.0 <= new_connection_gene_b.weight <= 3.0  # assert weight is within 3 std dev of mean
+        assert -limit <= new_connection_gene_b.weight <= limit  # assert weight is within the limits
         assert new_connection_gene_b.expressed
 
     def test_mutate_add_connection_fail(self):
@@ -370,6 +372,7 @@ class TestGenome:
         self.config.genome_config.num_inputs = 1
         self.config.genome_config.num_outputs = 1
         self.config.genome_config.initial_conn_prob = 1.0  # fully-connected
+        self.config.genome_config.weight_init_power = 1.0
 
         genome = Genome(key=0, config=self.config.genome_config, innovation_store=InnovationStore())
         genome.configure_new()
@@ -378,7 +381,7 @@ class TestGenome:
         genome.connections[(1, 1)] = ConnectionGene(3, 1, 1, 0.0, True)
         genome.connections[(1, 0)] = ConnectionGene(5, 0, 0, 0.0, True)
 
-        genome.mutate_add_connection(std_dev=1.0)
+        genome.mutate_add_connection()
         assert len(genome.connections) == 4
 
     def test_mutate_add_connection_succeed(self):
@@ -392,6 +395,7 @@ class TestGenome:
         self.config.genome_config.num_inputs = 1
         self.config.genome_config.num_outputs = 1
         self.config.genome_config.initial_conn_prob = 0.0  # no connections
+        self.config.genome_config.weight_init_power = 1.0
 
         genome = Genome(key=0, config=self.config.genome_config, innovation_store=InnovationStore())
         genome.configure_new()
@@ -399,7 +403,7 @@ class TestGenome:
         # Make sure there are no connections to start with
         assert len(genome.connections) == 0
 
-        genome.mutate_add_connection(std_dev=1.0)
+        genome.mutate_add_connection()
         # Make sure only one connection was added
         assert len(genome.connections) == 1
 
@@ -413,24 +417,28 @@ class TestGenome:
         self.config.genome_config.num_inputs = 3
         self.config.genome_config.num_outputs = 2
         self.config.genome_config.init_conn_prob = 1.0
+        self.config.genome_config.weight_replace_prob = 0.5
+        self.config.genome_config.weight_init_power = 1.0
+        self.config.genome_config.weight_perturb_power = 1.0
+        self.config.genome_config.weight_max_value = 10
+        self.config.genome_config.weight_min_value = -10
 
         genome = Genome(key=0, config=self.config.genome_config, innovation_store=InnovationStore())
         genome.configure_new()
 
         old_weights = [g.weight for g in genome.connections.values()]
         old_biases = [g.bias for g in genome.nodes.values()]
-        genome.mutate_weights(replace_prob=0.5,
-                              init_std_dev=0.5,
-                              perturb_std_dev=0.5,
-                              max_val=10,
-                              min_val=-10)
+        genome.mutate_weights()
         new_weights = [g.weight for g in genome.connections.values()]
         new_biases = [g.bias for g in genome.nodes.values()]
+        upper_limit = self.config.genome_config.weight_max_value
+        lower_limit = self.config.genome_config.weight_min_value
 
         assert 5 == len(genome.nodes)
         assert 6 == len(genome.connections)
         assert all(old != new for (old, new) in zip(old_weights, new_weights))
         assert all(old == new for (old, new) in zip(old_biases, new_biases))
+        assert all(lower_limit <= w <= upper_limit for w in new_weights)
 
     def test_mutate_biases(self):
         """Test the mutation of genome node biases.
@@ -439,24 +447,28 @@ class TestGenome:
         self.config.genome_config.num_inputs = 3
         self.config.genome_config.num_outputs = 2
         self.config.genome_config.init_conn_prob = 1.0
+        self.config.genome_config.bias_replace_prob = 0.5
+        self.config.genome_config.bias_init_power = 1.0
+        self.config.genome_config.bias_perturb_power = 1.0
+        self.config.genome_config.bias_min_value = -10
+        self.config.genome_config.bias_max_value = 10
 
         genome = Genome(key=0, config=self.config.genome_config, innovation_store=InnovationStore())
         genome.configure_new()
 
         old_weights = [g.weight for g in genome.connections.values()]
         old_biases = [g.bias for g in genome.nodes.values()]
-        genome.mutate_biases(replace_prob=0.5,
-                             init_std_dev=0.5,
-                             perturb_std_dev=0.5,
-                             max_val=10,
-                             min_val=-10)
+        genome.mutate_biases()
         new_weights = [g.weight for g in genome.connections.values()]
         new_biases = [g.bias for g in genome.nodes.values()]
+        upper_limit = self.config.genome_config.bias_max_value
+        lower_limit = self.config.genome_config.bias_min_value
 
         assert 5 == len(genome.nodes)
         assert 6 == len(genome.connections)
         assert all(old == new for (old, new) in zip(old_weights, new_weights))
         assert all(old != new for (old, new) in zip(old_biases, new_biases))
+        assert all(lower_limit <= b <= upper_limit for b in new_biases)
 
     def test_crossover_a(self):
         """Test that the crossover operator.
