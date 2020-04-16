@@ -21,16 +21,16 @@ class ReproductionConfig:
             crossover (as opposed to mutation alone). Crossover is only an
             option if there is more than one remaining parent in the parent
             pool for the species in question.
+        crossover_only_prob (float): The probability that a child
+            generated via crossover is not also mutated.
         inter_species_crossover_prob (float): The probability (given crossover)
             that the child is instead generating using parents from different
             species. Relies on their being more than one species.
-        elitism (int): The number of elites from each species to be copied to
+        num_elites (int): The number of elites from each species to be copied to
             the next generation. The size of a species must surpass the
-            min_species_size (elitism_threshold) for elitism to occur. Soon to
-            be renamed num_elites.
-        min_species_size (int): Elitism will only be applied for a species if
-            the number of remaining parents exceeds this threshold. Soon to be
-            renamed elitism_threshold.
+            elitism_threshold for elitism to occur.
+        elitism_threshold (int): Elitism will only be applied for a species if
+            the number of remaining parents exceeds this threshold.
         survival_threshold (float): The proportion of members of each species
             that are added to the parent pool and are allowed to reproduce. The
             fittest members are kept.
@@ -43,10 +43,11 @@ class ReproductionConfig:
             params (dict): A dictionary of config parameters and values.
         """
         self._params = [ConfigParameter('crossover_prob', float),
+                        ConfigParameter('crossover_only_prob', float),
                         ConfigParameter('inter_species_crossover_prob', float),
-                        ConfigParameter('elitism', int),
+                        ConfigParameter('num_elites', int),
                         ConfigParameter('survival_threshold', float),
-                        ConfigParameter('min_species_size', int)]
+                        ConfigParameter('elitism_threshold', int)]
 
         # Use the configuration data to interpret the supplied parameters
         for p in self._params:
@@ -178,8 +179,8 @@ class Reproduction:
                 population.
         """
         species_set = species
-        num_elites = self.reproduction_config.elitism  # TODO: Refactor elitism -> num_elites
-        elitism_threshold = self.reproduction_config.min_species_size  # TODO: Refactor min_species_size -> elitism_threshold
+        num_elites = self.reproduction_config.num_elites
+        elitism_threshold = self.reproduction_config.elitism_threshold
         survival_threshold = self.reproduction_config.survival_threshold
 
         # Ensure that the number of elites cannot exceed the minimum species
@@ -274,7 +275,8 @@ class Reproduction:
 
                     child = Genome(child_key, config.genome_config, innovation_store)
                     child.configure_crossover(parent1, parent2)
-                    child.mutate()
+                    if random.random() > self.reproduction_config.crossover_only_prob:
+                        child.mutate()
                     self.ancestors[child_key] = (parent1, parent2)
                 else:
                     # Child is generated through mutation alone

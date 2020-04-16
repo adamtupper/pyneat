@@ -74,7 +74,7 @@ class TestReproduction:
         """Test that reproduce works as expected when too many elites are specified.
         """
         # Setup configuration
-        self.config.reproduction_config.elitism = 5
+        self.config.reproduction_config.num_elites = 5
         self.config.reproduction_config.min_species_size = 3
         self.config.reproduction_config.survival_threshold = 0.75
 
@@ -95,9 +95,10 @@ class TestReproduction:
         """Test that reproduce produces a population with the correct number of
         elites carried over.
         """
-        self.config.reproduction_config.elitism = 1
-        self.config.reproduction_config.min_species_size = 4
+        self.config.reproduction_config.num_elites = 1
+        self.config.reproduction_config.elitism_threshold = 4
         self.config.reproduction_config.survival_threshold = 0.8
+        self.config.reproduction_config.crossover_only_prob = 0.0
 
         stagnation_scheme = DefaultStagnation(self.config.stagnation_config, self.reporters)
         reproduction_scheme = Reproduction(self.config.reproduction_config, self.reporters, stagnation_scheme)
@@ -124,14 +125,14 @@ class TestReproduction:
         assert len(population) == len(new_population)
         old_genomes = population.values()
         new_genomes = new_population.values()
-        assert 2 == len([1 for (old, new) in itertools.product(old_genomes, new_genomes) if old.nodes == new.nodes and old.connections == new.connections])
+        assert len([1 for (old, new) in itertools.product(old_genomes, new_genomes) if old.nodes == new.nodes and old.connections == new.connections]) == 2
 
     def test_reproduce_no_elitism(self):
         """Test that reproduce produces a population with all new genomes if the
         number of elites specified is zero.
         """
-        self.config.reproduction_config.elitism = 0
-        self.config.reproduction_config.min_species_size = 4
+        self.config.reproduction_config.num_elites = 0
+        self.config.reproduction_config.elitism_threshold = 4
         self.config.reproduction_config.survival_threshold = 0.8
 
         stagnation_scheme = DefaultStagnation(self.config.stagnation_config, self.reporters)
@@ -168,8 +169,8 @@ class TestReproduction:
         """Test that the two populations are equal if no mutations or crossover are
         allowed.
         """
-        self.config.reproduction_config.elitism = 0
-        self.config.reproduction_config.min_species_size = 4
+        self.config.reproduction_config.num_elites = 0
+        self.config.reproduction_config.elitism_threshold = 4
         self.config.reproduction_config.survival_threshold = 1.0
         self.config.genome_config.weight_mutate_prob = 0.0
         self.config.genome_config.bias_mutate_prob = 0.0
@@ -213,8 +214,8 @@ class TestReproduction:
     def test_reproduce_filter_stagnant(self):
         """Test that a stagnant population is filtered out.
         """
-        self.config.reproduction_config.elitism = 0
-        self.config.reproduction_config.min_species_size = 4
+        self.config.reproduction_config.num_elites = 0
+        self.config.reproduction_config.elitism_threshold = 4
         self.config.reproduction_config.survival_threshold = 1.0
         self.config.reproduction_config.crossover_prob = 0.0
         self.config.stagnation_config.species_fitness_func = 'max'
@@ -226,29 +227,6 @@ class TestReproduction:
         self.config.genome_config.node_add_prob = 0.0
         self.config.reproduction_config.crossover_prob = 0.0
 
-        # config = configparser.ConfigParser()
-        # config[NETWORK] = {
-        #     NUM_INPUTS: 1,
-        #     NUM_OUTPUTS: 1,
-        # }
-        # config[NEAT] = {
-        #     POPULATION_SIZE: 10,
-        #     ELITES: 0,
-        #     ELITISM_THRESHOLD: 4,
-        #     SURVIVAL_THRESHOLD: 1.0,
-        #     CROSSOVER_PROB: 0.0,
-        #     CONNECTION_GENE_DISABLE_PROB: 0.0,
-        #     INTER_SPECIES_CROSSOVER_PROB: 0.0,
-        #     WEIGHT_MUTATION_PROB: 0.0,
-        #     WEIGHT_REPLACE_PROB: 0.0,
-        #     WEIGHT_PERTURB_STD_DEV: 0.2,
-        #     ADD_CONNECTION_PROB: 0.0,
-        #     ADD_NODE_PROB: 0.0,
-        #     DIST_COEFF_1: 1.0,
-        #     DIST_COEFF_2: 1.0,
-        #     SPECIATION_THRESHOLD: 10.0,
-        #     STAGNATION_THRESHOLD: 10,
-        # }
         stagnation_scheme = DefaultStagnation(self.config.stagnation_config, self.reporters)
         reproduction_scheme = Reproduction(self.config.reproduction_config, self.reporters, stagnation_scheme)
         pop_size = 10
