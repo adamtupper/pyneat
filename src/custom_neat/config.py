@@ -3,12 +3,12 @@
 Modifies the config object in the default NEAT-Python config module to include
 the following additional parameters:
 
-    num_episodes: the number of episodes each genome/agent should be
-        evaluated for.
-    num_runs: the number of evolutionary runs to perform.
-    checkpoint_interval: the number of generations between checkpoint saves.
-    max_generations: the maximum number of generations for each evolutionary
-        run.
+- `num_episodes`: the number of episodes each genome/agent should be
+  evaluated for.
+- `num_runs`: the number of evolutionary runs to perform.
+- `checkpoint_interval`: the number of generations between checkpoint saves.
+- `max_generations`: the maximum number of generations for each evolutionary
+  run.
 """
 from __future__ import print_function
 
