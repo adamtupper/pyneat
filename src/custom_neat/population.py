@@ -141,7 +141,7 @@ class Population(object):
             # Evaluate all genomes using the user-provided function.
             fitness_function(list(self.population.items()), self.config)
 
-            # # Draw genomes
+            # Draw genomes (useful for debugging)
             # for key, genome in self.population.items():
             #     visualize.draw_net(genome, filename=f'results/run-0/genomes/genome_{key}')
 

@@ -29,7 +29,7 @@ class ReproductionConfig:
             min_species_size (elitism_threshold) for elitism to occur. Soon to
             be renamed num_elites.
         min_species_size (int): Elitism will only be applied for a species if
-            the number of allocated offspring exceeds this threshold. Soon to be
+            the number of remaining parents exceeds this threshold. Soon to be
             renamed elitism_threshold.
         survival_threshold (float): The proportion of members of each species
             that are added to the parent pool and are allowed to reproduce. The
@@ -234,7 +234,7 @@ class Reproduction:
             parents = parent_pool[species_key]
 
             # Add elite(s)
-            if num_offspring > elitism_threshold:
+            if len(parents) > elitism_threshold:
                 for i in range(num_elites):
                     """
                     TODO: Should elites be assigned new genome keys?
