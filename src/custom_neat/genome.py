@@ -462,12 +462,15 @@ class Genome:
         Returns:
             bool: True is a node was added, False otherwise.
         """
-        if self.connections:
-            # Only add a new node if there are existing connections to replace
+        # Find all connections that are not from bias nodes
+        splittable_connections = [k for k, g in self.connections.items() if g.node_in not in self.biases]
+
+        if splittable_connections:
+            # Only add a new node if there connections that can be split
 
             # NOTE: Gene dictionaries could be replaced with RandomDict() for faster
             # random access (currently O(n)): https://github.com/robtandy/randomdict
-            old_gene_key = random.choice(list(self.connections.keys()))
+            old_gene_key = random.choice(splittable_connections)
             old_connection_gene = self.connections[old_gene_key]
 
             mutation = (old_connection_gene.node_in,
@@ -483,7 +486,6 @@ class Genome:
 
             node_key = self.add_node(old_connection_gene.node_in,
                                      old_connection_gene.node_out,
-                                     bias=0.0,
                                      node_type=NodeType.HIDDEN)
 
             self.add_connection(node_in=old_connection_gene.node_in,

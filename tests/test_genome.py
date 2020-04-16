@@ -332,6 +332,7 @@ class TestGenome:
         # Alter configuration for this test
         self.config.genome_config.num_inputs = 1
         self.config.genome_config.num_outputs = 1
+        self.config.genome_config.num_biases = 1
         self.config.genome_config.activation_func = 'identity'
         self.config.genome_config.init_conn_prob = 1.0
         self.config.genome_config.weight_init_power = 1.0
@@ -346,14 +347,14 @@ class TestGenome:
         genome.configure_new()
 
         # Add the node that will attempt to be added via mutation
-        genome.add_node(0, 1, 0.0, NodeType.HIDDEN)
+        genome.add_node(0, 1, NodeType.HIDDEN)
 
         node_added = genome.mutate_add_node()
         assert not node_added
-        assert len(genome.connections) == 1
-        assert len(genome.nodes) == 3
+        assert len(genome.connections) == 2
+        assert len(genome.nodes) == 4
 
-        connection_gene = genome.connections[2]
+        connection_gene = genome.connections[3]
         assert connection_gene.expressed
 
     def test_mutate_add_node_succeed(self):
@@ -363,6 +364,7 @@ class TestGenome:
         # Alter configuration for this test
         self.config.genome_config.num_inputs = 1
         self.config.genome_config.num_outputs = 1
+        self.config.genome_config.num_biases = 1
         self.config.genome_config.activation_func = 'identity'
         self.config.genome_config.init_conn_prob = 1.0
         self.config.genome_config.weight_init_power = 1.0
@@ -372,25 +374,25 @@ class TestGenome:
 
         node_added = genome.mutate_add_node()
         assert node_added
-        assert len(genome.connections) == 3
-        assert len(genome.nodes) == 3
+        assert len(genome.connections) == 4
+        assert len(genome.nodes) == 4
 
         new_node_gene = genome.nodes[max(genome.nodes.keys())]
         assert new_node_gene.type == NodeType.HIDDEN
 
-        old_connection_gene = genome.connections[2]
+        old_connection_gene = genome.connections[3]
         assert not old_connection_gene.expressed
 
         limit = self.config.genome_config.weight_init_power
 
-        new_connection_gene_a = genome.connections[4]
+        new_connection_gene_a = genome.connections[6]
         assert new_connection_gene_a.node_in == 0
-        assert new_connection_gene_a.node_out == 3
+        assert new_connection_gene_a.node_out == 5
         assert -limit <= new_connection_gene_a.weight <= limit  # assert weight is within the limits
         assert new_connection_gene_a.expressed
 
-        new_connection_gene_b = genome.connections[5]
-        assert new_connection_gene_b.node_in == 3
+        new_connection_gene_b = genome.connections[7]
+        assert new_connection_gene_b.node_in == 5
         assert new_connection_gene_b.node_out == 1
         assert -limit <= new_connection_gene_b.weight <= limit  # assert weight is within the limits
         assert new_connection_gene_b.expressed
