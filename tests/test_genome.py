@@ -142,6 +142,39 @@ class TestGenome:
         assert new_gene.expressed
         assert 0 == new_gene.key
 
+    def test_add_node(self):
+        """Test add a node to the genome.
+        """
+        # Alter configuration for this test
+        self.config.genome_config.activation_func = 'identity'
+
+        genome = Genome(key=0, config=self.config.genome_config, innovation_store=InnovationStore())
+
+        # Position the node between two dummy nodes (for innovation store purposes)
+        genome.add_node(-1, -1, NodeType.INPUT)
+        assert len(genome.nodes) == 1
+
+        new_gene = genome.nodes[0]
+        assert new_gene.key == 0
+        assert new_gene.type == NodeType.INPUT
+        assert new_gene.activation == self.config.genome_config.activation_defs.get('identity')
+
+    def test_add_bias_node(self):
+        """Test adding a bias node to the genome.
+        """
+        # Alter configuration for this test
+        self.config.genome_config.activation_func = 'sigmoid'
+
+        genome = Genome(key=0, config=self.config.genome_config, innovation_store=InnovationStore())
+
+        genome.add_bias_node(0)
+        assert len(genome.nodes) == 1
+
+        new_gene = genome.nodes[0]
+        assert new_gene.key == 0
+        assert new_gene.type == NodeType.BIAS
+        assert new_gene.activation == self.config.genome_config.activation_defs.get('identity')
+
     def test_mutate_only_weights(self):
         """Test the mutation function behaves as expected when weight mutations
         are guaranteed but bias and structural mutations are prohibited.
