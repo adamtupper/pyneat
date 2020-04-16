@@ -68,22 +68,19 @@ class NodeGene:
     Attributes:
         key (int): The innovation key (also the node key) for this gene.
         type (NodeType): The type of the node (either input, output or hidden).
-        bias (float): The bias value of the node.
         activation (function): The node activation function.
     """
 
-    def __init__(self, key, type, bias, activation):
+    def __init__(self, key, type, activation):
         """Creates a new NodeGene object.
 
         Args:
             key (int): The innovation key (also the node key) for this gene.
             type (NodeType): The type of the node (either input, output or hidden).
-            bias (float): The bias value of the node.
             activation (function): The node activation function.
         """
         self.key = key
         self.type = type
-        self.bias = bias
         self.activation = activation
 
     def __eq__(self, other):
@@ -95,8 +92,8 @@ class NodeGene:
         Returns:
             bool: True if the objects are equal, False otherwise.
         """
-        return (self.key, self.type, self.bias, self.activation) == \
-               (other.key, other.type, other.bias, other.activation)
+        return (self.key, self.type, self.activation) == \
+               (other.key, other.type, other.activation)
 
 
 class GenomeConfig:

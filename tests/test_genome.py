@@ -28,11 +28,9 @@ class TestGenome:
         """
         node_gene = NodeGene(key=0,
                              type=NodeType.INPUT,
-                             bias=0.0,
                              activation=identity_activation)
         assert node_gene.key == 0
         assert node_gene.type == NodeType.INPUT
-        assert pytest.approx(0.0, node_gene.bias)
         assert identity_activation == node_gene.activation
 
     def test_create_connection_gene(self):
