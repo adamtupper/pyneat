@@ -10,6 +10,7 @@ class InnovationType(Enum):
     """
     NEW_NODE = 0
     NEW_CONNECTION = 1
+    NEW_BIAS = 2
 
 
 class InnovationRecord:

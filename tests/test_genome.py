@@ -66,6 +66,7 @@ class TestGenome:
         assert {} == genome.connections
         assert [] == genome.inputs
         assert [] == genome.outputs
+        assert [] == genome.biases
 
     def test_configure_new(self):
         """Test randomly configuring a new genome .
@@ -73,12 +74,13 @@ class TestGenome:
         # Alter relevant configuration parameters for this test
         self.config.genome_config.num_inputs = 2
         self.config.genome_config.num_outputs = 1
-        self.config.genome_config.bias_init_power = 1.0
+        self.config.genome_config.num_biases = 1
         self.config.genome_config.weight_init_power = 1.0
         self.config.genome_config.init_conn_prob = 1.0  # fully-connected
 
         num_input_nodes = self.config.genome_config.num_inputs
         num_output_nodes = self.config.genome_config.num_outputs
+        num_bias_nodes = self.config.genome_config.num_biases
         innovation_store = InnovationStore()
         genome = Genome(key=0, config=self.config.genome_config, innovation_store=innovation_store)
         genome.configure_new()
@@ -86,18 +88,14 @@ class TestGenome:
         assert 0 == genome.key
         assert genome.fitness is None
 
-        assert num_input_nodes + num_output_nodes == len(genome.nodes)
-        # Initial connection probability is 1.0 in config, therefore network
-        # should be fully connected.
-        assert num_input_nodes * num_output_nodes == len(genome.connections)
+        assert len(genome.nodes) == num_input_nodes + num_output_nodes + num_bias_nodes
+        assert len(genome.connections) == (num_input_nodes + num_bias_nodes) * num_output_nodes
 
         actual_node_types = [gene.type for k, gene in genome.nodes.items()]
-        expected_node_types = [NodeType.INPUT] * num_input_nodes + [NodeType.OUTPUT] * num_output_nodes
+        expected_node_types = [NodeType.INPUT] * num_input_nodes + \
+                              [NodeType.OUTPUT] * num_output_nodes + \
+                              [NodeType.BIAS] * num_bias_nodes
         assert actual_node_types == expected_node_types
-
-        limit = self.config.genome_config.bias_init_power
-        biases = [gene.bias for k, gene in genome.nodes.items()]
-        assert all(-limit <= b <= limit for b in biases)
 
         limit = self.config.genome_config.weight_init_power
         weights = [gene.weight for k, gene in genome.connections.items()]
@@ -105,11 +103,19 @@ class TestGenome:
 
         assert all([gene.expressed for k, gene in genome.connections.items()])
 
-        actual_conns = set(genome.connections.keys())
-        input_node_indices = list(range(0, num_input_nodes))
-        output_node_indices = list(range(num_input_nodes, num_input_nodes + num_output_nodes))
-        expected_conns = set([3, 4])
-        assert actual_conns == expected_conns
+        actual_conn_keys = list(genome.connections.keys())
+        actual_input_node_keys = list(range(0, num_input_nodes))
+        actual_output_node_keys = list(range(num_input_nodes, num_input_nodes + num_output_nodes))
+        actual_bias_node_keys = list(range(num_input_nodes + num_output_nodes, num_input_nodes + num_output_nodes + num_bias_nodes))
+        expected_conn_keys = [4, 5, 6]
+        expected_input_node_keys = [0, 1]
+        expected_output_node_keys = [2]
+        expected_bias_node_keys = [3]
+
+        assert actual_conn_keys == expected_conn_keys
+        assert actual_input_node_keys == expected_input_node_keys
+        assert actual_output_node_keys == expected_output_node_keys
+        assert actual_bias_node_keys == expected_bias_node_keys
 
     def test_copy(self):
         """Test copying a genome.

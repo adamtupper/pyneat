@@ -16,6 +16,7 @@ class NodeType(Enum):
     INPUT = 0
     HIDDEN = 1
     OUTPUT = 2
+    BIAS = 3
 
 
 class ConnectionGene:
@@ -100,8 +101,9 @@ class GenomeConfig:
     """Sets up and holds configuration information for the Genome class.
 
     Config Parameters:
-        num_inputs (float): The number of inputs each network should have.
-        num_outputs (float): The number of outputs each network should have.
+        num_inputs (int): The number of inputs each network should have.
+        num_outputs (int): The number of outputs each network should have.
+        num_biases (int): The number of bias nodes the network should have.
         initial_conn_prob (float): The initial connection probability of each
             potential connection between inputs and outputs. 0.0 = no
             connections, i.e. all inputs are disconnected from the outputs.
@@ -129,16 +131,6 @@ class GenomeConfig:
             weights.
         weight_max_value (float): Sets the maximum allowed value for connection
             weights.
-        bias_mutate_prob (float): The probability of mutating the node biases of
-            a genome when performing mutations.
-        bias_replace_prob (float): The probability of replacing, instead of
-            perturbing, a node bias when performing bias mutations.
-        bias_init_power (float): Sets the range of possible values for bias
-            replacements and new bias initialisations.
-        bias_perturb_power (float): Sets the range of possible values for bias
-            perturbations.
-        bias_min_value (float): Sets the minimum allowed value for node biases.
-        bias_max_value (float): Sets the maximum allowed value for node biases.
         gene_disable_prob (float): The probability of disabling a gene in the
             child that is disabled in either of the parents when performing
             crossover.
@@ -155,6 +147,7 @@ class GenomeConfig:
 
         self._params = [ConfigParameter('num_inputs', int),
                         ConfigParameter('num_outputs', int),
+                        ConfigParameter('num_biases', int),
                         ConfigParameter('initial_conn_prob', float),
                         ConfigParameter('activation_func', str),
                         ConfigParameter('compatibility_disjoint_coefficient', float),
@@ -167,12 +160,6 @@ class GenomeConfig:
                         ConfigParameter('weight_perturb_power', float),
                         ConfigParameter('weight_min_value', float),
                         ConfigParameter('weight_max_value', float),
-                        ConfigParameter('bias_mutate_prob', float),
-                        ConfigParameter('bias_replace_prob', float),
-                        ConfigParameter('bias_init_power', float),
-                        ConfigParameter('bias_perturb_power', float),
-                        ConfigParameter('bias_min_value', float),
-                        ConfigParameter('bias_max_value', float),
                         ConfigParameter('gene_disable_prob', float)]
 
         # Use the configuration data to interpret the supplied parameters
@@ -238,7 +225,6 @@ class Genome:
         Note: This is a required interface method.
 
         TODO: Write new test for when no input/output nodes are specified.
-        TODO: Make tests more robust to weight and bias initialisations.
 
         Args:
             key (int): A unique identifier for the genome.
@@ -255,9 +241,10 @@ class Genome:
         self.nodes = {}
         self.connections = {}
 
-        # Store the keys for input and output node genes
+        # Store the keys for input, bias and output node genes
         self.inputs = []
         self.outputs = []
+        self.biases = []
 
     def configure_new(self):
         """Configure a new genome based on the given configuration.
@@ -271,13 +258,15 @@ class Genome:
         """
         # Create the required number of input nodes
         for i in range(-1, -2 * self.config.num_inputs - 1, -2):
-            bias = random.uniform(-1.0, 1.0) * self.config.bias_init_power
-            self.add_node(i, i, bias, NodeType.INPUT)
+            self.add_node(i, i, NodeType.INPUT)
 
         # Create the required number of output nodes
         for i in range(-2, -2 * self.config.num_outputs - 1, -2):
-            bias = random.uniform(-1.0, 1.0) * self.config.bias_init_power
-            self.add_node(i, i, bias, NodeType.OUTPUT)
+            self.add_node(i, i, NodeType.OUTPUT)
+
+        # Create the required number of bias nodes
+        for i in range(self.config.num_biases):
+            self.add_bias_node(i)
 
         # Add a hidden node (only for debugging, to match Stanley et al.'s evolved DPNV solution)
         # bias = random.uniform(-1.0, 1.0) * self.config.bias_init_power
@@ -289,6 +278,12 @@ class Genome:
                 if random.random() < self.config.initial_conn_prob:
                     weight = random.uniform(-1.0, 1.0) * self.config.weight_init_power
                     self.add_connection(node_in, node_out, weight)
+
+        for node_in in self.biases:
+            for node_out in self.outputs:
+                # TODO: Should bias nodes be probabilistically connected?
+                weight = random.uniform(-1.0, 1.0) * self.config.weight_init_power
+                self.add_connection(node_in, node_out, weight)
 
         # Add extra connections (only for debugging, to match Stanley et al.'s evolved DPNV solution)
         # self.add_connection(1, 4, random.uniform(-1.0, 1.0) * self.config.weight_init_power)
@@ -306,8 +301,8 @@ class Genome:
         Returns:
             bool: True if this genome is equal to the other, False otherwise.
         """
-        self_attrs = (self.key, self.nodes, self.connections, self.inputs, self.outputs)
-        other_attrs = (other.key, other.nodes, other.connections, other.inputs, other.outputs)
+        self_attrs = (self.key, self.nodes, self.connections, self.inputs, self.outputs, self.biases)
+        other_attrs = (other.key, other.nodes, other.connections, other.inputs, other.outputs, self.biases)
 
         return self_attrs == other_attrs
 
@@ -321,13 +316,13 @@ class Genome:
         copied_genome.innovation_store = self.innovation_store
         return copied_genome
 
-    def add_node(self, node_in, node_out, bias, node_type):
-        """Add a new node positioned between two other nodes.
+    def add_node(self, node_in, node_out, node_type):
+        """Add a new node positioned between two other nodes. Input and output
+        nodes are positioned between non-existent nodes.
 
         Args:
             node_in (int): The key of the node that precedes this new node.
             node_out (int): The key of the node that succeeds this new node.
-            bias (float): The bias value for the node.
             node_type (NodeType): The type of node to be added.
 
         Returns:
@@ -339,7 +334,6 @@ class Genome:
         self.nodes[key] = NodeGene(
             key=key,
             type=node_type,
-            bias=bias,
             activation=self.config.activation_defs.get(self.config.activation_func)
         )
 
@@ -349,6 +343,23 @@ class Genome:
             self.outputs.append(key)
 
         return key
+
+    def add_bias_node(self, num):
+        """Add a new bias node.
+
+        Args:
+            num (int): A number that can uniquely identify bias nodes in the
+                innovation store.
+        """
+        key = self.innovation_store.get_innovation_key(num, num, InnovationType.NEW_BIAS)
+        assert key not in self.nodes
+
+        self.nodes[key] = NodeGene(
+            key=key,
+            type=NodeType.BIAS,
+            activation=self.config.activation_defs.get('identity')
+        )
+        self.biases.append(key)
 
     def add_connection(self, node_in, node_out, weight, expressed=True):
         """Add a connection between two nodes.
