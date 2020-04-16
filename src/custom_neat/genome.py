@@ -409,8 +409,7 @@ class Genome:
             if random.random() < self.config.weight_mutate_prob:
                 self.mutate_weights()
 
-            if random.random() < self.config.bias_mutate_prob:
-                self.mutate_biases()
+            # TODO: Are there any other non-structural mutations?
 
     def mutate_add_connection(self):
         """Performs an 'add connection' structural mutation.
@@ -422,7 +421,7 @@ class Genome:
             bool: True if a connection was added, False otherwise.
         """
         possible_inputs = [k for k, g in self.nodes.items()]
-        possible_outputs = [k for k, g in self.nodes.items() if g.type != NodeType.INPUT]
+        possible_outputs = [k for k, g in self.nodes.items() if g.type not in [NodeType.INPUT,NodeType.BIAS]]
 
         max_retries = 100
         attempts = 0
@@ -522,31 +521,6 @@ class Genome:
                 gene.weight = min(self.config.weight_max_value, gene.weight)
 
             assert self.config.weight_min_value <= gene.weight <= self.config.weight_max_value
-
-    def mutate_biases(self):
-        """Mutates (perturbs) or replaces each node bias in the genome.
-
-        Each bias is either replaced (with some probability, specified in the
-        genome config) or perturbed.
-
-        Replaced biases are drawn from a uniform distribution with range
-        [-bias_replace_power, bias_replace_power). Perturbations are drawn
-        from a uniform distribution with range
-        [-bias_perturb_power, bias_perturb_power).
-        """
-        for key, gene in self.nodes.items():
-            if random.random() < self.config.bias_replace_prob:
-                # Replace bias
-                gene.bias = random.uniform(-1.0, 1.0) * self.config.bias_init_power
-            else:
-                # Perturb bias
-                gene.bias += random.uniform(-1.0, 1.0) * self.config.bias_perturb_power
-
-                # Ensure bias remains within the desired range
-                gene.bias = max(self.config.bias_min_value, gene.bias)
-                gene.bias = min(self.config.bias_max_value, gene.bias)
-
-            assert self.config.bias_min_value <= gene.bias <= self.config.bias_max_value
 
     def configure_crossover(self, parent1, parent2):
         """Performs crossover between two genomes.

@@ -76,7 +76,7 @@ class TestGenome:
         self.config.genome_config.num_outputs = 1
         self.config.genome_config.num_biases = 1
         self.config.genome_config.weight_init_power = 1.0
-        self.config.genome_config.init_conn_prob = 1.0  # fully-connected
+        self.config.genome_config.initial_conn_prob = 1.0  # fully-connected
 
         num_input_nodes = self.config.genome_config.num_inputs
         num_output_nodes = self.config.genome_config.num_outputs
@@ -182,7 +182,8 @@ class TestGenome:
         # Alter configuration for this test
         self.config.genome_config.num_inputs = 2
         self.config.genome_config.num_outputs = 1
-        self.config.genome_config.init_conn_prob = 1.0
+        self.config.genome_config.num_biases = 1
+        self.config.genome_config.initial_conn_prob = 1.0
 
         self.config.genome_config.weight_mutate_prob = 1.0
         self.config.genome_config.weight_replace_prob = 0.5
@@ -190,56 +191,18 @@ class TestGenome:
 
         self.config.genome_config.conn_add_prob = 0.0
         self.config.genome_config.node_add_prob = 0.0
-        self.config.genome_config.bias_mutate_prob = 0.0
 
         genome = Genome(key=0, config=self.config.genome_config, innovation_store=InnovationStore())
         genome.configure_new()
 
-        old_biases = [g.bias for g in genome.nodes.values()]
         old_weights = [g.weight for g in genome.connections.values()]
         genome.mutate()
 
-        assert 3 == len(genome.nodes)
-        assert 2 == len(genome.connections)
-
-        new_biases = [g.bias for g in genome.nodes.values()]
-        assert all(old == new for (old, new) in zip(old_biases, new_biases))
+        assert 4 == len(genome.nodes)
+        assert 3 == len(genome.connections)
 
         new_weights = [g.weight for g in genome.connections.values()]
         assert all(old != new for (old, new) in zip(old_weights, new_weights))
-
-    def test_mutate_only_biases(self):
-        """Test the mutation function behaves as expected when bias mutations
-        are guaranteed but weight and structural mutations are prohibited.
-        """
-        # Alter configuration for this test
-        self.config.genome_config.num_inputs = 2
-        self.config.genome_config.num_outputs = 1
-        self.config.genome_config.init_conn_prob = 1.0
-
-        self.config.genome_config.bias_mutate_prob = 1.0
-        self.config.genome_config.bias_replace_prob = 0.5
-        self.config.genome_config.bias_perturb_power = 0.2
-
-        self.config.genome_config.conn_add_prob = 0.0
-        self.config.genome_config.node_add_prob = 0.0
-        self.config.genome_config.weight_mutate_prob = 0.0
-
-        genome = Genome(key=0, config=self.config.genome_config, innovation_store=InnovationStore())
-        genome.configure_new()
-
-        old_biases = [g.bias for g in genome.nodes.values()]
-        old_weights = [g.weight for g in genome.connections.values()]
-        genome.mutate()
-
-        assert 3 == len(genome.nodes)
-        assert 2 == len(genome.connections)
-
-        new_biases = [g.bias for g in genome.nodes.values()]
-        assert all(old != new for (old, new) in zip(old_biases, new_biases))
-
-        new_weights = [g.weight for g in genome.connections.values()]
-        assert all(old == new for (old, new) in zip(old_weights, new_weights))
 
     def test_mutate_only_connections(self):
         """Test the mutation function behaves as expected when the
@@ -249,28 +212,21 @@ class TestGenome:
         # Alter configuration for this test
         self.config.genome_config.num_inputs = 1
         self.config.genome_config.num_outputs = 1
-        self.config.genome_config.init_conn_prob = 0.0  # no initial connections
+        self.config.genome_config.num_biases = 1
+        self.config.genome_config.initial_conn_prob = 0.0  # no initial connections
 
         self.config.genome_config.conn_add_prob = 1.0
-
-        self.config.genome_config.bias_mutate_prob = 0.0
         self.config.genome_config.weight_mutate_prob = 0.0
         self.config.genome_config.node_add_prob = 0.0
 
         genome = Genome(key=0, config=self.config.genome_config, innovation_store=InnovationStore())
         genome.configure_new()
-        genome.connections = {}
+        assert len(genome.connections) == 1
 
-        assert not genome.connections
-
-        old_biases = [g.bias for g in genome.nodes.values()]
         genome.mutate()
 
-        assert 2 == len(genome.nodes)
-        assert 1 == len(genome.connections)
-
-        new_biases = [g.bias for g in genome.nodes.values()]
-        assert all(old == new for (old, new) in zip(old_biases, new_biases))
+        assert 3 == len(genome.nodes)
+        assert 2 == len(genome.connections)
 
     def test_mutate_only_nodes(self):
         """Test the mutation function behaves as expected when the 'add node'
@@ -280,7 +236,8 @@ class TestGenome:
         # Alter configuration for this test
         self.config.genome_config.num_inputs = 1
         self.config.genome_config.num_outputs = 1
-        self.config.genome_config.init_conn_prob = 1.0  # fully-connected
+        self.config.genome_config.num_biases = 1
+        self.config.genome_config.initial_conn_prob = 1.0  # fully-connected
 
         self.config.genome_config.node_add_prob = 1.0
 
@@ -294,15 +251,11 @@ class TestGenome:
         num_node_genes = len(genome.nodes)
         num_connection_genes = len(genome.connections)
 
-        old_biases = [g.bias for g in genome.nodes.values()]
         old_weights = [g.weight for g in genome.connections.values()]
         genome.mutate()
 
-        assert num_node_genes + 1 == len(genome.nodes)
-        assert num_connection_genes + 2 == len(genome.connections)
-
-        new_biases = [g.bias for g in genome.nodes.values()]
-        assert all(old == new for (old, new) in zip(old_biases, new_biases))
+        assert len(genome.nodes) == num_node_genes + 1
+        assert len(genome.connections) == num_connection_genes + 2
 
         new_weights = [g.weight for g in genome.connections.values()]
         assert all(old == new for (old, new) in zip(old_weights, new_weights))
@@ -334,7 +287,7 @@ class TestGenome:
         self.config.genome_config.num_outputs = 1
         self.config.genome_config.num_biases = 1
         self.config.genome_config.activation_func = 'identity'
-        self.config.genome_config.init_conn_prob = 1.0
+        self.config.genome_config.initial_conn_prob = 1.0
         self.config.genome_config.weight_init_power = 1.0
 
         # Populate the innovation store with the mutation that will attempt to
@@ -366,7 +319,7 @@ class TestGenome:
         self.config.genome_config.num_outputs = 1
         self.config.genome_config.num_biases = 1
         self.config.genome_config.activation_func = 'identity'
-        self.config.genome_config.init_conn_prob = 1.0
+        self.config.genome_config.initial_conn_prob = 1.0
         self.config.genome_config.weight_init_power = 1.0
 
         genome = Genome(key=0, config=self.config.genome_config, innovation_store=InnovationStore())
@@ -404,6 +357,7 @@ class TestGenome:
         # Alter configuration for this test
         self.config.genome_config.num_inputs = 1
         self.config.genome_config.num_outputs = 1
+        self.config.genome_config.num_biases = 1
         self.config.genome_config.initial_conn_prob = 1.0  # fully-connected
         self.config.genome_config.weight_init_power = 1.0
 
@@ -412,7 +366,6 @@ class TestGenome:
 
         # Manually add recurrent connections to saturate network
         genome.add_connection(1, 1, 0.0, True)
-        genome.add_connection(0, 0, 0.0, True)
 
         assert len(genome.connections) == 3
         connection_added = genome.mutate_add_connection()
@@ -429,6 +382,7 @@ class TestGenome:
         # Alter configuration for this test
         self.config.genome_config.num_inputs = 1
         self.config.genome_config.num_outputs = 1
+        self.config.genome_config.num_biases = 1
         self.config.genome_config.initial_conn_prob = 0.0  # no connections
         self.config.genome_config.weight_init_power = 1.0
 
@@ -436,15 +390,16 @@ class TestGenome:
         genome.configure_new()
 
         # Make sure there are no connections to start with
-        assert len(genome.connections) == 0
+        assert len(genome.connections) == 1
 
         connection_added = genome.mutate_add_connection()
         assert connection_added
         # Make sure only one connection was added
-        assert len(genome.connections) == 1
+        assert len(genome.connections) == 2
 
-        # Make sure the a recurrent connection was not added to an input node
-        assert genome.connections[2].node_out != 0
+        # Make sure the a recurrent connection was not added to an input or bias node
+        assert genome.connections[4].node_out != 0
+        assert genome.connections[4].node_out != 2
 
     def test_mutate_weights(self):
         """Test the mutation of genome connection weights.
@@ -452,7 +407,8 @@ class TestGenome:
         # Test configuration
         self.config.genome_config.num_inputs = 3
         self.config.genome_config.num_outputs = 2
-        self.config.genome_config.init_conn_prob = 1.0
+        self.config.genome_config.num_biases = 1
+        self.config.genome_config.initial_conn_prob = 1.0
         self.config.genome_config.weight_replace_prob = 0.5
         self.config.genome_config.weight_init_power = 1.0
         self.config.genome_config.weight_perturb_power = 1.0
@@ -463,48 +419,15 @@ class TestGenome:
         genome.configure_new()
 
         old_weights = [g.weight for g in genome.connections.values()]
-        old_biases = [g.bias for g in genome.nodes.values()]
         genome.mutate_weights()
         new_weights = [g.weight for g in genome.connections.values()]
-        new_biases = [g.bias for g in genome.nodes.values()]
         upper_limit = self.config.genome_config.weight_max_value
         lower_limit = self.config.genome_config.weight_min_value
 
-        assert 5 == len(genome.nodes)
-        assert 6 == len(genome.connections)
+        assert 6 == len(genome.nodes)
+        assert 8 == len(genome.connections)
         assert all(old != new for (old, new) in zip(old_weights, new_weights))
-        assert all(old == new for (old, new) in zip(old_biases, new_biases))
         assert all(lower_limit <= w <= upper_limit for w in new_weights)
-
-    def test_mutate_biases(self):
-        """Test the mutation of genome node biases.
-        """
-        # Test configuration
-        self.config.genome_config.num_inputs = 3
-        self.config.genome_config.num_outputs = 2
-        self.config.genome_config.init_conn_prob = 1.0
-        self.config.genome_config.bias_replace_prob = 0.5
-        self.config.genome_config.bias_init_power = 1.0
-        self.config.genome_config.bias_perturb_power = 1.0
-        self.config.genome_config.bias_min_value = -10
-        self.config.genome_config.bias_max_value = 10
-
-        genome = Genome(key=0, config=self.config.genome_config, innovation_store=InnovationStore())
-        genome.configure_new()
-
-        old_weights = [g.weight for g in genome.connections.values()]
-        old_biases = [g.bias for g in genome.nodes.values()]
-        genome.mutate_biases()
-        new_weights = [g.weight for g in genome.connections.values()]
-        new_biases = [g.bias for g in genome.nodes.values()]
-        upper_limit = self.config.genome_config.bias_max_value
-        lower_limit = self.config.genome_config.bias_min_value
-
-        assert 5 == len(genome.nodes)
-        assert 6 == len(genome.connections)
-        assert all(old == new for (old, new) in zip(old_weights, new_weights))
-        assert all(old != new for (old, new) in zip(old_biases, new_biases))
-        assert all(lower_limit <= b <= upper_limit for b in new_biases)
 
     def test_mutate_structural_only_connection(self):
         """Test that if an add connection structural mutation is performed no
@@ -513,25 +436,23 @@ class TestGenome:
         # Test configuration
         self.config.genome_config.num_inputs = 3
         self.config.genome_config.num_outputs = 2
-        self.config.genome_config.init_conn_prob = 1.0
+        self.config.genome_config.num_biases = 1
+        self.config.genome_config.initial_conn_prob = 1.0
         self.config.genome_config.conn_add_prob = 1.0  # Guarantee a connection will be added
-        self.config.genome_config.bias_mutate_prob = 1.0
+        self.config.genome_config.node_add_prob = 0.0
         self.config.genome_config.weight_mutate_prob = 1.0
 
         genome = Genome(key=0, config=self.config.genome_config, innovation_store=InnovationStore())
         genome.configure_new()
 
         old_weights = [g.weight for g in genome.connections.values()]
-        old_biases = [g.bias for g in genome.nodes.values()]
-        assert len(genome.connections) == 6
+        assert len(genome.connections) == 8
 
         genome.mutate()
         new_weights = [g.weight for g in genome.connections.values()]
-        new_biases = [g.bias for g in genome.nodes.values()]
 
-        assert len(genome.connections) == 7
+        assert len(genome.connections) == 9
         assert all(old == new for (old, new) in zip(old_weights, new_weights))
-        assert all(old == new for (old, new) in zip(old_biases, new_biases))
 
     def test_mutate_structural_only_node(self):
         """Test that if an add node structural mutation is performed no
@@ -540,25 +461,26 @@ class TestGenome:
         # Test configuration
         self.config.genome_config.num_inputs = 3
         self.config.genome_config.num_outputs = 2
-        self.config.genome_config.init_conn_prob = 1.0
+        self.config.genome_config.num_biases = 1
+        self.config.genome_config.initial_conn_prob = 1.0
         self.config.genome_config.node_add_prob = 1.0  # Guarantee a connection will be added
-        self.config.genome_config.bias_mutate_prob = 1.0
+        self.config.genome_config.conn_add_prob = 0.0
         self.config.genome_config.weight_mutate_prob = 1.0
 
         genome = Genome(key=0, config=self.config.genome_config, innovation_store=InnovationStore())
         genome.configure_new()
 
         old_weights = [g.weight for g in genome.connections.values()]
-        old_biases = [g.bias for g in genome.nodes.values()]
-        assert len(genome.nodes) == 5
+        assert len(genome.nodes) == 6
+        assert len(genome.connections) == 8
 
         genome.mutate()
         new_weights = [g.weight for g in genome.connections.values()]
-        new_biases = [g.bias for g in genome.nodes.values()]
 
-        assert len(genome.nodes) == 6
+        assert len(genome.nodes) == 7
+        print([(g.node_in, g.node_out) for g in genome.connections.values()])
+        assert len(genome.connections) == 10
         assert all(old == new for (old, new) in zip(old_weights, new_weights))
-        assert all(old == new for (old, new) in zip(old_biases, new_biases))
 
     def test_crossover_a(self):
         """Test that the crossover operator.
