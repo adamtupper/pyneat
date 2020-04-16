@@ -33,7 +33,7 @@ class ReproductionConfig:
             renamed elitism_threshold.
         survival_threshold (float): The proportion of members of each species
             that are added to the parent pool and are allowed to reproduce. The
-            fitessed members are kept.
+            fittest members are kept.
     """
 
     def __init__(self, params):
