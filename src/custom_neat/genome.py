@@ -4,9 +4,9 @@ import random
 import copy
 from enum import Enum
 
-from neat.activations import ActivationFunctionSet
 from neat.config import ConfigParameter, write_pretty_params
 
+from custom_neat.activations import ActivationFunctionSet
 from custom_neat.innovation import InnovationType
 
 
