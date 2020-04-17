@@ -69,7 +69,9 @@ class NodeGene:
     Attributes:
         key (int): The innovation key (also the node key) for this gene.
         type (NodeType): The type of the node (either input, output or hidden).
-        activation (function): The node activation function.
+        activation (function): The node activation function. Note that input and
+            bias nodes should not have an activation function (i.e. it is the
+            identity function).
     """
 
     def __init__(self, key, type, activation):
@@ -109,8 +111,8 @@ class GenomeConfig:
             connections, i.e. all inputs are disconnected from the outputs.
             1.0 = fully connected, i.e. all inputs are connected to all outputs.
         activation_func (str): The name of the activation function to be used by
-            all nodes. Must be present in the set of possible activation
-            functions.
+            hidden and output nodes. Must be present in the set of possible
+            activation functions.
         compatibility_disjoint_coefficient (float): The disjoint and excess
             coefficient to be used when calculating genome distance.
         compatibility_weight_coefficient (float): The weight and bias
@@ -323,10 +325,12 @@ class Genome:
         key = self.innovation_store.get_innovation_key(node_in, node_out, InnovationType.NEW_NODE)
         assert key not in self.nodes
 
+        activation = None if node_type in [NodeType.INPUT, NodeType.BIAS] else self.config.activation_defs.get(self.config.activation_func)
+
         self.nodes[key] = NodeGene(
             key=key,
             type=node_type,
-            activation=self.config.activation_defs.get(self.config.activation_func)
+            activation=activation
         )
 
         if node_type == NodeType.INPUT:
@@ -349,7 +353,7 @@ class Genome:
         self.nodes[key] = NodeGene(
             key=key,
             type=NodeType.BIAS,
-            activation=self.config.activation_defs.get('identity')
+            activation=None
         )
         self.biases.append(key)
 
