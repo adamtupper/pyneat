@@ -86,13 +86,14 @@ class RNN:
             # self.prev_states[node_idx] = value
 
         # Propagate input values through the network
-        for node_idx, bias, activation, node_inputs in self.node_evals:
+        for node_idx, activation, node_inputs in self.node_evals:
             weighted_inputs = [self.prev_states[in_node_idx] * weight for in_node_idx, weight in node_inputs]
-            self.curr_states[node_idx] = activation(bias + sum(weighted_inputs))
+            self.curr_states[node_idx] = activation(sum(weighted_inputs))
 
+        outputs = [self.prev_states[i] for i in self.output_nodes]
         self.prev_states = {node: val for (node, val) in self.curr_states.items()}
 
-        return [self.curr_states[i] for i in self.output_nodes]
+        return outputs
 
     @staticmethod
     def create(genome):

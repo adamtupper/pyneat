@@ -66,3 +66,22 @@ def test_required_for_output_multilayer_recurrent():
     required = required_for_output(input_nodes, output_nodes, bias_nodes, connection_genes)
     assert len(required) == 7
     assert required == {0, 1, 2, 5, 6, 7, 14}
+
+
+def test_required_for_output_simple_recurrent():
+    """Test that for a simple three neuron RNN that all nodes are marked as
+    required."""
+    input_nodes = [0]
+    bias_nodes = [3]
+    output_nodes = [2]
+    connection_genes = [
+        ConnectionGene(4, node_in=0, node_out=1, weight=1., expressed=True),
+        ConnectionGene(5, node_in=1, node_out=1, weight=2., expressed=True),
+        ConnectionGene(6, node_in=1, node_out=2, weight=3., expressed=True),
+        ConnectionGene(7, node_in=3, node_out=1, weight=4., expressed=True),
+        ConnectionGene(8, node_in=3, node_out=2, weight=5., expressed=True),
+    ]
+
+    required = required_for_output(input_nodes, output_nodes, bias_nodes, connection_genes)
+    assert len(required) == 4
+    assert required == {0, 1, 2, 3}

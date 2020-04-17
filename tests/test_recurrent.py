@@ -57,6 +57,7 @@ def test_create_some_required():
     }
     genome.inputs = [0, 1]
     genome.outputs = [4, 5]
+    genome.biases = []
 
     network = RNN.create(genome)
 
@@ -78,6 +79,9 @@ def test_reset():
     """
     # Manually create genome for deterministic testing
     genome = Genome(key=2, config=None, innovation_store=None)
+    genome.inputs = [0, 1]
+    genome.outputs = [4, 5]
+    genome.biases = [11]
     genome.nodes = {
         0: NodeGene(0, NodeType.INPUT, activation=None),
         1: NodeGene(1, NodeType.INPUT, activation=None),
@@ -102,11 +106,13 @@ def test_reset():
     network.curr_states = {k: 1.0 for k, _ in network.curr_states.items()}
 
     network.reset()
-    assert network.prev_states == {k: 0.0 for k, _ in network.prev_states.items() if k != 11}
-    assert network.curr_states == {k: 0.0 for k, _ in network.curr_states.items() if k != 11}
-
-    assert network.prev_states == {k: 1.0 for k, _ in network.prev_states.items() if k == 11}
-    assert network.curr_states == {k: 1.0 for k, _ in network.curr_states.items() if k == 11}
+    for node_key in network.prev_states.keys():
+        if node_key == 11:
+            assert network.prev_states[node_key] == 1.0
+            assert network.curr_states[node_key] == 1.0
+        else:
+            assert network.prev_states[node_key] == 0.0
+            assert network.curr_states[node_key] == 0.0
 
 
 def test_forward_arch_1_in_order():
@@ -129,14 +135,17 @@ def test_forward_arch_1_in_order():
         5: ConnectionGene(5, node_in=1, node_out=1, weight=2., expressed=True),
         6: ConnectionGene(6, node_in=1, node_out=2, weight=3., expressed=True),
         7: ConnectionGene(7, node_in=3, node_out=1, weight=4., expressed=True),
-        6: ConnectionGene(8, node_in=3, node_out=2, weight=5., expressed=True),
+        8: ConnectionGene(8, node_in=3, node_out=2, weight=5., expressed=True),
     }
+    genome.inputs = [0]
+    genome.biases = [3]
+    genome.outputs = [2]
 
     network = RNN.create(genome)
 
-    assert pytest.approx([0.0], network.forward([1.]))
-    assert pytest.approx([5.0], network.forward([2.]))
-    assert pytest.approx([17.0], network.forward([3.]))
+    assert network.forward([1.]) == pytest.approx([0.0])
+    assert network.forward([2.]) == pytest.approx([5.0])
+    assert network.forward([3.]) == pytest.approx([17.0])
 
 
 def test_forward_arch_1_out_of_order():
@@ -159,14 +168,17 @@ def test_forward_arch_1_out_of_order():
         5: ConnectionGene(5, node_in=2, node_out=2, weight=2., expressed=True),
         6: ConnectionGene(6, node_in=2, node_out=0, weight=3., expressed=True),
         7: ConnectionGene(7, node_in=3, node_out=2, weight=4., expressed=True),
-        6: ConnectionGene(8, node_in=3, node_out=0, weight=5., expressed=True),
+        8: ConnectionGene(8, node_in=3, node_out=0, weight=5., expressed=True),
     }
+    genome.inputs = [1]
+    genome.biases = [3]
+    genome.outputs = [0]
 
     network = RNN.create(genome)
 
-    assert pytest.approx([0.0], network.forward([1.]))
-    assert pytest.approx([5.0], network.forward([2.]))
-    assert pytest.approx([17.0], network.forward([3.]))
+    assert network.forward([1.]) == pytest.approx([0.0])
+    assert network.forward([2.]) == pytest.approx([5.0])
+    assert network.forward([3.]) == pytest.approx([17.0])
 
 
 def test_forward_arch_2_in_order():
@@ -191,12 +203,15 @@ def test_forward_arch_2_in_order():
         6: ConnectionGene(6, node_in=2, node_out=1, weight=2., expressed=True),
         7: ConnectionGene(7, node_in=3, node_out=2, weight=0.5, expressed=True),
     }
+    genome.inputs = [0]
+    genome.outputs = [2]
+    genome.biases = [3]
 
     network = RNN.create(genome)
 
-    assert pytest.approx([0.0], network.forward([1.]))
-    assert pytest.approx([0.5], network.forward([2.]))
-    assert pytest.approx([0.5], network.forward([3.]))
+    assert network.forward([1.]) == pytest.approx([0.0])
+    assert network.forward([2.]) == pytest.approx([0.5])
+    assert network.forward([3.]) == pytest.approx([0.5])
 
 
 def test_forward_arch_2_out_of_order():
@@ -217,13 +232,16 @@ def test_forward_arch_2_out_of_order():
     }
     genome.connections = {
         4: ConnectionGene(4, node_in=1, node_out=2, weight=0.5, expressed=True),
-        5: ConnectionGene(5, node_in=0, node_out=1, weight=3.0, expressed=True),
+        5: ConnectionGene(5, node_in=0, node_out=2, weight=3.0, expressed=True),
         6: ConnectionGene(6, node_in=2, node_out=0, weight=2.0, expressed=True),
         7: ConnectionGene(7, node_in=3, node_out=0, weight=1.0, expressed=True),
     }
+    genome.inputs = [3]
+    genome.outputs = [2]
+    genome.biases = [1]
 
     network = RNN.create(genome)
 
-    assert pytest.approx([0.0], network.forward([1.]))
-    assert pytest.approx([0.5], network.forward([2.]))
-    assert pytest.approx([0.5], network.forward([3.]))
+    assert network.forward([1.]) == pytest.approx([0.0])
+    assert network.forward([2.]) == pytest.approx([0.5])
+    assert network.forward([3.]) == pytest.approx([0.5])
