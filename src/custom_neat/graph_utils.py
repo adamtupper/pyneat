@@ -2,17 +2,19 @@
 """
 
 
-def required_for_output(input_nodes, output_nodes, connections):
+def required_for_output(input_nodes, output_nodes, bias_nodes, connections):
     """Returns the set of nodes that are required to calculate the output when
     the graph is interpreted as a neural network.
 
-    The input and output nodes are always included in the set of required nodes.
+    The input, output and bias nodes are always included in the set of required
+    nodes.
 
     TODO: Complete function docstring.
 
     Args:
         input_nodes (:list:`int`): The node IDs of all input nodes.
         output_nodes (:list:`int`): The node IDs of all output nodes.
+        bias_nodes (:list:`int`): The node IDs of all bias nodes.
         connections (:list:`ConnectionGene`): The connection genes of the
             genome.
 
@@ -33,6 +35,6 @@ def required_for_output(input_nodes, output_nodes, connections):
         else:
             updated = False
 
-    required = required.union(set(input_nodes))
+    required = required.union(set(input_nodes)).union(set(bias_nodes))
 
     return required

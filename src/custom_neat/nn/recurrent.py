@@ -13,6 +13,7 @@ class RNN:
     Attributes:
         input_nodes (:list:`int`): The node IDs of all input nodes.
         output_nodes (:list:`int`): The node IDs of all output nodes.
+        bias_nodes (:list:`int`): The node IDs of all bias nodes.
         node_evals (:list:`tuple`): The information required to evaluate each
             node (e.g. activation fn, bias, node inputs).
         prev_states (dict): A dictionary of node ID, value pairs that stores the
@@ -21,17 +22,19 @@ class RNN:
             output value for each node at the current time step.
     """
 
-    def __init__(self, input_nodes, output_nodes, node_evals):
+    def __init__(self, input_nodes, output_nodes, bias_nodes, node_evals):
         """Create a new RNN object.
 
         Args:
             input_nodes (:list:`int`): The node IDs of all input nodes.
             output_nodes (:list:`int`): The node IDs of all output nodes.
+            bias_nodes (:list:`int`): The node IDs of all bias nodes.
             node_evals (:list:`tuple`): The information required to evaluate
-            each node (e.g. activation fn, bias, node inputs).
+            each node (e.g. node key, activation fn, node inputs).
         """
         self.input_nodes = input_nodes
         self.output_nodes = output_nodes
+        self.bias_nodes = bias_nodes
         self.node_evals = node_evals
 
         # Store the previous and current states for each node
@@ -43,20 +46,27 @@ class RNN:
             self.prev_states[node_idx] = 0.0
             self.curr_states[node_idx] = 0.0
 
-        for node_idx, node_bias, node_activation, node_inputs in self.node_evals:
+        for node_idx, node_activation, node_inputs in self.node_evals:
             self.prev_states[node_idx] = 0.0
             self.curr_states[node_idx] = 0.0
             for in_node_idx, _ in node_inputs:
                 self.prev_states[in_node_idx] = 0.0
                 self.curr_states[in_node_idx] = 0.0
 
+        for node_idx in self.bias_nodes:
+            self.prev_states[node_idx] = 1.0
+            self.curr_states[node_idx] = 1.0
+
     def reset(self):
         """Reset the network.
 
         Set all previous and current states to zero.
         """
-        self.prev_states = {k: 0.0 for k, _ in self.prev_states.items()}
-        self.curr_states = {k: 0.0 for k, _ in self.curr_states.items()}
+        for k, _ in self.prev_states.items():
+            self.prev_states[k] = 1.0 if k in self.bias_nodes else 0.0
+
+        for k, _ in self.curr_states.items():
+            self.curr_states[k] = 1.0 if k in self.bias_nodes else 0.0
 
     def forward(self, inputs):
         """Calculate the new output values for the current time step, given the
@@ -97,9 +107,11 @@ class RNN:
         # Fetch indices of network input and output nodes
         input_nodes = genome.inputs
         output_nodes = genome.outputs
+        bias_nodes = genome.biases
 
         # Find all required nodes for computing the network outputs
-        required = required_for_output(input_nodes, output_nodes, genome.connections.values())
+        required = required_for_output(input_nodes, output_nodes, bias_nodes,
+                                       genome.connections.values())
 
         # Build a dict of all of the inputs for each node
         node_inputs = {}
@@ -122,6 +134,6 @@ class RNN:
         for node_idx, inputs in node_inputs.items():
             node_gene = genome.nodes.get(node_idx)
             assert node_gene is not None
-            node_evals.append((node_idx, node_gene.bias, node_gene.activation, inputs))
+            node_evals.append((node_idx, node_gene.activation, inputs))
 
-        return RNN(input_nodes, output_nodes, node_evals)
+        return RNN(input_nodes, output_nodes, bias_nodes, node_evals)
