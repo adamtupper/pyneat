@@ -187,6 +187,7 @@ class Genome:
             pairs.
         inputs (:list:`int`): The node keys of input nodes.
         outputs (:list:`int`): The node keys of output nodes.
+        biases (:list:`int`): The node keys of bias nodes.
         innovation_store (InnovationStore): The global innovation store used for
             tracking new structural mutations.
     """
@@ -194,8 +195,6 @@ class Genome:
     def parse_config(cls, param_dict):
         """Takes a dictionary of configuration items, returns an object that
         will later be passed to the write_config method.
-
-        Note: This is a required interface method.
 
         Args:
             param_dict (dict): A dictionary of configuration parameter values.
@@ -211,8 +210,6 @@ class Genome:
         parse_config. This method should write the configuration item
         definitions to the given file.
 
-        Note: This is a required interface method.
-
         Args:
             filename (str): The name of the file to write the genome configuration to.
             config (GenomeConfig): The genome configuration to save.
@@ -221,8 +218,6 @@ class Genome:
 
     def __init__(self, key, config, innovation_store):
         """Creates a new Genome object.
-
-        Note: This is a required interface method.
 
         TODO: Write new test for when no input/output nodes are specified.
 
@@ -253,8 +248,6 @@ class Genome:
         as negatives so that matching innovation keys are generated for
         corresponding input and output nodes between genomes. Inputs nodes use
         odd negative numbers, and output nodes use even negative numbers.
-
-        Note: This is a required interface method.
         """
         # Create the required number of input nodes
         for i in range(-1, -2 * self.config.num_inputs - 1, -2):
@@ -269,8 +262,7 @@ class Genome:
             self.add_bias_node(i)
 
         # Add a hidden node (only for debugging, to match Stanley et al.'s evolved DPNV solution)
-        # bias = random.uniform(-1.0, 1.0) * self.config.bias_init_power
-        # self.add_node(1, 3, bias, NodeType.HIDDEN)
+        # self.add_node(1, 3, NodeType.HIDDEN)
 
         # Add initial connections
         for node_in in self.inputs:
@@ -286,10 +278,10 @@ class Genome:
                 self.add_connection(node_in, node_out, weight)
 
         # Add extra connections (only for debugging, to match Stanley et al.'s evolved DPNV solution)
-        # self.add_connection(1, 4, random.uniform(-1.0, 1.0) * self.config.weight_init_power)
-        # self.add_connection(2, 4, random.uniform(-1.0, 1.0) * self.config.weight_init_power)
-        # self.add_connection(4, 3, random.uniform(-1.0, 1.0) * self.config.weight_init_power)
-        # self.add_connection(4, 4, random.uniform(-1.0, 1.0) * self.config.weight_init_power)
+        # self.add_connection(1, 5, random.uniform(-1.0, 1.0) * self.config.weight_init_power)
+        # self.add_connection(2, 5, random.uniform(-1.0, 1.0) * self.config.weight_init_power)
+        # self.add_connection(5, 3, random.uniform(-1.0, 1.0) * self.config.weight_init_power)
+        # self.add_connection(5, 5, random.uniform(-1.0, 1.0) * self.config.weight_init_power)
         # self.add_connection(3, 3, random.uniform(-1.0, 1.0) * self.config.weight_init_power)
 
     def __eq__(self, other):
@@ -388,8 +380,6 @@ class Genome:
 
     def mutate(self):
         """Mutate the genome.
-
-        Note: This is a required interface method.
 
         Mutates the genome according to the mutation parameter values specified
         in the genome configuration. If any structural mutations are performed,
@@ -525,8 +515,6 @@ class Genome:
     def configure_crossover(self, parent1, parent2):
         """Performs crossover between two genomes.
 
-        Note: This is a required interface method.
-
         If the two genomes have equal fitness then the joint and excess genes
         are inherited from parent1. Since parent1 and parent2 are chosen at
         random, this choice is random.
@@ -577,11 +565,11 @@ class Genome:
                 self.inputs.append(key)
             elif gene1.type == NodeType.OUTPUT:
                 self.outputs.append(key)
+            elif gene1.type == NodeType.BIAS:
+                self.biases.append(key)
 
     def distance(self, other):
         """Computes the compatibility  (genetic) distance between two genomes.
-
-        Note: This is a required interface method.
 
         This is used for deciding how to speciate the population. Distance is a
         function of the number of disjoint and excess genes, as well as the
@@ -611,14 +599,7 @@ class Genome:
         non_matching_nodes = set(self.nodes.keys()) ^ set(other.nodes.keys())
         matching_nodes = all_nodes - non_matching_nodes
 
-        sum_bias_diff = 0.0
-        for key in matching_nodes:
-            sum_bias_diff += abs(self.nodes[key].bias - other.nodes[key].bias)
-
-        # if matching_nodes:
-        #     avg_bias_diff = avg_bias_diff / len(matching_nodes)
-
-        # Connection gene distance (count only expressed connections)
+        # Connection gene distance
         all_connections = set(self.connections.keys()).union(set(other.connections.keys()))
         non_matching_connections = set(self.connections.keys()) ^ set(other.connections.keys())
         matching_connections = all_connections - non_matching_connections
@@ -626,23 +607,15 @@ class Genome:
         sum_weight_diff = 0.0
         for key in matching_connections:
             sum_weight_diff += abs(self.connections[key].weight - other.connections[key].weight)
+        avg_weight_diff = sum_weight_diff / len(matching_connections) if matching_connections else 0.
 
-        # if matching_connections:
-        #     avg_weight_diff = avg_weight_diff / len(matching_connections)
-
+        weight_dist = c2 * avg_weight_diff
         gene_dist = c1 * (len(non_matching_nodes) + len(non_matching_connections)) / N
-
-        if len(matching_nodes) + len(matching_connections) > 0:
-            weight_dist = c2 * (sum_weight_diff + sum_bias_diff) / (len(matching_nodes) + len(matching_connections))
-        else:
-            weight_dist = 0
 
         return gene_dist + weight_dist
 
     def size(self):
         """Returns a measure of genome complexity.
-
-        Note: This is a required interface function.
 
         Returns:
             tuple: A measure of the complexity of the genome given by
