@@ -29,6 +29,12 @@ class TestReproduction:
     def test_create_new_population(self):
         """Test creating a new population of genomes.
         """
+        # Alter configuration for this test
+        self.config.genome_config.num_inputs = 2
+        self.config.genome_config.num_outputs = 1
+        self.config.genome_config.num_biases = 1
+        self.config.genome_config.initial_conn_prob = 1.0
+
         stagnation_scheme = DefaultStagnation(self.config.stagnation_config, self.reporters)
         reproduction_scheme = Reproduction(self.config, self.reporters, stagnation_scheme)
         pop_size = 10
@@ -36,7 +42,8 @@ class TestReproduction:
 
         assert 10 == len(genomes)
         assert 10 == len({id for id in genomes.keys()})
-        assert all([len(g.nodes) == 3 for id, g in genomes.items()])
+        assert all([len(g.nodes) == 4 for id, g in genomes.items()])
+        assert all([len(g.connections) == 3 for id, g in genomes.items()])
 
     def test_compute_num_offspring(self):
         """Test method for computing the number of offspring each species is
@@ -109,9 +116,7 @@ class TestReproduction:
             genome.fitness = 1
 
         for genome_id, genome in list(population.items())[:5]:
-            # Increase weight and biases for half the genomes to ensure two species
-            for g in genome.nodes.values():
-                g.bias += 50
+            # Increase weights for half the genomes to ensure two species
             for g in genome.connections.values():
                 g.weight += 50
 
@@ -144,9 +149,7 @@ class TestReproduction:
             genome.fitness = 1
 
         for genome_id, genome in list(population.items())[:5]:
-            # Increase weight and biases for half the genomes to ensure two species
-            for g in genome.nodes.values():
-                g.bias += 50
+            # Increase weights for half the genomes to ensure two species
             for g in genome.connections.values():
                 g.weight += 50
 
@@ -173,7 +176,6 @@ class TestReproduction:
         self.config.reproduction_config.elitism_threshold = 4
         self.config.reproduction_config.survival_threshold = 1.0
         self.config.genome_config.weight_mutate_prob = 0.0
-        self.config.genome_config.bias_mutate_prob = 0.0
         self.config.genome_config.conn_add_prob = 0.0
         self.config.genome_config.node_add_prob = 0.0
         self.config.reproduction_config.crossover_prob = 0.0
@@ -186,9 +188,7 @@ class TestReproduction:
             genome.fitness = 1
 
         for genome_id, genome in list(population.items())[:5]:
-            # Increase weight and biases for half the genomes to ensure two species
-            for g in genome.nodes.values():
-                g.bias += 50
+            # Increase weights for half the genomes to ensure two species
             for g in genome.connections.values():
                 g.weight += 50
 
@@ -222,7 +222,6 @@ class TestReproduction:
         self.config.stagnation_config.max_stagnation = 10
         self.config.stagnation_config.species_elitism = 0
         self.config.genome_config.weight_mutate_prob = 0.0
-        self.config.genome_config.bias_mutate_prob = 0.0
         self.config.genome_config.conn_add_prob = 0.0
         self.config.genome_config.node_add_prob = 0.0
         self.config.reproduction_config.crossover_prob = 0.0
@@ -235,9 +234,7 @@ class TestReproduction:
             genome.fitness = 1
 
         for genome_id, genome in list(population0.items())[:5]:
-            # Increase weight and biases for half the genomes to ensure two species
-            for g in genome.nodes.values():
-                g.bias += 50
+            # Increase weights for half the genomes to ensure two species
             for g in genome.connections.values():
                 g.weight += 50
 

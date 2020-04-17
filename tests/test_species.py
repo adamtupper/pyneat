@@ -86,8 +86,8 @@ class TestSpeciesSet:
             # Build genome
             genome = Genome(key=i, config=self.config.genome_config, innovation_store=None)
             genome.nodes = {
-                0: NodeGene(0, type=NodeType.INPUT, bias=weight, activation=identity_activation),
-                1: NodeGene(1, type=NodeType.OUTPUT, bias=weight, activation=identity_activation)
+                0: NodeGene(0, type=NodeType.INPUT, activation=identity_activation),
+                1: NodeGene(1, type=NodeType.OUTPUT, activation=identity_activation)
             }
             genome.connections = {
                 2: ConnectionGene(
@@ -134,8 +134,8 @@ class TestSpeciesSet:
             # Build genome
             genome = Genome(key=i, config=self.config.genome_config, innovation_store=None)
             genome.nodes = {
-                0: NodeGene(0, type=NodeType.INPUT, bias=weight, activation=identity_activation),
-                1: NodeGene(1, type=NodeType.OUTPUT, bias=weight, activation=identity_activation)
+                0: NodeGene(0, type=NodeType.INPUT, activation=identity_activation),
+                1: NodeGene(1, type=NodeType.OUTPUT, activation=identity_activation)
             }
             genome.connections = {
                 2: ConnectionGene(
@@ -162,8 +162,8 @@ class TestSpeciesSet:
             # Update genomes
             genome = population[i]
             genome.nodes = {
-                0: NodeGene(0, type=NodeType.INPUT, bias=weight, activation=identity_activation),
-                1: NodeGene(1, type=NodeType.OUTPUT, bias=weight, activation=identity_activation)
+                0: NodeGene(0, type=NodeType.INPUT, activation=identity_activation),
+                1: NodeGene(1, type=NodeType.OUTPUT, activation=identity_activation)
             }
             genome.connections = {
                 2: ConnectionGene(
@@ -210,8 +210,8 @@ class TestSpeciesSet:
             # Build genome
             genome = Genome(key=i, config=self.config.genome_config, innovation_store=None)
             genome.nodes = {
-                0: NodeGene(0, type=NodeType.INPUT, bias=weight, activation=identity_activation),
-                1: NodeGene(1, type=NodeType.OUTPUT, bias=weight, activation=identity_activation)
+                0: NodeGene(0, type=NodeType.INPUT, activation=identity_activation),
+                1: NodeGene(1, type=NodeType.OUTPUT, activation=identity_activation)
             }
             genome.connections = {
                 2: ConnectionGene(
@@ -237,8 +237,8 @@ class TestSpeciesSet:
             # Update genomes
             genome = population[i]
             genome.nodes = {
-                0: NodeGene(0, type=NodeType.INPUT, bias=weight, activation=identity_activation),
-                1: NodeGene(1, type=NodeType.OUTPUT, bias=weight, activation=identity_activation)
+                0: NodeGene(0, type=NodeType.INPUT, activation=identity_activation),
+                1: NodeGene(1, type=NodeType.OUTPUT, activation=identity_activation)
             }
             genome.connections = {
                 2: ConnectionGene(
