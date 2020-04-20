@@ -147,7 +147,7 @@ def draw_net(genome, view=False, filename=None, node_names=None, show_disabled=T
         ng = genome.nodes[k]
         inputs.add(k)
         name = node_names.get(k, str(k))
-        input_attrs = {'label': f'({k}) {ng.bias:.2f}', 'style': 'filled', 'shape': 'box', 'fillcolor': node_colors.get(k, 'lightgray')}
+        input_attrs = {'label': f'({k})', 'style': 'filled', 'shape': 'box', 'fillcolor': node_colors.get(k, 'lightgray')}
         dot.node(name, _attributes=input_attrs)
 
     outputs = set()
@@ -155,7 +155,7 @@ def draw_net(genome, view=False, filename=None, node_names=None, show_disabled=T
         ng = genome.nodes[k]
         outputs.add(k)
         name = node_names.get(k, str(k))
-        node_attrs = {'label': f'({k}) {ng.bias:.2f}\nf={genome.fitness if genome.fitness else 0:.4f}', 'shape': 'ellipse', 'style': 'filled', 'fillcolor': node_colors.get(k, 'lightblue')}
+        node_attrs = {'label': f'({k})\nf={genome.fitness if genome.fitness else 0:.4f}', 'shape': 'ellipse', 'style': 'filled', 'fillcolor': node_colors.get(k, 'lightblue')}
 
         dot.node(name, _attributes=node_attrs)
 
@@ -181,7 +181,7 @@ def draw_net(genome, view=False, filename=None, node_names=None, show_disabled=T
         if k in inputs or k in outputs:
             continue
         ng = genome.nodes[k]
-        attrs = {'label': f'({k}) {ng.bias:.2f}', 'shape': 'ellipse', 'style': 'filled', 'fillcolor': node_colors.get(k, 'white')}
+        attrs = {'label': f'({k})', 'shape': 'ellipse', 'style': 'filled', 'fillcolor': node_colors.get(k, 'white')}
         dot.node(str(k), _attributes=attrs)
 
     for key, cg in genome.connections.items():  # Modified
