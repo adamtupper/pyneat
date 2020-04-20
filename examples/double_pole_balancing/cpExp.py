@@ -6,7 +6,7 @@ import random
 import pickle
 import os
 
-from cart_pole import CartPole
+from cart_pole2 import CartPole
 
 import neat
 
@@ -31,9 +31,8 @@ def save_object(genome, filename):
 
 def evaluate_population(population, config):
     _, genomes = zip(*population)
-    simulation = CartPole(genomes, markov=False)
-    # simulation.print_status = False   # Comment this line to print the status
-    simulation.run()
+    simulation = CartPole(genomes, markov=False, print_status=True)
+    simulation.run(testing=False)
 
 
 if __name__ == "__main__":
