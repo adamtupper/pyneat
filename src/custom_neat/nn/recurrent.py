@@ -1,7 +1,6 @@
 """Builds a recurrent neural network from a genome.
 """
 
-from custom_neat.genome import *
 from custom_neat.graph_utils import required_for_output
 
 
@@ -30,7 +29,7 @@ class RNN:
             output_nodes (:list:`int`): The node IDs of all output nodes.
             bias_nodes (:list:`int`): The node IDs of all bias nodes.
             node_evals (:list:`tuple`): The information required to evaluate
-            each node (e.g. node key, activation fn, node inputs).
+                each node (e.g. node key, activation fn, node inputs).
         """
         self.input_nodes = input_nodes
         self.output_nodes = output_nodes
