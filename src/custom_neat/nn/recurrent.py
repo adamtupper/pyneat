@@ -110,8 +110,10 @@ class RNN:
         bias_nodes = genome.biases
 
         # Find all required nodes for computing the network outputs
-        required = required_for_output(input_nodes, output_nodes, bias_nodes,
-                                       genome.connections.values())
+        nodes = [k for k in genome.nodes.keys()]
+        connections = [(g.node_in, g.node_out) for g in genome.connections.values()]
+        required = required_for_output(input_nodes, bias_nodes, output_nodes,
+                                       connections, nodes)
 
         # Build a dict of all of the inputs for each node
         node_inputs = {}

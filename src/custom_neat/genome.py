@@ -8,6 +8,7 @@ from neat.config import ConfigParameter, write_pretty_params
 
 from custom_neat.activations import ActivationFunctionSet
 from custom_neat.innovation import InnovationType
+from custom_neat.graph_utils import creates_cycle
 
 
 class NodeType(Enum):
@@ -117,6 +118,8 @@ class GenomeConfig:
             coefficient to be used when calculating genome distance.
         compatibility_weight_coefficient (float): The weight and bias
             coefficient to be used when calculation genome distance.
+        feed_forward (bool): False if recurrent connections are allowed, True
+            otherwise.
         conn_add_prob (float): The probability of adding a new connection when
             performing mutations.
         node_add_prob (float): The probability of adding a new node when
@@ -154,6 +157,7 @@ class GenomeConfig:
                         ConfigParameter('activation_func', str),
                         ConfigParameter('compatibility_disjoint_coefficient', float),
                         ConfigParameter('compatibility_weight_coefficient', float),
+                        ConfigParameter('feed_forward', bool),
                         ConfigParameter('conn_add_prob', float),
                         ConfigParameter('node_add_prob', float),
                         ConfigParameter('weight_mutate_prob', float),
@@ -422,6 +426,11 @@ class Genome:
         while attempts < max_retries:
             node_in = random.choice(possible_inputs)
             node_out = random.choice(possible_outputs)
+
+            connections = [(g.node_in, g.node_out) for g in self.connections.values()]
+            if self.config.feed_forward and creates_cycle(connections, (node_in, node_out)):
+                attempts += 1
+                continue
 
             # Check for existing connection
             mutation = (node_in, node_out, InnovationType.NEW_CONNECTION)
