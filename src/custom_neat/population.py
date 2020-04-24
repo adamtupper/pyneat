@@ -143,7 +143,7 @@ class Population(object):
 
             # Draw genomes (useful for debugging)
             # for key, genome in self.population.items():
-            #     visualize.draw_net(genome, filename=f'results/run-0/genomes/genome_{key}')
+            #     visualize.draw_net(genome, filename=f'results/run_1/genomes/genome_{key}')
 
             # Gather and report statistics.
             best = None

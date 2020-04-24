@@ -50,8 +50,9 @@ def evaluate_genomes(genomes, config):
     xor_inputs = [(0.0, 0.0), (0.0, 1.0), (1.0, 0.0), (1.0, 1.0)]
     xor_outputs = [(0.0,), (1.0,), (1.0,), (0.0,)]
 
-    fitness = 4.0
     for _, genome in genomes:
+        fitness = 4.0
+
         # Build network
         network = NN.create(genome)
 
@@ -81,7 +82,12 @@ def run(config, base_dir):
                                               filename_prefix=base_dir + 'checkpoints/' + 'neat-checkpoint-'))
 
     start = time.time()
-    solution = population.run(fitness_function=evaluate_genomes, n=100)
+    for i in range(config.max_generations):
+        solution = population.run(fitness_function=evaluate_genomes, n=1)
+        # pickle.dump(population, open(base_dir + 'populations/' + f'population_{i}', 'wb'))
+
+        if solution.fitness > config.fitness_threshold:
+            break
     end = time.time()
 
     elapsed = end - start
