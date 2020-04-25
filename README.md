@@ -12,7 +12,7 @@ Installation instructions are as follows.
 
 ### 2.1. Common
 
-Network visualisations are created using Graphviz. First install Graphviz
+Network visualisations are created using Graphviz. First, install Graphviz
 using:
 
 ```bash
@@ -20,16 +20,7 @@ sudo apt update
 sudo apt install graphviz graphviz-dev
 ```
 
-To install this package, firstly create an isolated conda environment with all
-required dependencies using the environment file provided:
-
-```bash
-conda env create -f environment.yml
-```
-
-Following this, activate the conda environment (`conda activate pyneat`)
-and install the remaining dependencies that cannot be installed through conda
-using:
+The remaining dependencies (listed in the requirements file) can then be installed using pip:
 
 ```bash
 pip install -r requirements.txt
