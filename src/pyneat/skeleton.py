@@ -5,7 +5,7 @@ console script. To run this script uncomment the following lines in the
 [options.entry_points] section in setup.cfg:
 
     console_scripts =
-         fibonacci = custom_neat.skeleton:run
+         fibonacci = pyneat.skeleton:run
 
 Then run `python setup.py install` which will install the command `fibonacci`
 inside your current environment.
@@ -19,7 +19,7 @@ import argparse
 import sys
 import logging
 
-from custom_neat import __version__
+from pyneat import __version__
 
 __author__ = "Adam Tupper"
 __copyright__ = "Adam Tupper"
@@ -58,7 +58,7 @@ def parse_args(args):
     parser.add_argument(
         "--version",
         action="version",
-        version="custom_neat {ver}".format(ver=__version__))
+        version="pyneat {ver}".format(ver=__version__))
     parser.add_argument(
         dest="n",
         help="n-th Fibonacci number",

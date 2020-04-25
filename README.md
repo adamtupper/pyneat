@@ -1,6 +1,6 @@
-# Custom-NEAT
+# PyNEAT
 
-A customised version of NEAT-Python.
+A Python implementation of the NEAT neuroevolution algorithm.
 
 ## 1. Description
 
@@ -27,7 +27,7 @@ required dependencies using the environment file provided:
 conda env create -f environment.yml
 ```
 
-Following this, activate the conda environment (`conda activate custom_neat`)
+Following this, activate the conda environment (`conda activate pyneat`)
 and install the remaining dependencies that cannot be installed through conda
 using:
 
@@ -37,21 +37,21 @@ pip install -r requirements.txt
 
 ### 2.2. Basic Usage
 
-For basic usage, install Custom-NEAT using:
+For basic usage, install PyNEAT using:
 
 ```bash
 python setup.py install
 ```
 
-Custom-NEAT can then be imported in your Python programs using:
+PyNEAT can then be imported in your Python programs using:
 
 ```python
-import custom_neat
+import pyneat
 ```
 
 ## 2.3. Development
 
-To install Custom-NEAT for continued development use:
+To install PyNEAT for continued development use:
 
 ```bash
 python setup.py develop

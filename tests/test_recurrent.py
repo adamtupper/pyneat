@@ -4,8 +4,8 @@
 import pytest
 from neat.activations import identity_activation, sigmoid_activation
 
-from custom_neat.genome import *
-from custom_neat.nn.recurrent import RNN
+from pyneat.genome import *
+from pyneat.nn.recurrent import RNN
 
 
 def test_create_all_required():

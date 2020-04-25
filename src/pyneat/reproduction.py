@@ -10,7 +10,7 @@ import random
 
 from neat.config import ConfigParameter, write_pretty_params, Config
 
-from custom_neat.genome import Genome
+from pyneat.genome import Genome
 
 
 class ReproductionConfig:

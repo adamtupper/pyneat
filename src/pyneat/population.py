@@ -5,7 +5,7 @@ from __future__ import print_function
 from neat.math_util import mean
 from neat.reporting import ReporterSet
 
-from custom_neat.innovation import InnovationStore
+from pyneat.innovation import InnovationStore
 import visualize
 
 

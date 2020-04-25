@@ -8,7 +8,7 @@ from dpole import integrate  # wrapped from C++
 
 # from neat.nn import nn_cpp as nn
 # from neat.ctrnn import ctrnn_pure as nn
-from custom_neat.nn.ctrnn import CTRNN
+from pyneat.nn.ctrnn import CTRNN
 
 class CartPole(object):
     def __init__(self, population, markov):

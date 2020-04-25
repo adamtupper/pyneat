@@ -1,8 +1,8 @@
 ===========
-custom_neat
+pyneat
 ===========
 
-This is the documentation of **custom_neat**.
+This is the documentation of **pyneat**.
 
 .. note::
 

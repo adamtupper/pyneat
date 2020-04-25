@@ -11,31 +11,12 @@
 # Add your pinned requirements so that they can be easily installed with:
 # pip install -r requirements.txt
 # Remember to also add them in setup.cfg but unpinned.
-# Example:
-# numpy==1.13.3
-# scipy==1.0
-#
 
 # NEAT-Python
 neat-python==0.92
 
-# OpenAI Gym and dependencies
-#gym==0.15.4
-#box2d-py==2.3.8
-#atari_py~=0.2.0
-#opencv-python==4.1.2.30
-
-# Ray
-# ray==0.8.0
-
-# Numpy
-#numpy==1.17
-
-# AtariARI
-#git+git://github.com/mila-iqia/atari-representation-learning.git
-
-# Visualisation
-# pygraphviz==1.5
+# Visualisation and examples
+numpy
 graphviz
 matplotlib
 

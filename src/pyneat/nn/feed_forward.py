@@ -1,7 +1,7 @@
 """Builds a feed-forward neural network from a genome.
 """
 
-from custom_neat.graph_utils import required_for_output, group_layers
+from pyneat.graph_utils import required_for_output, group_layers
 
 
 class NN:

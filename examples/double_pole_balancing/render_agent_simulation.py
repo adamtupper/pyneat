@@ -8,7 +8,7 @@ import pickle
 import argparse
 import math
 
-from custom_neat.nn.recurrent import RNN
+from pyneat.nn.recurrent import RNN
 
 from cart_pole2 import CartPole
 from movie import make_movie

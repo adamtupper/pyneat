@@ -4,7 +4,7 @@
 import sys
 from random import randint
 from dpole import integrate  # wrapped from C++
-from custom_neat.nn.recurrent import RNN
+from pyneat.nn.recurrent import RNN
 
 
 # from neat.nn import nn_cpp as nn

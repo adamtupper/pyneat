@@ -3,8 +3,8 @@
 
 import pytest
 
-from custom_neat.graph_utils import *
-from custom_neat.genome import *
+from pyneat.graph_utils import *
+from pyneat.genome import *
 
 
 def test_is_required_feed_forward_simple():

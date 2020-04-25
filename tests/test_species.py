@@ -9,9 +9,9 @@ import neat
 from neat.reporting import ReporterSet
 from neat.activations import  identity_activation
 
-from custom_neat.species import *
-from custom_neat.genome import *
-from custom_neat.reproduction import Reproduction
+from pyneat.species import *
+from pyneat.genome import *
+from pyneat.reproduction import Reproduction
 
 
 class TestSpecies:

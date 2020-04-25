@@ -9,10 +9,10 @@ import neat
 from neat.reporting import ReporterSet
 from neat.stagnation import DefaultStagnation
 
-from custom_neat.reproduction import *
-from custom_neat.genome import *
-from custom_neat.species import *
-from custom_neat.innovation import InnovationStore
+from pyneat.reproduction import *
+from pyneat.genome import *
+from pyneat.species import *
+from pyneat.innovation import InnovationStore
 
 
 class TestReproduction:

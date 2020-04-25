@@ -10,7 +10,7 @@ import pickle
 import argparse
 
 import gym
-from custom_neat.nn.recurrent import RNN
+from pyneat.nn.recurrent import RNN
 
 # Initialise argument parser
 parser = argparse.ArgumentParser()

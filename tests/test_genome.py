@@ -5,12 +5,12 @@ import os
 
 import pytest
 import neat
-from custom_neat.activations import identity_activation
+from pyneat.activations import identity_activation
 
-from custom_neat.genome import *
-from custom_neat.species import SpeciesSet
-from custom_neat.reproduction import Reproduction
-from custom_neat.innovation import InnovationStore, InnovationType, InnovationRecord
+from pyneat.genome import *
+from pyneat.species import SpeciesSet
+from pyneat.reproduction import Reproduction
+from pyneat.innovation import InnovationStore, InnovationType, InnovationRecord
 
 
 class TestGenome:

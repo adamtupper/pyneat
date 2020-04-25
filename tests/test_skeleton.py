@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import pytest
-from custom_neat.skeleton import fib
+from pyneat.skeleton import fib
 
 __author__ = "Adam Tupper"
 __copyright__ = "Adam Tupper"

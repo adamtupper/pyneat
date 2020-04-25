@@ -6,13 +6,13 @@ import pytest
 
 import neat
 
-from custom_neat.genome import *
-from custom_neat.reproduction import Reproduction
-from custom_neat.species import SpeciesSet
-from custom_neat.innovation import InnovationStore
+from pyneat.genome import *
+from pyneat.reproduction import Reproduction
+from pyneat.species import SpeciesSet
+from pyneat.innovation import InnovationStore
 
-from custom_neat.nn.feed_forward import NN
-from custom_neat.activations import steep_sigmoid_activation
+from pyneat.nn.feed_forward import NN
+from pyneat.activations import steep_sigmoid_activation
 
 
 class TestFeedForward:

@@ -1,7 +1,7 @@
 """Handles the continuous-time recurrent neural network implementation."""
 from __future__ import division
 
-from custom_neat.graph_utils import required_for_output
+from pyneat.graph_utils import required_for_output
 
 
 class CTRNNNodeEval(object):

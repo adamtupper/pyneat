@@ -6,9 +6,9 @@ from enum import Enum
 
 from neat.config import ConfigParameter, write_pretty_params
 
-from custom_neat.activations import ActivationFunctionSet
-from custom_neat.innovation import InnovationType
-from custom_neat.graph_utils import creates_cycle
+from pyneat.activations import ActivationFunctionSet
+from pyneat.innovation import InnovationType
+from pyneat.graph_utils import creates_cycle
 
 
 class NodeType(Enum):

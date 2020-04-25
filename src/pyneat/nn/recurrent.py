@@ -1,7 +1,7 @@
 """Builds a recurrent neural network from a genome.
 """
 
-from custom_neat.graph_utils import required_for_output
+from pyneat.graph_utils import required_for_output
 
 
 class RNN:

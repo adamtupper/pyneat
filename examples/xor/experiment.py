@@ -15,12 +15,12 @@ import shutil
 import neat
 import numpy as np
 
-from custom_neat.nn.feed_forward import NN
-from custom_neat.genome import Genome, NodeType
-from custom_neat.reproduction import Reproduction
-from custom_neat.species import SpeciesSet
-from custom_neat.config import CustomConfig
-from custom_neat.population import Population
+from pyneat.nn.feed_forward import NN
+from pyneat.genome import Genome, NodeType
+from pyneat.reproduction import Reproduction
+from pyneat.species import SpeciesSet
+from pyneat.config import CustomConfig
+from pyneat.population import Population
 
 
 def parse_args(args):

@@ -10,11 +10,11 @@ from cart_pole2 import CartPole
 
 import neat
 
-from custom_neat.population import Population
-from custom_neat.genome import Genome
-from custom_neat.reproduction import Reproduction
-from custom_neat.species import SpeciesSet
-from custom_neat.config import CustomConfig
+from pyneat.population import Population
+from pyneat.genome import Genome
+from pyneat.reproduction import Reproduction
+from pyneat.species import SpeciesSet
+from pyneat.config import CustomConfig
 import visualize
 
 

@@ -30,10 +30,10 @@ import os
 
 import neat
 
-from custom_neat.reproduction import Reproduction
-from custom_neat.species import SpeciesSet
-from custom_neat.genome import Genome
-from custom_neat.innovation import *
+from pyneat.reproduction import Reproduction
+from pyneat.species import SpeciesSet
+from pyneat.genome import Genome
+from pyneat.innovation import *
 
 
 class TestInnovation:
