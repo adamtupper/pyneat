@@ -10,11 +10,13 @@ import sys
 import pickle
 import argparse
 import time
+import shutil
 
 import neat
+import numpy as np
 
 from custom_neat.nn.feed_forward import NN
-from custom_neat.genome import Genome
+from custom_neat.genome import Genome, NodeType
 from custom_neat.reproduction import Reproduction
 from custom_neat.species import SpeciesSet
 from custom_neat.config import CustomConfig
@@ -43,8 +45,9 @@ def evaluate_genomes(genomes, config):
     Modifies only the fitness member of each genome.
 
     Args:
-        genomes (list):  A list of (genome_id, genome) pairs of the genomes to
+        genomes (list): A list of (genome_id, genome) pairs of the genomes to
             be evaluated.
+        config (CustomConfig): The experiment configuration.
     """
     # 2-input XOR inputs and expected outputs.
     xor_inputs = [(0.0, 0.0), (0.0, 1.0), (1.0, 0.0), (1.0, 1.0)]
@@ -66,42 +69,74 @@ def evaluate_genomes(genomes, config):
 
 
 def run(config, base_dir):
-    """Performs a single evolutionary run.
+    """Performs a number of evolutionary runs.
 
     Args:
-        config (Config): The experiment configuration file.
-        base_dir (str): The base directory to store the results for this run.
+        config (CustomConfig): The experiment configuration.
+        base_dir (str): The base directory to store the results for the
+            experiment.
     """
+    # Store statistics for each run
+    generations = []
+    evaluations = []
+    n_nodes = []
+    n_connections = []
+    succeeded = []
+    durations = []
+    fitnesses = []
 
-    # Perform evolutionary run
-    population = Population(config)
-    population.add_reporter(neat.StatisticsReporter())
-    population.add_reporter(neat.StdOutReporter(True))
-    population.add_reporter(neat.Checkpointer(generation_interval=config.checkpoint_interval,
-                                              time_interval_seconds=None,
-                                              filename_prefix=base_dir + 'checkpoints/' + 'neat-checkpoint-'))
+    # Perform evolutionary runs
+    for i in range(config.num_runs):
+        run_dir = os.path.join(base_dir, f'run_{i}')
+        checkpoint_dir = os.path.join(run_dir, 'checkpoints')
+        os.makedirs(run_dir)
+        os.makedirs(checkpoint_dir)
 
-    start = time.time()
-    for i in range(config.max_generations):
-        solution = population.run(fitness_function=evaluate_genomes, n=1)
-        # pickle.dump(population, open(base_dir + 'populations/' + f'population_{i}', 'wb'))
+        population = Population(config)
+        population.add_reporter(neat.StatisticsReporter())
+        population.add_reporter(neat.StdOutReporter(True))
+        population.add_reporter(neat.Checkpointer(generation_interval=config.checkpoint_interval,
+                                                  time_interval_seconds=None,
+                                                  filename_prefix=os.path.join(checkpoint_dir, 'checkpoint_')))
+
+        start = time.time()
+        solution = population.run(fitness_function=evaluate_genomes, n=100)
+        end = time.time()
+        durations.append(end - start)
 
         if solution.fitness > config.fitness_threshold:
-            break
-    end = time.time()
+            succeeded.append(True)
+            generations.append(population.generation)
+            evaluations.append(population.generation * config.pop_size)
+            n_nodes.append(len([g for g in solution.nodes.values() if g.type == NodeType.HIDDEN]))
+            n_connections.append(len([g for g in solution.connections.values() if g.expressed]))
+            fitnesses.append(solution.fitness)
 
-    elapsed = end - start
-    print(f'Time elapsed: {time.strftime("%H:%M:%S", time.gmtime(elapsed))}')
-    print(f'Fitness achieved: {solution.fitness}')
-    print()
+            # Save solution
+            with open(os.path.join(run_dir, 'solution.pickle'), 'wb') as file:
+                pickle.dump(solution, file)
+        else:
+            succeeded.append(False)
 
-    # Save best genome
-    with open(base_dir + 'solution.pickle', 'wb') as file:
-        pickle.dump(solution, file)
+        print()
+        print('Results:')
+        print(f'\tAvg. # Generations:\t{np.mean(generations):.3f}')
+        print(f'\tAvg. # Evaluations:\t{np.mean(evaluations):.3f}')
+        print(f'\tStd. Dev. # Evaluations:\t{np.std(evaluations):.3f}')
+        print(f'\tAvg. # Hidden Nodes:\t{np.mean(n_nodes):.3f}')
+        print(f'\tStd. Dev. # Hidden Nodes:\t{np.std(n_nodes):.3f}')
+        print(f'\tAvg. # Enabled Connections:\t{np.mean(n_connections):.3f}')
+        print(f'\tStd. Dev. # Enabled Connections:\t{np.std(n_connections):.3f}')
+        print(f'\tSuccess Rate:\t{len([x for x in succeeded if x]) / config.num_runs * 100:.3f}%')
+        print(f'\tAvg. Time Elapsed: {time.strftime("%H:%M:%S", time.gmtime(np.mean(durations)))}')
+        print(f'\tAvg. Solution Fitness:\t{np.mean(fitnesses):.3f}')
+        print(f'\tWorst # Generations:\t{max(generations)}')
+        print(f'\tWorst # Evaluations:\t{max(evaluations)}')
+        print()
 
 
 def main():
-    """The main entry point to the program. Performs multiple evolutionary runs.
+    """The main entry point to the program. Performs setup for the experiments.
     """
     args = parse_args(sys.argv[1:])
 
@@ -115,15 +150,13 @@ def main():
                               neat.DefaultStagnation,
                               args.config)
 
-        for i in range(config.num_runs):
-            print(f'Starting run {i+1}/{config.num_runs}')
+        if os.path.exists(args.results_dir):
+            shutil.rmtree(args.results_dir)
+        else:
+            os.makedirs(args.results_dir)
 
-            results_dir = args.results_dir + f'run_{i+1}/'
-            if not os.path.exists(results_dir):
-                os.makedirs(results_dir)
-                os.makedirs(results_dir + 'checkpoints/')
-
-            run(config, results_dir)
+        # Run the experiment
+        run(config, args.results_dir)
 
 
 if __name__ == '__main__':
