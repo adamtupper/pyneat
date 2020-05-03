@@ -300,7 +300,7 @@ class Genome:
             bool: True if this genome is equal to the other, False otherwise.
         """
         self_attrs = (self.key, self.nodes, self.connections, self.inputs, self.outputs, self.biases)
-        other_attrs = (other.key, other.nodes, other.connections, other.inputs, other.outputs, self.biases)
+        other_attrs = (other.key, other.nodes, other.connections, other.inputs, other.outputs, other.biases)
 
         return self_attrs == other_attrs
 
@@ -461,44 +461,50 @@ class Genome:
         receives a weight of 1.0 and the connection leading out of the new node
         receives the old connection weight.
 
+        Connections from bias nodes and non-expressed nodes are not split.
+
         Returns:
             bool: True is a node was added, False otherwise.
         """
-        # Find all connections that are not from bias nodes
-        splittable_connections = [k for k, g in self.connections.items() if g.node_in not in self.biases]
 
-        if splittable_connections:
-            # Only add a new node if there connections that can be split
-
+        max_retries = 20
+        attempts = 0
+        while attempts < max_retries:
             # NOTE: Gene dictionaries could be replaced with RandomDict() for faster
             # random access (currently O(n)): https://github.com/robtandy/randomdict
-            old_gene_key = random.choice(splittable_connections)
+            old_gene_key = random.choice(list(self.connections.keys()))
             old_connection_gene = self.connections[old_gene_key]
 
             mutation = (old_connection_gene.node_in,
                         old_connection_gene.node_out,
                         InnovationType.NEW_NODE)
             node_mutation_key = self.innovation_store.mutation_to_key.get(mutation)
-            if node_mutation_key in self.nodes:
-                # Skip if this mutation is already present in this genome
-                # TODO: Decide whether we should retry if the node to be added already exists
-                return False
 
-            old_connection_gene.expressed = False
+            if (node_mutation_key in self.nodes) or \
+               (not old_connection_gene.expressed) or \
+               (old_connection_gene.node_in in self.biases):
+                # Try again if the selected connection is not splittable or the
+                # mutation has already been applied
+                attempts += 1
+            else:
+                # Split the selected connection and add the node
+                old_connection_gene.expressed = False
 
-            node_key = self.add_node(old_connection_gene.node_in,
-                                     old_connection_gene.node_out,
-                                     node_type=NodeType.HIDDEN)
+                node_key = self.add_node(old_connection_gene.node_in,
+                                         old_connection_gene.node_out,
+                                         node_type=NodeType.HIDDEN)
 
-            self.add_connection(node_in=old_connection_gene.node_in,
-                                node_out=node_key,
-                                weight=1.0)
+                self.add_connection(node_in=old_connection_gene.node_in,
+                                    node_out=node_key,
+                                    weight=1.0)
 
-            self.add_connection(node_in=node_key,
-                                node_out=old_connection_gene.node_out,
-                                weight=old_connection_gene.weight)
+                self.add_connection(node_in=node_key,
+                                    node_out=old_connection_gene.node_out,
+                                    weight=old_connection_gene.weight)
 
-            return True
+                return True
+
+        return False
 
     def mutate_weights(self):
         """Mutates (perturbs) or replaces each connection weight in the genome.

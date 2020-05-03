@@ -106,7 +106,10 @@ class TestReproduction:
         self.config.reproduction_config.elitism_threshold = 1
         self.config.reproduction_config.survival_threshold = 0.8
         self.config.reproduction_config.mutate_only_prob = 1.0
-        self.config.reproduction_config.weight_mutate_prob = 1.0
+
+        self.config.genome_config.weight_mutate_prob = 1.0
+        self.config.genome_config.node_add_prob = 0.2
+        self.config.genome_config.conn_add_prob = 0.5
 
         stagnation_scheme = DefaultStagnation(self.config.stagnation_config, self.reporters)
         reproduction_scheme = Reproduction(self.config.reproduction_config, self.reporters, stagnation_scheme)
@@ -129,9 +132,16 @@ class TestReproduction:
         new_population = reproduction_scheme.reproduce(self.config, species_set, pop_size, generation=1, innovation_store=innovation_store)
 
         assert len(population) == len(new_population)
-        old_genomes = population.values()
-        new_genomes = new_population.values()
-        assert len([1 for (old, new) in itertools.product(old_genomes, new_genomes) if old.nodes == new.nodes and old.connections == new.connections]) == 2
+
+        num_duplicates = 0
+        for old in population.values():
+            for new in new_population.values():
+                old_attrs = (old.nodes, old.connections, old.inputs, old.outputs, old.biases)
+                new_attrs = (new.nodes, new.connections, new.inputs, new.outputs, new.biases)
+                if old_attrs == new_attrs:
+                    num_duplicates += 1
+
+        assert num_duplicates == 2
 
     def test_reproduce_no_elitism(self):
         """Test that reproduce produces a population with all new genomes if the

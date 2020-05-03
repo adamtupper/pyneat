@@ -7,6 +7,21 @@ All notable changes to this project will be documented in this file.
 The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`_,
 and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.html)>`_.
 
+Current
+=======
+
+Changed
+=======
+
+- Changed :code:`crossover_prob` config parameter to :code:`mutate_only_prob` (equivalent to
+  1 - :code:`crossover_prob`).
+- Added retries for add node mutations.
+
+Fixed
+#####
+
+- Fixed bug preventing :code:`survival_threshold` from being applied.
+
 Version 0.2.0 (25-04-2020)
 ==========================
 
