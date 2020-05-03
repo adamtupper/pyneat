@@ -17,10 +17,10 @@ class ReproductionConfig:
     """Sets up and hold configuration information for the Reproduction class.
 
     Config Parameters:
-        crossover_prob (float): The probability that a child is generated via
-            crossover (as opposed to mutation alone). Crossover is only an
-            option if there is more than one remaining parent in the parent
-            pool for the species in question.
+        mutate_only_prob (float): The probability that a child is generated
+            through mutation alone. Crossover is only an option if there is more
+            than one remaining parent in the parent pool for the species in
+            question.
         crossover_only_prob (float): The probability that a child
             generated via crossover is not also mutated.
         inter_species_crossover_prob (float): The probability (given crossover)
@@ -42,7 +42,7 @@ class ReproductionConfig:
         Args:
             params (dict): A dictionary of config parameters and values.
         """
-        self._params = [ConfigParameter('crossover_prob', float),
+        self._params = [ConfigParameter('mutate_only_prob', float),
                         ConfigParameter('crossover_only_prob', float),
                         ConfigParameter('inter_species_crossover_prob', float),
                         ConfigParameter('num_elites', int),
@@ -154,6 +154,33 @@ class Reproduction:
 
         return genomes
 
+    def generate_parent_pools(self, remaining_species):
+        """Culls the lowest performing members of each remaining species
+
+        Args:
+            remaining_species (dict): Species key/species pairs for the
+                remaining species after stagnated species have been removed.
+
+        Returns:
+            dict: The parent genomes for each species. A dictionary of the form
+                species key, genomes.
+        """
+        survival_threshold = self.reproduction_config.survival_threshold
+        parent_pool = {}
+
+        for species_key, species in remaining_species.items():
+            old_members = list(species.members.items())
+
+            # Sort members in order of descending fitness
+            old_members.sort(reverse=True, key=lambda x: x[1].fitness)
+
+            # Eliminate the lowest performing members of the species
+            cutoff = int(math.ceil(survival_threshold * len(old_members)))
+            parents = old_members[:cutoff]
+            parent_pool[species_key] = parents
+
+        return parent_pool
+
     def reproduce(self, config, species, pop_size, generation, innovation_store):
         """Produces the next generation of genomes.
 
@@ -181,7 +208,6 @@ class Reproduction:
         species_set = species
         num_elites = self.reproduction_config.num_elites
         elitism_threshold = self.reproduction_config.elitism_threshold
-        survival_threshold = self.reproduction_config.survival_threshold
 
         # Ensure that the number of elites cannot exceed the minimum species
         # size for elitism.
@@ -210,17 +236,7 @@ class Reproduction:
         self.reporters.info("Mean fitness: {:.3f}".format(mean_fitness))
 
         # Generate parent pool for each species
-        parent_pool = {}
-        for species_key, species in remaining_species.items():
-            old_members = list(species.members.items())
-
-            # Sort members in order of descending fitness
-            old_members.sort(reverse=True, key=lambda x: x[1].fitness)
-
-            # Eliminate the lowest performing members of the species
-            cutoff = int(math.ceil(survival_threshold) * len(old_members))
-            parents = old_members[:cutoff]
-            parent_pool[species_key] = parents
+        parent_pool = self.generate_parent_pools(remaining_species)
 
         # Generate new population
         new_population = {}
@@ -262,7 +278,7 @@ class Reproduction:
                 num_offspring -= 1
                 child_key = next(self.genome_key_generator)
 
-                if (len(parents) > 1) and (random.random() < self.reproduction_config.crossover_prob):
+                if (len(parents) > 1) and (random.random() > self.reproduction_config.mutate_only_prob):
                     # Child is generated through mutation and crossover
                     (parent1_key, parent1), (parent2_key, parent2) = random.sample(parents, 2)
 

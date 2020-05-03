@@ -103,9 +103,10 @@ class TestReproduction:
         elites carried over.
         """
         self.config.reproduction_config.num_elites = 1
-        self.config.reproduction_config.elitism_threshold = 4
+        self.config.reproduction_config.elitism_threshold = 1
         self.config.reproduction_config.survival_threshold = 0.8
-        self.config.reproduction_config.crossover_only_prob = 0.0
+        self.config.reproduction_config.mutate_only_prob = 1.0
+        self.config.reproduction_config.weight_mutate_prob = 1.0
 
         stagnation_scheme = DefaultStagnation(self.config.stagnation_config, self.reporters)
         reproduction_scheme = Reproduction(self.config.reproduction_config, self.reporters, stagnation_scheme)
@@ -257,3 +258,35 @@ class TestReproduction:
             genome.fitness = 1
 
         assert 0 == len(species_set.species)
+
+    def test_generate_parent_pools(self):
+        """Test that the worst performing members of each species are being
+        culled from the parent pool.
+        """
+        self.config.reproduction_config.survival_threshold = 0.5
+        self.config.genome_config.compatibility_disjoint_coefficient = 0.0
+        self.config.genome_config.compatibility_weight_coefficient = 0.0
+        self.config.species_set_config.compatibility_threshold = 1.0
+
+        stagnation_scheme = DefaultStagnation(self.config.stagnation_config, self.reporters)
+        reproduction_scheme = Reproduction(self.config.reproduction_config, self.reporters, stagnation_scheme)
+        pop_size = 10
+
+        # Create new population
+        population = reproduction_scheme.create_new(Genome, self.config.genome_config, pop_size, InnovationStore())
+
+        # Assign different fitnesses to each member of the population
+        for i, genome in enumerate(population.values()):
+            genome.fitness = i
+
+        # Speciate the population
+        species_set = SpeciesSet(self.config.species_set_config, self.reporters)
+        species_set.speciate(self.config, population, generation=1)
+
+        assert len(species_set.species) == 1
+
+        parent_pools = reproduction_scheme.generate_parent_pools(species_set.species)
+
+        # Check that only half of the genomes in the species survived
+        assert len(parent_pools) == 1
+        assert len(parent_pools[0]) == len(population) / 2
