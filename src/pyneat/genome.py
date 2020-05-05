@@ -531,7 +531,7 @@ class Genome:
 
             assert self.config.weight_min_value <= gene.weight <= self.config.weight_max_value
 
-    def configure_crossover(self, parent1, parent2):
+    def configure_crossover(self, parent1, parent2, average):
         """Performs crossover between two genomes.
 
         If the two genomes have equal fitness then the joint and excess genes
@@ -541,6 +541,8 @@ class Genome:
         Args:
             parent1 (Genome): The first parent.
             parent2 (Genome): The second parent.
+            average (bool): Whether or not to average the weights of mutual
+                connections or choose at random from one of the parents.
         """
         # Ensure parent1 is the fittest
         if parent1.fitness < parent2.fitness:
@@ -554,11 +556,15 @@ class Genome:
                 # gene1 is excess or disjoint
                 self.connections[key] = copy.deepcopy(gene1)
             else:
-                # gene is mutual, randomly choose from parents
-                if random.random() > 0.5:
+                # gene is mutual, either average or randomly choose from parents
+                if average:
                     self.connections[key] = copy.deepcopy(gene1)
+                    self.connections[key].weight = (gene1.weight + gene2.weight) / 2
                 else:
-                    self.connections[key] = copy.deepcopy(gene2)
+                    if random.random() > 0.5:
+                        self.connections[key] = copy.deepcopy(gene1)
+                    else:
+                        self.connections[key] = copy.deepcopy(gene2)
 
                 if (not gene1.expressed) or (not gene2.expressed):
                     # Probabilistically disable gene if disabled in at least one parent
@@ -573,7 +579,7 @@ class Genome:
                 # gene1 is excess or disjoint
                 self.nodes[key] = copy.deepcopy(gene1)
             else:
-                # gene is mutual, randomly choose from parents
+                # gene is mutual, randomly choose from parents (makes no difference for node genes)
                 if random.random() > 0.5:
                     self.nodes[key] = copy.deepcopy(gene1)
                 else:

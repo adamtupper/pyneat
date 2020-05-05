@@ -533,7 +533,7 @@ class TestGenome:
         }
 
         child = Genome(key=2, config=self.config.genome_config, innovation_store=None)
-        child.configure_crossover(parent1, parent2)
+        child.configure_crossover(parent1, parent2, average=False)
         assert 4 == len(child.nodes)
         assert 4 == len(child.connections)
 
@@ -547,7 +547,7 @@ class TestGenome:
         assert 2.0 in [g.weight for g in child.connections.values()]
 
         child = Genome(key=2, config=self.config.genome_config, innovation_store=None)
-        child.configure_crossover(parent2, parent1)
+        child.configure_crossover(parent2, parent1, average=False)
         assert 4 == len(child.nodes)
         assert 4 == len(child.connections)
 
@@ -604,7 +604,7 @@ class TestGenome:
         }
 
         child = Genome(key=2, config=self.config.genome_config, innovation_store=None)
-        child.configure_crossover(parent1, parent2)
+        child.configure_crossover(parent1, parent2, average=False)
         assert 5 == len(child.nodes)
         assert 5 == len(child.connections)
 
@@ -618,7 +618,7 @@ class TestGenome:
         assert 1.0 in [g.weight for g in child.connections.values()]
 
         child = Genome(key=2, config=self.config.genome_config, innovation_store=None)
-        child.configure_crossover(parent2, parent1)
+        child.configure_crossover(parent2, parent1, average=False)
         assert 5 == len(child.nodes)
         assert 5 == len(child.connections)
 
@@ -662,7 +662,7 @@ class TestGenome:
         }
 
         child = Genome(key=2, config=self.config.genome_config, innovation_store=None)
-        child.configure_crossover(parent1, parent2)
+        child.configure_crossover(parent1, parent2, average=False)
         assert 2 == len(child.nodes)
         assert 1 == len(child.connections)
         assert [0, 1] == list(child.nodes)
@@ -703,10 +703,12 @@ class TestGenome:
         }
 
         child = Genome(key=2, config=self.config.genome_config, innovation_store=None)
-        child.configure_crossover(parent1, parent2)
+        child.configure_crossover(parent1, parent2, average=False)
         assert 3 == len(child.nodes)
         assert 3 == len(child.connections)
         assert all([not g.expressed for g in child.connections.values()])
+
+    # TODO: Add tests for average crossover
 
     def test_distance(self):
         """Test the genetic distance method.

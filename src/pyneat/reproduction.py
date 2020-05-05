@@ -21,6 +21,9 @@ class ReproductionConfig:
             through mutation alone. Crossover is only an option if there is more
             than one remaining parent in the parent pool for the species in
             question.
+        crossover_avg_prob (float): The probability that the weights of mutual
+            connections are averaged from both parents instead of chosen at
+            random from one or the other.
         crossover_only_prob (float): The probability that a child
             generated via crossover is not also mutated.
         inter_species_crossover_prob (float): The probability (given crossover)
@@ -43,6 +46,7 @@ class ReproductionConfig:
             params (dict): A dictionary of config parameters and values.
         """
         self._params = [ConfigParameter('mutate_only_prob', float),
+                        ConfigParameter('crossover_avg_prob', float),
                         ConfigParameter('crossover_only_prob', float),
                         ConfigParameter('inter_species_crossover_prob', float),
                         ConfigParameter('num_elites', int),
@@ -290,7 +294,8 @@ class Reproduction:
                             parent2_key, parent2 = random.choice(parent_pool[other_species_key])
 
                     child = Genome(child_key, config.genome_config, innovation_store)
-                    child.configure_crossover(parent1, parent2)
+                    average = True if random.random() < self.reproduction_config.crossover_avg_prob else False
+                    child.configure_crossover(parent1, parent2, average)
                     if random.random() > self.reproduction_config.crossover_only_prob:
                         child.mutate()
                     self.ancestors[child_key] = (parent1, parent2)
@@ -334,16 +339,16 @@ class Reproduction:
         # Calculate the sum of adjusted fitnesses for each species
         for species_key, species in remaining_species.items():
             species_size = len(species.members)
-            species.adj_fitness = 0.0  # reset sum of the adjusted fitnesses
+            species.adjusted_fitness = 0.0  # reset sum of the adjusted fitnesses
             for genome_key, genome in species.members.items():
-                species.adj_fitness += (genome.fitness - lowest_fitness) / species_size
+                species.adjusted_fitness += (genome.fitness - lowest_fitness) / species_size
 
         # Calculate the number of offspring for each species
         offspring = {}
-        adj_fitness_sum = sum([s.adj_fitness for s in remaining_species.values()])
+        adjusted_fitness_sum = sum([s.adjusted_fitness for s in remaining_species.values()])
         for species_key, species in remaining_species.items():
-            if adj_fitness_sum != 0:
-                offspring[species_key] = pop_size * (species.adj_fitness / adj_fitness_sum)
+            if adjusted_fitness_sum != 0:
+                offspring[species_key] = pop_size * (species.adjusted_fitness / adjusted_fitness_sum)
             else:
                 # All members of all species have zero fitness
                 # Allocate each species an equal number of offspring
