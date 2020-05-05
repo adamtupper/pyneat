@@ -33,6 +33,7 @@ import neat
 from pyneat.reproduction import Reproduction
 from pyneat.species import SpeciesSet
 from pyneat.genome import Genome
+from pyneat.stagnation import Stagnation
 from pyneat.innovation import *
 
 
@@ -45,7 +46,7 @@ class TestInnovation:
         self.config = neat.Config(Genome,
                                   Reproduction,
                                   SpeciesSet,
-                                  neat.DefaultStagnation,
+                                  Stagnation,
                                   config_path)
 
     def test_innovation_record_constructor(self):

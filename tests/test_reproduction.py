@@ -7,8 +7,8 @@ import os
 import pytest
 import neat
 from neat.reporting import ReporterSet
-from neat.stagnation import DefaultStagnation
 
+from pyneat.stagnation import Stagnation
 from pyneat.reproduction import *
 from pyneat.genome import *
 from pyneat.species import *
@@ -22,7 +22,7 @@ class TestReproduction:
         self.config = neat.Config(Genome,
                                   Reproduction,
                                   SpeciesSet,
-                                  neat.DefaultStagnation,
+                                  Stagnation,
                                   config_path)
         self.reporters = ReporterSet()
 
@@ -35,7 +35,7 @@ class TestReproduction:
         self.config.genome_config.num_biases = 1
         self.config.genome_config.initial_conn_prob = 1.0
 
-        stagnation_scheme = DefaultStagnation(self.config.stagnation_config, self.reporters)
+        stagnation_scheme = Stagnation(self.config.stagnation_config, self.reporters)
         reproduction_scheme = Reproduction(self.config, self.reporters, stagnation_scheme)
         pop_size = 10
         genomes = reproduction_scheme.create_new(Genome, self.config.genome_config, pop_size, InnovationStore())
@@ -49,7 +49,7 @@ class TestReproduction:
         """Test method for computing the number of offspring each species is
         allocated for the next generation.
         """
-        stagnation_scheme = DefaultStagnation(self.config.stagnation_config, self.reporters)
+        stagnation_scheme = Stagnation(self.config.stagnation_config, self.reporters)
         reproduction_scheme = Reproduction(self.config, self.reporters, stagnation_scheme)
         popn_size = 10
 
@@ -85,7 +85,7 @@ class TestReproduction:
         self.config.reproduction_config.min_species_size = 3
         self.config.reproduction_config.survival_threshold = 0.75
 
-        stagnation_scheme = DefaultStagnation(self.config.stagnation_config, self.reporters)
+        stagnation_scheme = Stagnation(self.config.stagnation_config, self.reporters)
         reproduction_scheme = Reproduction(self.config.reproduction_config, self.reporters, stagnation_scheme)
         pop_size = 10
         population = reproduction_scheme.create_new(Genome, self.config.genome_config, pop_size, InnovationStore())
@@ -111,7 +111,7 @@ class TestReproduction:
         self.config.genome_config.node_add_prob = 0.2
         self.config.genome_config.conn_add_prob = 0.5
 
-        stagnation_scheme = DefaultStagnation(self.config.stagnation_config, self.reporters)
+        stagnation_scheme = Stagnation(self.config.stagnation_config, self.reporters)
         reproduction_scheme = Reproduction(self.config.reproduction_config, self.reporters, stagnation_scheme)
         pop_size = 10
         innovation_store = InnovationStore()
@@ -151,7 +151,7 @@ class TestReproduction:
         self.config.reproduction_config.elitism_threshold = 4
         self.config.reproduction_config.survival_threshold = 0.8
 
-        stagnation_scheme = DefaultStagnation(self.config.stagnation_config, self.reporters)
+        stagnation_scheme = Stagnation(self.config.stagnation_config, self.reporters)
         reproduction_scheme = Reproduction(self.config.reproduction_config, self.reporters, stagnation_scheme)
         pop_size = 10
         innovation_store = InnovationStore()
@@ -191,7 +191,7 @@ class TestReproduction:
         self.config.genome_config.node_add_prob = 0.0
         self.config.reproduction_config.crossover_prob = 0.0
 
-        stagnation_scheme = DefaultStagnation(self.config.stagnation_config, self.reporters)
+        stagnation_scheme = Stagnation(self.config.stagnation_config, self.reporters)
         reproduction_scheme = Reproduction(self.config.reproduction_config, self.reporters, stagnation_scheme)
         pop_size = 10
         population = reproduction_scheme.create_new(Genome, self.config.genome_config, pop_size, InnovationStore())
@@ -237,7 +237,7 @@ class TestReproduction:
         self.config.genome_config.node_add_prob = 0.0
         self.config.reproduction_config.crossover_prob = 0.0
 
-        stagnation_scheme = DefaultStagnation(self.config.stagnation_config, self.reporters)
+        stagnation_scheme = Stagnation(self.config.stagnation_config, self.reporters)
         reproduction_scheme = Reproduction(self.config.reproduction_config, self.reporters, stagnation_scheme)
         pop_size = 10
         population0 = reproduction_scheme.create_new(Genome, self.config.genome_config, pop_size, InnovationStore())
@@ -278,7 +278,7 @@ class TestReproduction:
         self.config.genome_config.compatibility_weight_coefficient = 0.0
         self.config.species_set_config.compatibility_threshold = 1.0
 
-        stagnation_scheme = DefaultStagnation(self.config.stagnation_config, self.reporters)
+        stagnation_scheme = Stagnation(self.config.stagnation_config, self.reporters)
         reproduction_scheme = Reproduction(self.config.reproduction_config, self.reporters, stagnation_scheme)
         pop_size = 10
 

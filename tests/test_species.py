@@ -12,6 +12,7 @@ from neat.activations import  identity_activation
 from pyneat.species import *
 from pyneat.genome import *
 from pyneat.reproduction import Reproduction
+from pyneat.stagnation import Stagnation
 
 
 class TestSpecies:
@@ -54,7 +55,7 @@ class TestSpeciesSet:
         self.config = neat.Config(Genome,
                                   Reproduction,
                                   SpeciesSet,
-                                  neat.DefaultStagnation,
+                                  Stagnation,
                                   config_path)
 
     def test_species_set_constructor(self):

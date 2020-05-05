@@ -21,6 +21,7 @@ from pyneat.reproduction import Reproduction
 from pyneat.species import SpeciesSet
 from pyneat.config import CustomConfig
 from pyneat.population import Population
+from pyneat.stagnation import Stagnation
 
 
 def parse_args(args):
@@ -147,7 +148,7 @@ def main():
         config = CustomConfig(Genome,
                               Reproduction,
                               SpeciesSet,
-                              neat.DefaultStagnation,
+                              Stagnation,
                               args.config)
 
         if os.path.exists(args.results_dir):

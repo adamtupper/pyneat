@@ -10,6 +10,7 @@ from pyneat.genome import *
 from pyneat.reproduction import Reproduction
 from pyneat.species import SpeciesSet
 from pyneat.innovation import InnovationStore
+from pyneat.stagnation import Stagnation
 
 from pyneat.nn.feed_forward import NN
 from pyneat.activations import steep_sigmoid_activation
@@ -23,7 +24,7 @@ class TestFeedForward:
         self.config = neat.Config(Genome,
                                   Reproduction,
                                   SpeciesSet,
-                                  neat.DefaultStagnation,
+                                  Stagnation,
                                   config_path)
 
     @staticmethod

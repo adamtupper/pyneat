@@ -11,6 +11,7 @@ from pyneat.genome import *
 from pyneat.species import SpeciesSet
 from pyneat.reproduction import Reproduction
 from pyneat.innovation import InnovationStore, InnovationType, InnovationRecord
+from pyneat.stagnation import Stagnation
 
 
 class TestGenome:
@@ -20,7 +21,7 @@ class TestGenome:
         self.config = neat.Config(Genome,
                                   Reproduction,
                                   SpeciesSet,
-                                  neat.DefaultStagnation,
+                                  Stagnation,
                                   config_path)
 
     def test_create_node_gene(self):

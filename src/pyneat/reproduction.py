@@ -77,7 +77,7 @@ class Reproduction:
         reporters (ReporterSet): The set of reporters to log events via.
         genome_key_generator (generator): Keeps track of the next genome key when
             generating offspring.
-        stagnation (DefaultStagnation): Keeps track of which species have
+        stagnation (Stagnation): Keeps track of which species have
             stagnated.
         ancestors (dict): A dictionary that stores the parents of each
             offspring produced.
@@ -121,7 +121,7 @@ class Reproduction:
             config (ReproductionConfig): The configuration for
                 reproduction hyperparameters.
             reporters (ReporterSet): The set of reporters to log events via.
-            stagnation (DefaultStagnation): Keeps track of which species have
+            stagnation (Stagnation): Keeps track of which species have
                 stagnated.
         """
         self.reproduction_config = config
