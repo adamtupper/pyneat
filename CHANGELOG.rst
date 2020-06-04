@@ -18,6 +18,8 @@ Added
 - Custom stagnation behaviour that doesn't preserve elite species if the number of species is above the species elitism
   threshold. This is more inline with the original implementation of NEAT. Previously, the stagnation behaviour of
   NEAT-Python was used.
+- The visualise module (for visualising results) that was included with examples has now been added to the library
+  proper.
 
 Changed
 #######
@@ -27,6 +29,8 @@ Changed
 - Added retries for add node mutations.
 - Reduced the maximum weight magnitudes for the XOR example to match the original implementation of NEAT. Now weights
   are restricted to the range [-8., 8.].
+- The :code:`Population.run` function can now take additional keyword arguments that are passed to the provided
+  fitness evaluation function.
 
 Fixed
 #####

@@ -99,7 +99,7 @@ class Population(object):
         """
         self.reporters.remove(reporter)
 
-    def run(self, fitness_function, n=None):
+    def run(self, fitness_function, n=None, **kwargs):
         """Runs NEAT's genetic algorithm for at most n generations.  If n is
         None, run until solution is found or extinction occurs.
 
@@ -121,6 +121,7 @@ class Population(object):
             fitness_function (function): The fitness function to assess genomes
                 with.
             n (int): The maximum number of generations to run for.
+            **kwargs: Extra arguments that are passed to the fitness function.
 
         Returns:
             Genome: The best genome found during the run(s).
@@ -139,7 +140,7 @@ class Population(object):
             assert len(self.population.keys()) == self.config.pop_size
 
             # Evaluate all genomes using the user-provided function.
-            fitness_function(list(self.population.items()), self.config)
+            fitness_function(list(self.population.items()), self.config, **kwargs)
 
             # Draw genomes (useful for debugging)
             # for key, genome in self.population.items():
