@@ -15,7 +15,8 @@ def sigmoid_activation(z):
 def steep_sigmoid_activation(z):
     """Used in the original implementation by Stanley and Miikkulainen (2002).
     """
-    return float(mp.mpf(1.0) / (mp.mpf(1.0) + mp.exp(mp.mpf(-4.924273) * mp.mpf(z))))
+    y = 1.0 / (1.0 + mp.exp(-4.924273 * mp.mpf(z)))
+    return float(y)
 
 
 def tanh_activation(z):
