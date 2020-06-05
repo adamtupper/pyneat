@@ -6,7 +6,6 @@ from neat.math_util import mean
 from neat.reporting import ReporterSet
 
 from pyneat.innovation import InnovationStore
-import visualize
 
 
 class CompleteExtinctionException(Exception):
