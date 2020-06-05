@@ -31,6 +31,7 @@ Changed
   are restricted to the range [-8., 8.].
 - The :code:`Population.run` function can now take additional keyword arguments that are passed to the provided
   fitness evaluation function.
+- Introduce mpmath dependency to use for calculating exponentials in the activation functions (to avoid overflow errors).
 
 Fixed
 #####
