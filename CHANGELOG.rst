@@ -20,6 +20,8 @@ Added
   NEAT-Python was used.
 - The visualise module (for visualising results) that was included with examples has now been added to the library
   proper.
+- A :code:`LogFileReporter` that reports the same information as the NEAT-Python :code:`StdOutReporter`, but instead
+  saves the logs to a log file.
 
 Changed
 #######
