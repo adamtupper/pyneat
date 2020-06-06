@@ -594,7 +594,7 @@ class Genome:
                 self.biases.append(key)
 
     def distance(self, other):
-        """Computes the compatibility  (genetic) distance between two genomes.
+        """Computes the compatibility (genetic) distance between two genomes.
 
         This is used for deciding how to speciate the population. Distance is a
         function of the number of disjoint and excess genes, as well as the
