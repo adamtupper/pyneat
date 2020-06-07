@@ -3,7 +3,7 @@
 Example:
     Ensure that the following is executed in the `peal` conda environment.
 
-        $ python experiment.py path/to/config.ini
+        $ python experiment.py path/to/config.ini results
 """
 import os
 import sys
