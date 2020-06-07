@@ -709,7 +709,47 @@ class TestGenome:
         assert 3 == len(child.connections)
         assert all([not g.expressed for g in child.connections.values()])
 
-    # TODO: Add tests for average crossover
+    def test_average_crossover(self):
+        """Test that average crossover is performed correctly.
+        """
+        # Test configuration
+        self.config.genome_config.gene_disable_prob = 0.0
+
+        parent1 = Genome(key=0, config=self.config.genome_config, innovation_store=None)
+        parent1.fitness = 2.
+        parent1.nodes = {
+            0: NodeGene(key=0, type=NodeType.INPUT, activation=None),
+            1: NodeGene(key=1, type=NodeType.INPUT, activation=None),
+            2: NodeGene(key=2, type=NodeType.OUTPUT, activation=identity_activation),
+            3: NodeGene(key=3, type=NodeType.BIAS, activation=identity_activation)
+        }
+        parent1.connections = {
+            4: ConnectionGene(key=4, node_in=0, node_out=2, weight=1., expressed=True),
+            5: ConnectionGene(key=5, node_in=1, node_out=2, weight=1., expressed=True),
+            6: ConnectionGene(key=6, node_in=3, node_out=2, weight=1., expressed=True),
+        }
+
+        parent2 = Genome(key=1, config=self.config.genome_config, innovation_store=None)
+        parent2.fitness = 1.
+        parent2.nodes = {
+            0: NodeGene(key=0, type=NodeType.INPUT, activation=None),
+            1: NodeGene(key=1, type=NodeType.INPUT, activation=None),
+            2: NodeGene(key=2, type=NodeType.OUTPUT, activation=identity_activation),
+            3: NodeGene(key=3, type=NodeType.BIAS, activation=identity_activation)
+        }
+        parent2.connections = {
+            4: ConnectionGene(key=4, node_in=0, node_out=2, weight=2., expressed=True),
+            5: ConnectionGene(key=5, node_in=1, node_out=2, weight=2., expressed=True),
+            6: ConnectionGene(key=6, node_in=3, node_out=2, weight=2., expressed=True),
+        }
+
+        child = Genome(key=2, config=self.config.genome_config, innovation_store=None)
+        child.configure_crossover(parent1, parent2, average=True)
+        assert 4 == len(child.nodes)
+        assert 3 == len(child.connections)
+        assert [0, 1, 2, 3] == list(child.nodes)
+        assert [4, 5, 6] == list(child.connections)
+        assert all([cg.weight == 1.5 for cg in child.connections.values()])
 
     def test_distance(self):
         """Test the genetic distance method.
@@ -749,3 +789,219 @@ class TestGenome:
 
         assert genome1.distance(genome2) == pytest.approx(5.72, abs=1e-3)
         assert genome2.distance(genome1) == pytest.approx(5.72, abs=1e-3)
+
+    def test_distance_normalisation_enabled_large_genome(self):
+        """Test that the gene distance is normalised when it is enabled AND
+        the genomes are larger than the threshold.
+        """
+        self.config.genome_config.compatibility_disjoint_coefficient = 1.0
+        self.config.genome_config.compatibility_weight_coefficient = 1.0
+        self.config.genome_config.normalise_gene_dist = True
+
+        genome1 = Genome(key=0, config=self.config.genome_config, innovation_store=None)
+        genome1.nodes = {
+            0: NodeGene(0, NodeType.INPUT, None),
+            1: NodeGene(1, NodeType.INPUT, None),
+            2: NodeGene(2, NodeType.INPUT, None),
+            3: NodeGene(3, NodeType.OUTPUT, identity_activation),
+            7: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            8: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            9: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            10: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            11: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            12: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            13: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            14: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            15: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            16: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            17: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            18: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            19: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            20: NodeGene(20, NodeType.HIDDEN, identity_activation)
+        }
+        genome1.connections = {
+            4: ConnectionGene(key=4, node_in=0, node_out=3, weight=1., expressed=True),
+            5: ConnectionGene(key=5, node_in=1, node_out=3, weight=1., expressed=True),
+            6: ConnectionGene(key=6, node_in=2, node_out=3, weight=1., expressed=True)
+        }
+
+        genome2 = Genome(key=0, config=self.config.genome_config, innovation_store=None)
+        genome2.nodes = {
+            0: NodeGene(0, NodeType.INPUT, None),
+            1: NodeGene(1, NodeType.INPUT, None),
+            2: NodeGene(2, NodeType.INPUT, None),
+            3: NodeGene(3, NodeType.OUTPUT, identity_activation),
+            7: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            8: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            9: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            10: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            11: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            12: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            13: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            14: NodeGene(7, NodeType.HIDDEN, identity_activation),
+        }
+
+        genome2.connections = {
+            4: ConnectionGene(key=4, node_in=0, node_out=3, weight=1., expressed=True),
+            5: ConnectionGene(key=5, node_in=1, node_out=3, weight=1., expressed=True),
+            6: ConnectionGene(key=6, node_in=2, node_out=3, weight=1., expressed=True)
+        }
+
+        assert genome1.distance(genome2) == pytest.approx(0.2857, abs=1e-4)
+        assert genome2.distance(genome1) == pytest.approx(0.2857, abs=1e-4)
+
+    def test_distance_normalisation_disabled_large_genome(self):
+        """Test that the gene distance isn't normalised when the genomes are
+        large enough (at least one of them) but normalisation is disabled.
+        """
+        self.config.genome_config.compatibility_disjoint_coefficient = 1.0
+        self.config.genome_config.compatibility_weight_coefficient = 1.0
+        self.config.genome_config.normalise_gene_dist = False
+
+        genome1 = Genome(key=0, config=self.config.genome_config, innovation_store=None)
+        genome1.nodes = {
+            0: NodeGene(0, NodeType.INPUT, None),
+            1: NodeGene(1, NodeType.INPUT, None),
+            2: NodeGene(2, NodeType.INPUT, None),
+            3: NodeGene(3, NodeType.OUTPUT, identity_activation),
+            7: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            8: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            9: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            10: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            11: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            12: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            13: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            14: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            15: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            16: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            17: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            18: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            19: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            20: NodeGene(20, NodeType.HIDDEN, identity_activation)
+        }
+        genome1.connections = {
+            4: ConnectionGene(key=4, node_in=0, node_out=3, weight=1., expressed=True),
+            5: ConnectionGene(key=5, node_in=1, node_out=3, weight=1., expressed=True),
+            6: ConnectionGene(key=6, node_in=2, node_out=3, weight=1., expressed=True)
+        }
+
+        genome2 = Genome(key=0, config=self.config.genome_config, innovation_store=None)
+        genome2.nodes = {
+            0: NodeGene(0, NodeType.INPUT, None),
+            1: NodeGene(1, NodeType.INPUT, None),
+            2: NodeGene(2, NodeType.INPUT, None),
+            3: NodeGene(3, NodeType.OUTPUT, identity_activation),
+            7: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            8: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            9: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            10: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            11: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            12: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            13: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            14: NodeGene(7, NodeType.HIDDEN, identity_activation),
+        }
+
+        genome2.connections = {
+            4: ConnectionGene(key=4, node_in=0, node_out=3, weight=1., expressed=True),
+            5: ConnectionGene(key=5, node_in=1, node_out=3, weight=1., expressed=True),
+            6: ConnectionGene(key=6, node_in=2, node_out=3, weight=1., expressed=True)
+        }
+
+        assert genome1.distance(genome2) == pytest.approx(6)
+        assert genome2.distance(genome1) == pytest.approx(6)
+
+    def test_distance_normalisation_enabled_small_genome(self):
+        """Test that the gene distance isn't normalised when it is enabled, but
+        the genomes are smaller than the threshold.
+        """
+        self.config.genome_config.compatibility_disjoint_coefficient = 1.0
+        self.config.genome_config.compatibility_weight_coefficient = 1.0
+        self.config.genome_config.normalise_gene_dist = True
+
+        genome1 = Genome(key=0, config=self.config.genome_config, innovation_store=None)
+        genome1.nodes = {
+            0: NodeGene(0, NodeType.INPUT, None),
+            1: NodeGene(1, NodeType.INPUT, None),
+            2: NodeGene(2, NodeType.INPUT, None),
+            3: NodeGene(3, NodeType.OUTPUT, identity_activation),
+            7: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            8: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            9: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            10: NodeGene(7, NodeType.HIDDEN, identity_activation)
+        }
+        genome1.connections = {
+            4: ConnectionGene(key=4, node_in=0, node_out=3, weight=1., expressed=True),
+            5: ConnectionGene(key=5, node_in=1, node_out=3, weight=1., expressed=True),
+            6: ConnectionGene(key=6, node_in=2, node_out=3, weight=1., expressed=True)
+        }
+
+        genome2 = Genome(key=0, config=self.config.genome_config, innovation_store=None)
+        genome2.nodes = {
+            0: NodeGene(0, NodeType.INPUT, None),
+            1: NodeGene(1, NodeType.INPUT, None),
+            2: NodeGene(2, NodeType.INPUT, None),
+            3: NodeGene(3, NodeType.OUTPUT, identity_activation),
+            7: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            8: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            9: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            10: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            11: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            12: NodeGene(7, NodeType.HIDDEN, identity_activation),
+        }
+
+        genome2.connections = {
+            4: ConnectionGene(key=4, node_in=0, node_out=3, weight=1., expressed=True),
+            5: ConnectionGene(key=5, node_in=1, node_out=3, weight=1., expressed=True),
+            6: ConnectionGene(key=6, node_in=2, node_out=3, weight=1., expressed=True)
+        }
+
+        assert genome1.distance(genome2) == pytest.approx(2)
+        assert genome2.distance(genome1) == pytest.approx(2)
+
+    def test_distance_normalisation_disabled_small_genome(self):
+        """Test that the gene distance isn't normalised when it is disabled AND
+        the genomes are smaller than the threshold.
+        """
+        self.config.genome_config.compatibility_disjoint_coefficient = 1.0
+        self.config.genome_config.compatibility_weight_coefficient = 1.0
+        self.config.genome_config.normalise_gene_dist = False
+
+        genome1 = Genome(key=0, config=self.config.genome_config, innovation_store=None)
+        genome1.nodes = {
+            0: NodeGene(0, NodeType.INPUT, None),
+            1: NodeGene(1, NodeType.INPUT, None),
+            2: NodeGene(2, NodeType.INPUT, None),
+            3: NodeGene(3, NodeType.OUTPUT, identity_activation),
+            7: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            8: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            9: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            10: NodeGene(7, NodeType.HIDDEN, identity_activation)
+        }
+        genome1.connections = {
+            4: ConnectionGene(key=4, node_in=0, node_out=3, weight=1., expressed=True),
+            5: ConnectionGene(key=5, node_in=1, node_out=3, weight=1., expressed=True),
+            6: ConnectionGene(key=6, node_in=2, node_out=3, weight=1., expressed=True)
+        }
+
+        genome2 = Genome(key=0, config=self.config.genome_config, innovation_store=None)
+        genome2.nodes = {
+            0: NodeGene(0, NodeType.INPUT, None),
+            1: NodeGene(1, NodeType.INPUT, None),
+            2: NodeGene(2, NodeType.INPUT, None),
+            3: NodeGene(3, NodeType.OUTPUT, identity_activation),
+            7: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            8: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            9: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            10: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            11: NodeGene(7, NodeType.HIDDEN, identity_activation),
+            12: NodeGene(7, NodeType.HIDDEN, identity_activation),
+        }
+
+        genome2.connections = {
+            4: ConnectionGene(key=4, node_in=0, node_out=3, weight=1., expressed=True),
+            5: ConnectionGene(key=5, node_in=1, node_out=3, weight=1., expressed=True),
+            6: ConnectionGene(key=6, node_in=2, node_out=3, weight=1., expressed=True)
+        }
+
+        assert genome1.distance(genome2) == pytest.approx(2)
+        assert genome2.distance(genome1) == pytest.approx(2)
