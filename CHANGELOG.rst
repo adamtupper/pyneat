@@ -36,6 +36,8 @@ Changed
 - The :code:`Population.run` function can now take additional keyword arguments that are passed to the provided
   fitness evaluation function.
 - Introduce mpmath dependency to use for calculating exponentials in the activation functions (to avoid overflow errors).
+- An 'add connection' mutation is not performed if an 'add node' mutation has been performed (as per the original
+  implementation of NEAT).
 
 Fixed
 #####

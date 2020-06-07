@@ -91,6 +91,7 @@ class Species:
             members (dict): A dictionary of genome ID and genome pairs of the
                 new members of the species.
         """
+        # TODO: Does this need to be a deep copy?
         self.representative = copy.deepcopy(representative)
         self.members = members
 

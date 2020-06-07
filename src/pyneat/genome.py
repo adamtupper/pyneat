@@ -393,18 +393,21 @@ class Genome:
         """Mutate the genome.
 
         Mutates the genome according to the mutation parameter values specified
-        in the genome configuration. If any structural mutations are performed,
-        weight and bias mutations will not be performed (as per the original
-        implementation of NEAT).
+        in the genome configuration.
+
+        As per the original implementation of NEAT:
+        - If any structural mutations are performed, weight and bias mutations
+          will not be performed.
+        - If an add node mutation is performed, an add connection mutation will
+          not also be performed.
         """
         connection_added = False
         node_added = False
 
-        if random.random() < self.config.conn_add_prob:
-            connection_added = self.mutate_add_connection()
-
         if random.random() < self.config.node_add_prob:
             node_added = self.mutate_add_node()
+        elif random.random() < self.config.conn_add_prob:
+            connection_added = self.mutate_add_connection()
 
         if not (connection_added or node_added):
             if random.random() < self.config.weight_mutate_prob:
