@@ -22,6 +22,8 @@ Added
   proper.
 - A :code:`LogFileReporter` that reports the same information as the NEAT-Python :code:`StdOutReporter`, but instead
   saves the logs to a log file.
+- The ability to toggle on/off gene distance normalisation for the genetic distance calculation. Controlled by the
+  :code:`normalise_gene_dist` config parameter.
 
 Changed
 #######

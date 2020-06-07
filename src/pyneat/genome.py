@@ -118,6 +118,8 @@ class GenomeConfig:
             coefficient to be used when calculating genome distance.
         compatibility_weight_coefficient (float): The weight and bias
             coefficient to be used when calculation genome distance.
+        normalise_gene_dist (bool): Whether or not normalise the gene dist (for
+            genetic distance calculations) for large genomes.
         feed_forward (bool): False if recurrent connections are allowed, True
             otherwise.
         conn_add_prob (float): The probability of adding a new connection when
@@ -157,6 +159,7 @@ class GenomeConfig:
                         ConfigParameter('activation_func', str),
                         ConfigParameter('compatibility_disjoint_coefficient', float),
                         ConfigParameter('compatibility_weight_coefficient', float),
+                        ConfigParameter('normalise_gene_dist', bool),
                         ConfigParameter('feed_forward', bool),
                         ConfigParameter('conn_add_prob', float),
                         ConfigParameter('node_add_prob', float),
@@ -612,12 +615,14 @@ class Genome:
         c1 = self.config.compatibility_disjoint_coefficient
         c2 = self.config.compatibility_weight_coefficient
 
-        # Find size of larger genome (set to 1 if both genomes contain < 20 genes)
-        if (len(self.nodes) + len(self.connections) < 20) and (len(other.nodes) + len(other.connections) < 20):
-            N = 1
-        else:
-            N = max(len(self.nodes) + len(self.connections),
+        # Find size of larger genome (set to 1 if both genomes contain <= 20 genes)
+        self_n_genes = len(self.nodes) + len(self.connections)
+        other_n_genes = len(other.nodes) + len(other.connections)
+        if self.config.normalise_gene_dist and (self_n_genes > 20 or other_n_genes > 20):
+            n_genes = max(len(self.nodes) + len(self.connections),
                     len(other.nodes) + len(other.connections))
+        else:
+            n_genes = 1
 
         # Node gene distance
         all_nodes = set(self.nodes.keys()).union(set(other.nodes.keys()))
@@ -635,7 +640,7 @@ class Genome:
         avg_weight_diff = sum_weight_diff / len(matching_connections) if matching_connections else 0.
 
         weight_dist = c2 * avg_weight_diff
-        gene_dist = c1 * (len(non_matching_nodes) + len(non_matching_connections)) / N
+        gene_dist = c1 * (len(non_matching_nodes) + len(non_matching_connections)) / n_genes
 
         return gene_dist + weight_dist
 
