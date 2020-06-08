@@ -16,6 +16,7 @@ import neat
 import numpy as np
 
 from pyneat.nn.feed_forward import NN
+from pyneat.graph_utils import required_for_output
 from pyneat.genome import Genome, NodeType
 from pyneat.reproduction import Reproduction
 from pyneat.species import SpeciesSet
@@ -80,8 +81,10 @@ def run(config, base_dir):
     # Store statistics for each run
     generations = []
     evaluations = []
-    n_nodes = []
+    n_hidden = []
+    n_hidden_used = []
     n_connections = []
+    n_connections_used = []
     succeeded = []
     durations = []
     fitnesses = []
@@ -109,9 +112,19 @@ def run(config, base_dir):
             succeeded.append(True)
             generations.append(population.generation)
             evaluations.append(population.generation * config.pop_size)
-            n_nodes.append(len([g for g in solution.nodes.values() if g.type == NodeType.HIDDEN]))
+            n_hidden.append(len([g for g in solution.nodes.values() if g.type == NodeType.HIDDEN]))
             n_connections.append(len([g for g in solution.connections.values() if g.expressed]))
             fitnesses.append(solution.fitness)
+
+            enabled_connections = [(g.node_in, g.node_out) for g in solution.connections.values() if g.expressed]
+            required_nodes = required_for_output(solution.inputs,
+                                                 solution.biases,
+                                                 solution.outputs,
+                                                 enabled_connections,
+                                                 list(solution.nodes.keys()))
+            n_hidden_used.append(len([n for n in required_nodes if solution.nodes[n].type == NodeType.HIDDEN]))
+
+            n_connections_used.append(len([g for g in solution.connections.values() if g.node_out in required_nodes and g.expressed]))
 
             # Save solution
             with open(os.path.join(run_dir, 'solution.pickle'), 'wb') as file:
@@ -124,10 +137,17 @@ def run(config, base_dir):
     print(f'\tAvg. # Generations:\t{np.mean(generations):.3f}')
     print(f'\tAvg. # Evaluations:\t{np.mean(evaluations):.3f}')
     print(f'\tStd. Dev. # Evaluations:\t{np.std(evaluations):.3f}')
-    print(f'\tAvg. # Hidden Nodes:\t{np.mean(n_nodes):.3f}')
-    print(f'\tStd. Dev. # Hidden Nodes:\t{np.std(n_nodes):.3f}')
+
+    print(f'\tAvg. # Hidden Nodes:\t{np.mean(n_hidden):.3f}')
+    print(f'\tStd. Dev. # Hidden Nodes:\t{np.std(n_hidden):.3f}')
+    print(f'\tAvg. # Used Hidden Nodes:\t{np.mean(n_hidden_used):.3f}')
+    print(f'\tStd. Dev. # Used Hidden Nodes:\t{np.std(n_hidden_used):.3f}')
+
     print(f'\tAvg. # Enabled Connections:\t{np.mean(n_connections):.3f}')
     print(f'\tStd. Dev. # Enabled Connections:\t{np.std(n_connections):.3f}')
+    print(f'\tAvg. # Enabled & Used Connections:\t{np.mean(n_connections_used):.3f}')
+    print(f'\tStd. Dev. # Enabled & Used Connections:\t{np.std(n_connections_used):.3f}')
+
     print(f'\tSuccess Rate:\t{len([x for x in succeeded if x]) / config.num_runs * 100:.3f}%')
     print(f'\tAvg. Time Elapsed:\t{time.strftime("%H:%M:%S", time.gmtime(np.mean(durations)))}')
     print(f'\tAvg. Solution Fitness:\t{np.mean(fitnesses):.3f}')
