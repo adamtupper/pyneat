@@ -63,6 +63,14 @@ class ConnectionGene:
         return (self.key, self.node_in, self.node_out, self.weight, self.expressed) == \
                (other.key, other.node_in, other.node_out, other.weight, other.expressed)
 
+    def copy(self):
+        """Create a copy of the connection gene.
+
+        Returns:
+            ConnectionGene: A copy of itself.
+        """
+        return copy.copy(self)
+
 
 class NodeGene:
     """Defines a node gene used in the genome encoding.
@@ -98,6 +106,14 @@ class NodeGene:
         """
         return (self.key, self.type, self.activation) == \
                (other.key, other.type, other.activation)
+
+    def copy(self):
+        """Create a copy of the node gene.
+
+        Returns:
+            NodeGene: A copy of itself.
+        """
+        return copy.copy(self)
 
 
 class GenomeConfig:
@@ -310,12 +326,21 @@ class Genome:
     def copy(self):
         """Create a copy of the genome.
 
+        Note: Copies share the same config and innovation store.
+
         Returns:
-            Genome: A copy of itself, but with the same innovation store.
+            Genome: A copy of itself, but with the same config and innovation
+                store.
         """
-        copied_genome = copy.deepcopy(self)
-        copied_genome.innovation_store = self.innovation_store
-        return copied_genome
+        new_copy = Genome(self.key, self.config, self.innovation_store)
+        new_copy.fitness = self.fitness
+        new_copy.inputs = self.inputs.copy()
+        new_copy.outputs = self.outputs.copy()
+        new_copy.biases = self.biases.copy()
+        new_copy.nodes = {k: g.copy() for k, g in self.nodes.items()}
+        new_copy.connections = {k: g.copy() for k, g in self.connections.items()}
+
+        return new_copy
 
     def add_node(self, node_in, node_out, node_type):
         """Add a new node positioned between two other nodes. Input and output
@@ -560,17 +585,17 @@ class Genome:
 
             if gene2 is None:
                 # gene1 is excess or disjoint
-                self.connections[key] = copy.deepcopy(gene1)
+                self.connections[key] = gene1.copy()
             else:
                 # gene is mutual, either average or randomly choose from parents
                 if average:
-                    self.connections[key] = copy.deepcopy(gene1)
+                    self.connections[key] = gene1.copy()
                     self.connections[key].weight = (gene1.weight + gene2.weight) / 2
                 else:
                     if random.random() > 0.5:
-                        self.connections[key] = copy.deepcopy(gene1)
+                        self.connections[key] = gene1.copy()
                     else:
-                        self.connections[key] = copy.deepcopy(gene2)
+                        self.connections[key] = gene2.copy()
 
                 if (not gene1.expressed) or (not gene2.expressed):
                     # Probabilistically disable gene if disabled in at least one parent
@@ -583,13 +608,13 @@ class Genome:
 
             if gene2 is None:
                 # gene1 is excess or disjoint
-                self.nodes[key] = copy.deepcopy(gene1)
+                self.nodes[key] = gene1.copy()
             else:
                 # gene is mutual, randomly choose from parents (makes no difference for node genes)
                 if random.random() > 0.5:
-                    self.nodes[key] = copy.deepcopy(gene1)
+                    self.nodes[key] = gene1.copy()
                 else:
-                    self.nodes[key] = copy.deepcopy(gene2)
+                    self.nodes[key] = gene2.copy()
 
             # Add to input/output nodes if applicable
             if gene1.type == NodeType.INPUT:

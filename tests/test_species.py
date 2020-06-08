@@ -33,11 +33,11 @@ class TestSpecies:
         """Test the Species update method.
         """
         species = Species(key=0, generation=1)
-        new_representative = 0
         new_members = {
             0: Genome(key=0, config=None, innovation_store=None),
             1: Genome(key=1, config=None, innovation_store=None),
         }
+        new_representative = new_members[0]
 
         assert species.representative is None
         assert {} == species.members
