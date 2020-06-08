@@ -551,7 +551,7 @@ class Genome:
         for key, gene in self.connections.items():
             if random.random() < self.config.weight_replace_prob:
                 # Replace weight
-                gene.weight = random.uniform(-1.0, 1.0) * self.config.weight_init_power
+                gene.weight = random.uniform(-1.0, 1.0) * self.config.weight_perturb_power
             else:
                 # Perturb weight
                 gene.weight += random.uniform(-1.0, 1.0) * self.config.weight_perturb_power
