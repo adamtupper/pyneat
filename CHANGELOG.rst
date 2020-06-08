@@ -46,6 +46,7 @@ Fixed
 
 - Fixed bug preventing :code:`survival_threshold` from being applied.
 - Species adjusted fitness is now saved to the right attribute.
+- Disabled connections being used in feed-forward neural networks.
 
 Version 0.2.0 (25-04-2020)
 ==========================
