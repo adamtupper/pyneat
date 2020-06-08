@@ -257,9 +257,9 @@ class TestSpeciesSet:
         expected_species0.update(representative=population[0], members={0: population[0], 1: population[1]})
 
         expected_species1 = Species(key=1, generation=1)
-        expected_species1.update(representative=population[3], members={2: population[2], 3: population[3]})
+        expected_species1.update(representative=population[2], members={2: population[2], 3: population[3]})
 
-        assert 2 == len(species_set.species)
-        assert 2 == next(species_set.species_key_generator)
-        assert expected_species0 == species_set.species[0]
-        assert expected_species1 == species_set.species[1]
+        assert len(species_set.species) == 2
+        assert next(species_set.species_key_generator) == 2
+        assert species_set.species[0] == expected_species0
+        assert species_set.species[1] == expected_species1
