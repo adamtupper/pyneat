@@ -11,7 +11,7 @@ def find_path(sources, goals, connections):
         sources (list): A list of node keys that the path may start from.
         goals (list): A list of node keys that the path may finish at.
         connections (list): A list of tuples that specify the input and output
-            node keys of each connection.
+            node keys of each enabled connection.
 
     Returns:
         list: A list of each node along the discovered path.
@@ -54,7 +54,7 @@ def required_for_output(inputs, biases, outputs, connections, nodes):
         biases (list): The keys of bias nodes.
         outputs (list): The keys of output nodes.
         connections (list): A list of tuples that specify the input and output
-            node keys of each connection.
+            node keys of each enabled connection.
         nodes (list): The keys of all nodes in the network.
 
     Returns:
@@ -68,7 +68,7 @@ def required_for_output(inputs, biases, outputs, connections, nodes):
         if h not in required:
             # if the node hasn't already marked as required
             path_to_output = find_path([h], outputs + list(required), connections)
-            path_from_input = find_path(inputs + biases, [h] + list(required), connections)
+            path_from_input = find_path(inputs + biases + list(required), [h], connections)
 
             if path_to_output and path_from_input:
                 # add hidden node and other hidden nodes along the path found
@@ -130,7 +130,7 @@ def group_layers(inputs, outputs, biases, connections, nodes):
         nodes (set): The set of nodes required for calculating the output value.
 
     Returns:
-        list: A list of sets that contain the node kets for the nodes in each
+        list: A list of sets that contain the node keys for the nodes in each
             layer.
     """
     layers = []
