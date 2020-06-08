@@ -62,12 +62,17 @@ def evaluate_genomes(genomes, config):
         network = NN.create(genome)
 
         # Evaluate network
+        net_outputs = []
         for xi, xo in zip(xor_inputs, xor_outputs):
             output = network.forward(xi)
+            net_outputs.append(output[0])
             fitness -= (output[0] - xo[0]) ** 2
 
         # Update genome's fitness
         genome.fitness = fitness
+
+        if (net_outputs[0] < 0.5) and (net_outputs[1] >= 0.5) and (net_outputs[2] >= 0.5) and (net_outputs[3] < 0.5):
+            genome.fitness = 4.0
 
 
 def run(config, base_dir):
