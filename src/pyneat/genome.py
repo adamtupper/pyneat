@@ -566,8 +566,7 @@ class Genome:
         """Performs crossover between two genomes.
 
         If the two genomes have equal fitness then the joint and excess genes
-        are inherited from parent1. Since parent1 and parent2 are chosen at
-        random, this choice is random.
+        are inherited from the smaller genome.
 
         Args:
             parent1 (Genome): The first parent.
@@ -576,6 +575,10 @@ class Genome:
                 connections or choose at random from one of the parents.
         """
         # Ensure parent1 is the fittest
+        if (parent1.fitness == parent2.fitness) and \
+           (len(parent2.connections) < len(parent1.connections)):
+            # Favour smaller genome
+            parent1, parent2 = parent2, parent1
         if parent1.fitness < parent2.fitness:
             parent1, parent2 = parent2, parent1
 
@@ -644,18 +647,12 @@ class Genome:
         c2 = self.config.compatibility_weight_coefficient
 
         # Find size of larger genome (set to 1 if both genomes contain <= 20 genes)
-        self_n_genes = len(self.nodes) + len(self.connections)
-        other_n_genes = len(other.nodes) + len(other.connections)
+        self_n_genes = len(self.connections)
+        other_n_genes = len(other.connections)
         if self.config.normalise_gene_dist and (self_n_genes > 20 or other_n_genes > 20):
-            n_genes = max(len(self.nodes) + len(self.connections),
-                    len(other.nodes) + len(other.connections))
+            n_genes = max(self_n_genes, other_n_genes)
         else:
             n_genes = 1
-
-        # Node gene distance
-        all_nodes = set(self.nodes.keys()).union(set(other.nodes.keys()))
-        non_matching_nodes = set(self.nodes.keys()) ^ set(other.nodes.keys())
-        matching_nodes = all_nodes - non_matching_nodes
 
         # Connection gene distance
         all_connections = set(self.connections.keys()).union(set(other.connections.keys()))
@@ -668,7 +665,7 @@ class Genome:
         avg_weight_diff = sum_weight_diff / len(matching_connections) if matching_connections else 0.
 
         weight_dist = c2 * avg_weight_diff
-        gene_dist = c1 * (len(non_matching_nodes) + len(non_matching_connections)) / n_genes
+        gene_dist = c1 * len(non_matching_connections) / n_genes
 
         return gene_dist + weight_dist
 
