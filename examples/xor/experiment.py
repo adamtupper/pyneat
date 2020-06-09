@@ -71,7 +71,10 @@ def evaluate_genomes(genomes, config):
         # Update genome's fitness
         genome.fitness = fitness
 
-        if (net_outputs[0] < 0.5) and (net_outputs[1] >= 0.5) and (net_outputs[2] >= 0.5) and (net_outputs[3] < 0.5):
+        # Stanley and Miikkulainen (2002) used the following test for solutions
+        # as opposed to a fitness threshold
+        if (net_outputs[0] < 0.5) and (net_outputs[1] >= 0.5) and \
+           (net_outputs[2] >= 0.5) and (net_outputs[3] < 0.5):
             genome.fitness = 4.0
 
 
