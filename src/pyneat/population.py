@@ -208,6 +208,17 @@ class Population(object):
                 else:
                     raise CompleteExtinctionException()
 
+            # Update compatibility distance threshold
+            compat_threshold = self.config.species_set_config.compatibility_threshold
+            if len(self.species.species) > 35:
+                compat_threshold += 0.3
+            elif len(self.species.species) < 25:
+                compat_threshold -= 0.3
+            compat_threshold = max(0.3, compat_threshold)
+
+            self.config.species_set_config.compatibility_threshold = compat_threshold
+            self.reporters.info(f'Compatibility threshold = {compat_threshold}')
+
             # Divide the new population into species.
             self.species.speciate(self.config, self.population, self.generation)
 
