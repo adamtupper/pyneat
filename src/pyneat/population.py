@@ -81,6 +81,7 @@ class Population(object):
             self.population, self.species, self.generation = initial_state
 
         self.best_genome = None
+        self.last_improved = 0
 
     def add_reporter(self, reporter):
         """Add a new reporter to the reporter set.
@@ -168,12 +169,22 @@ class Population(object):
 
             self.reporters.end_generation(self.config, self.population, self.species)
 
+            # If the fitness of the entire population has not improved for more
+            # than 20 generations, refocus the search into the most promising
+            # spaces.
+            if best.fitness == self.best_genome.fitness:
+                self.last_improved = self.generation
+            refocus = self.generation - self.last_improved > 20
+            if refocus:
+                self.last_improved = self.generation
+
             # Create the next generation from the current generation.
             self.population = self.reproduction.reproduce(self.config,
                                                           self.species,
                                                           self.config.pop_size,
                                                           self.generation,
-                                                          self.innovation_store)
+                                                          self.innovation_store,
+                                                          refocus)
 
             # # Check for genomes with non-unique innovation keys
             # for key, genome in self.population.items():

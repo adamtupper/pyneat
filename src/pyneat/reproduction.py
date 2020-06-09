@@ -185,7 +185,7 @@ class Reproduction:
 
         return parent_pool
 
-    def reproduce(self, config, species, pop_size, generation, innovation_store):
+    def reproduce(self, config, species, pop_size, generation, innovation_store, refocus):
         """Produces the next generation of genomes.
 
         Note: This is a required interface method.
@@ -217,15 +217,26 @@ class Reproduction:
         # size for elitism.
         assert num_elites <= elitism_threshold
 
-        # Filter stagnant species
         all_fitnesses = []
         remaining_species = {}
-        for species_key, species, stagnant in self.stagnation.update(species_set, generation):
-            if stagnant:
-                self.reporters.species_stagnant(species_key, species)
-            else:
+        if refocus:
+            # Keep only the top two species
+            sorted_species = [s for s in species_set.species.values() if s.fitness is not None]
+            try:
+                sorted_species.sort(key=lambda x: x.fitness, reverse=True)
+            except:
+                print()
+            for species in sorted_species[:2]:
                 all_fitnesses.extend(m.fitness for m in species.members.values())
-                remaining_species[species_key] = species
+                remaining_species[species.key] = species
+        else:
+            # Filter stagnant species
+            for species_key, species, stagnant in self.stagnation.update(species_set, generation):
+                if stagnant:
+                    self.reporters.species_stagnant(species_key, species)
+                else:
+                    all_fitnesses.extend(m.fitness for m in species.members.values())
+                    remaining_species[species_key] = species
 
         # Check for extinction
         if not remaining_species:
@@ -341,7 +352,7 @@ class Reproduction:
             species_size = len(species.members)
             species.adjusted_fitness = 0.0  # reset sum of the adjusted fitnesses
             for genome_key, genome in species.members.items():
-                species.adjusted_fitness += (genome.fitness - lowest_fitness) / species_size
+                species.adjusted_fitness += (genome.fitness) / species_size
 
         # Calculate the number of offspring for each species
         offspring = {}
