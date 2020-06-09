@@ -431,7 +431,7 @@ class Genome:
 
         if random.random() < self.config.node_add_prob:
             node_added = self.mutate_add_node()
-        elif random.random() < self.config.conn_add_prob:
+        if random.random() < self.config.conn_add_prob:
             connection_added = self.mutate_add_connection()
 
         if not (connection_added or node_added):
@@ -452,7 +452,7 @@ class Genome:
         possible_inputs = [k for k, g in self.nodes.items()]
         possible_outputs = [k for k, g in self.nodes.items() if g.type not in [NodeType.INPUT,NodeType.BIAS]]
 
-        max_retries = 100
+        max_retries = 20
         attempts = 0
         while attempts < max_retries:
             node_in = random.choice(possible_inputs)
