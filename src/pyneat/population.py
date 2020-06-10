@@ -1,6 +1,7 @@
 """Implements the core of the evolutionary algorithm.
 """
 from __future__ import print_function
+import pickle
 
 from neat.math_util import mean
 from neat.reporting import ReporterSet
@@ -137,7 +138,12 @@ class Population(object):
             self.reporters.start_generation(self.generation)
 
             # Ensure population size is correct
-            assert len(self.population.keys()) == self.config.pop_size
+            try:
+                assert len(self.population.keys()) == self.config.pop_size
+            except AssertionError:
+                print(f'Population size: {len(self.population.keys())}')
+                pickle.dump(self, open('failed_population.pickle', 'wb'))
+                raise RuntimeError("Population size check failed.")
 
             # Evaluate all genomes using the user-provided function.
             fitness_function(list(self.population.items()), self.config, **kwargs)
