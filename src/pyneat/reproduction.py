@@ -296,7 +296,7 @@ class Reproduction:
 
                     if random.random() < self.reproduction_config.inter_species_crossover_prob:
                         # Inter-species crossover (replace the 2nd parent with one from another species)
-                        candidates = [i for i in parent_pool.keys() if i != species_key]
+                        candidates = [i for i in parent_pool.keys() if i != species_key and len(parent_pool[i]) > 0]
                         if len(candidates) > 1:
                             other_species_key = random.choice(candidates)
                             parent2_key, parent2 = random.choice(parent_pool[other_species_key])
