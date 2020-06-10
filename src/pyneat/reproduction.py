@@ -222,10 +222,7 @@ class Reproduction:
         if refocus:
             # Keep only the top two species
             sorted_species = [s for s in species_set.species.values() if s.fitness is not None]
-            try:
-                sorted_species.sort(key=lambda x: x.fitness, reverse=True)
-            except:
-                print()
+            sorted_species.sort(key=lambda x: x.fitness, reverse=True)
             for species in sorted_species[:2]:
                 all_fitnesses.extend(m.fitness for m in species.members.values())
                 remaining_species[species.key] = species
