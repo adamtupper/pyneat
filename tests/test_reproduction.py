@@ -74,8 +74,8 @@ class TestReproduction:
         offspring_numbers = reproduction_scheme.compute_num_offspring(remaining_species, popn_size)
 
         assert 10 == sum(offspring_numbers.values())
-        assert offspring_numbers[1] == 2
-        assert offspring_numbers[2] == 8
+        assert offspring_numbers[1] == 3
+        assert offspring_numbers[2] == 7
 
     def test_reproduce_too_many_elites(self):
         """Test that reproduce works as expected when too many elites are specified.
@@ -96,7 +96,7 @@ class TestReproduction:
         species_set.speciate(self.config, population, generation=1)
 
         with pytest.raises(AssertionError):
-            reproduction_scheme.reproduce(self.config, species_set, pop_size, generation=1, innovation_store=InnovationStore())
+            reproduction_scheme.reproduce(self.config, species_set, pop_size, generation=1, innovation_store=InnovationStore(), refocus=False)
 
     def test_reproduce_elitism(self):
         """Test that reproduce produces a population with the correct number of
@@ -129,7 +129,7 @@ class TestReproduction:
 
         assert 2 == len(species_set.species)
 
-        new_population = reproduction_scheme.reproduce(self.config, species_set, pop_size, generation=1, innovation_store=innovation_store)
+        new_population = reproduction_scheme.reproduce(self.config, species_set, pop_size, generation=1, innovation_store=innovation_store, refocus=False)
 
         assert len(population) == len(new_population)
 
@@ -169,7 +169,7 @@ class TestReproduction:
 
         assert 2 == len(species_set.species)
 
-        new_population = reproduction_scheme.reproduce(self.config, species_set, pop_size,  generation=1, innovation_store=innovation_store)
+        new_population = reproduction_scheme.reproduce(self.config, species_set, pop_size,  generation=1, innovation_store=innovation_store, refocus=False)
 
         assert len(population) == len(new_population)
         old_genomes = population.values()
@@ -208,7 +208,7 @@ class TestReproduction:
 
         assert 2 == len(species_set.species)
 
-        new_population = reproduction_scheme.reproduce(self.config, species_set, pop_size, generation=1, innovation_store=InnovationStore())
+        new_population = reproduction_scheme.reproduce(self.config, species_set, pop_size, generation=1, innovation_store=InnovationStore(), refocus=False)
 
         old_genomes = population.values()
         new_genomes = new_population.values()
@@ -254,7 +254,7 @@ class TestReproduction:
 
         assert 2 == len(species_set.species)
 
-        population1 = reproduction_scheme.reproduce(self.config, species_set, pop_size, generation=1, innovation_store=InnovationStore())
+        population1 = reproduction_scheme.reproduce(self.config, species_set, pop_size, generation=1, innovation_store=InnovationStore(), refocus=False)
         species_set.speciate(self.config, population1, generation=10)
         for genome in population1.values():
             genome.fitness = 1
@@ -262,7 +262,7 @@ class TestReproduction:
         assert 2 == len(species_set.species)
 
         # Skip to generation 11 to stagnate all species
-        population2 = reproduction_scheme.reproduce(self.config, species_set, pop_size, generation=11, innovation_store=InnovationStore())
+        population2 = reproduction_scheme.reproduce(self.config, species_set, pop_size, generation=11, innovation_store=InnovationStore(), refocus=False)
         species_set.speciate(self.config, population2, generation=11)
         for genome in population2.values():
             genome.fitness = 1
