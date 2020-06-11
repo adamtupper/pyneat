@@ -1,7 +1,5 @@
 """Tests for the reproduction module.
 """
-import configparser
-import itertools
 import os
 
 import pytest
@@ -74,8 +72,40 @@ class TestReproduction:
         offspring_numbers = reproduction_scheme.compute_num_offspring(remaining_species, popn_size)
 
         assert 10 == sum(offspring_numbers.values())
-        assert offspring_numbers[1] == 3
-        assert offspring_numbers[2] == 7
+        assert offspring_numbers[1] == 2
+        assert offspring_numbers[2] == 8
+
+    def test_compute_num_offspring_negative(self):
+        """Test method for computing the number of offspring each species is
+        allocated for the next generation when genomes have negative fitnesses.
+        """
+        stagnation_scheme = Stagnation(self.config.stagnation_config, self.reporters)
+        reproduction_scheme = Reproduction(self.config, self.reporters, stagnation_scheme)
+        popn_size = 10
+
+        # Build Species 1
+        genome1 = Genome(key=0, config=self.config.genome_config, innovation_store=InnovationStore())
+        genome1.fitness = -30
+        genome2 = Genome(key=1, config=self.config.genome_config, innovation_store=InnovationStore())
+        genome2.fitness = -40
+        species1 = Species(key=1, generation=1)
+        species1.update(representative=genome1, members={1: genome1, 2: genome2})
+
+        # Build Species 2
+        genome3 = Genome(key=2, config=self.config.genome_config, innovation_store=InnovationStore())
+        genome3.fitness = -10
+        genome4 = Genome(key=3, config=self.config.genome_config, innovation_store=InnovationStore())
+        genome4.fitness = -20
+        species2 = Species(key=2, generation=1)
+        species2.update(representative=genome3, members={3: genome3, 4: genome4})
+
+        # Test Offspring numbers
+        remaining_species = {1: species1, 2: species2}
+        offspring_numbers = reproduction_scheme.compute_num_offspring(remaining_species, popn_size)
+
+        assert 10 == sum(offspring_numbers.values())
+        assert offspring_numbers[1] == 2
+        assert offspring_numbers[2] == 8
 
     def test_reproduce_too_many_elites(self):
         """Test that reproduce works as expected when too many elites are specified.
@@ -300,3 +330,38 @@ class TestReproduction:
         # Check that only half of the genomes in the species survived
         assert len(parent_pools) == 1
         assert len(parent_pools[0]) == len(population) / 2
+
+    # def test_reproduce_bug(self):
+    #     """
+    #     """
+    #     self.config.reproduction_config.num_elites = 1
+    #     self.config.reproduction_config.elitism_threshold = 4
+    #     self.config.reproduction_config.survival_threshold = 1.0
+    #     self.config.genome_config.weight_mutate_prob = 0.0
+    #     self.config.genome_config.conn_add_prob = 0.0
+    #     self.config.genome_config.node_add_prob = 0.0
+    #     self.config.reproduction_config.crossover_prob = 0.0
+    #     self.config.pop_size = 128
+    #
+    #     stagnation_scheme = Stagnation(self.config.stagnation_config, self.reporters)
+    #     reproduction_scheme = Reproduction(self.config.reproduction_config, self.reporters, stagnation_scheme)
+    #
+    #     population = pickle.load(open('failed_population_population.pickle', 'rb'))
+    #     species_set = pickle.load(open('failed_population_species.pickle', 'rb'))
+    #
+    #     for g in population.values():
+    #         if g.fitness is None:
+    #             g.fitness = 0
+    #
+    #     for s in species_set.species.values():
+    #         for m in s.members.values():
+    #             if m.fitness is None:
+    #                 m.fitness = 0
+    #
+    #     innov_store = InnovationStore()
+    #     new_population = reproduction_scheme.reproduce(self.config, species_set,
+    #                                                    self.config.pop_size, generation=1,
+    #                                                    innovation_store=innov_store,
+    #                                                    refocus=False)
+    #
+    #     assert len(new_population) == self.config.pop_size

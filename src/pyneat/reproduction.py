@@ -349,7 +349,7 @@ class Reproduction:
             species_size = len(species.members)
             species.adjusted_fitness = 0.0  # reset sum of the adjusted fitnesses
             for genome_key, genome in species.members.items():
-                species.adjusted_fitness += (genome.fitness) / species_size
+                species.adjusted_fitness += (genome.fitness - lowest_fitness) / species_size
 
         # Calculate the number of offspring for each species
         offspring = {}
