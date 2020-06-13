@@ -1,8 +1,5 @@
 """Implements the core of the evolutionary algorithm.
 """
-from __future__ import print_function
-import pickle
-
 from neat.math_util import mean
 from neat.reporting import ReporterSet
 
@@ -127,7 +124,6 @@ class Population(object):
         Returns:
             Genome: The best genome found during the run(s).
         """
-
         if self.config.no_fitness_termination and (n is None):
             raise RuntimeError("Cannot have no generational limit with no fitness termination")
 
@@ -137,13 +133,8 @@ class Population(object):
 
             self.reporters.start_generation(self.generation)
 
-            # Ensure population size is correct
-            try:
-                assert len(self.population.keys()) == self.config.pop_size
-            except AssertionError:
-                print(f'Population size: {len(self.population.keys())}')
-                pickle.dump(self, open('failed_population.pickle', 'wb'))
-                raise RuntimeError("Population size check failed.")
+            # Runtime check that the population size is always correct
+            assert len(self.population.keys()) == self.config.pop_size
 
             # Evaluate all genomes using the user-provided function.
             fitness_function(list(self.population.items()), self.config, **kwargs)
@@ -192,12 +183,7 @@ class Population(object):
                                                           self.innovation_store,
                                                           refocus)
 
-            # # Check for genomes with non-unique innovation keys
-            # for key, genome in self.population.items():
-            #     connection_keys = list(genome.connections.keys())
-            #     node_keys = list(genome.nodes.keys())
-            #     if len(node_keys + connection_keys) != len(set(node_keys) ^ set(connection_keys)):
-            #         print('STOP')
+            # Runtime check to ensure that all genomes share an innovation store
             assert len(set([g.innovation_store for g in self.population.values()])) == 1
 
             # Check for complete extinction.
@@ -214,7 +200,7 @@ class Population(object):
                 else:
                     raise CompleteExtinctionException()
 
-            # Dynamic compatibility distance threshold
+            # Dynamic compatibility distance thresholding
             # compat_threshold = self.config.species_set_config.compatibility_threshold
             # if len(self.species.species) > 35:
             #     compat_threshold += 0.3
