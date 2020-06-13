@@ -82,7 +82,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'pyneat'
+project = u'PyNEAT'
 copyright = u'2020, Adam Tupper'
 
 # The version info for the project you're documenting, acts as replacement for
