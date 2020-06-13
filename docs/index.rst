@@ -23,6 +23,8 @@ Contents
 .. toctree::
    :maxdepth: 2
 
+   Installation <install>
+   Getting Started <getting_started>
    License <license>
    Authors <authors>
    Changelog <changelog>
