@@ -2,4 +2,4 @@
 Contributors
 ============
 
-* Adam Tupper <adamdtupper@protonmail.com>
+* Adam Tupper <adam.tupper@outlook.com>
