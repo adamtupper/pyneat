@@ -120,43 +120,60 @@ class GenomeConfig:
     """Sets up and holds configuration information for the Genome class.
 
     Config Parameters:
-        num_inputs (int): The number of inputs each network should have.
-        num_outputs (int): The number of outputs each network should have.
-        num_biases (int): The number of bias nodes the network should have.
-        initial_conn_prob (float): The initial connection probability of each
-            potential connection between inputs and outputs. 0.0 = no
-            connections, i.e. all inputs are disconnected from the outputs.
-            1.0 = fully connected, i.e. all inputs are connected to all outputs.
-        activation_func (str): The name of the activation function to be used by
-            hidden and output nodes. Must be present in the set of possible
-            activation functions.
-        compatibility_disjoint_coefficient (float): The disjoint and excess
-            coefficient to be used when calculating genome distance.
-        compatibility_weight_coefficient (float): The weight and bias
-            coefficient to be used when calculation genome distance.
-        normalise_gene_dist (bool): Whether or not normalise the gene dist (for
-            genetic distance calculations) for large genomes.
-        feed_forward (bool): False if recurrent connections are allowed, True
-            otherwise.
-        conn_add_prob (float): The probability of adding a new connection when
-            performing mutations.
-        node_add_prob (float): The probability of adding a new node when
-            performing mutations.
-        weight_mutate_prob (float): The probability of mutating the connection
-            weights of a genome when performing mutations.
-        weight_replace_prob (float): The probability of replacing, instead of
-            perturbing, a connection weight when performing weight mutations.
-        weight_init_power (float): Sets the range of possible values for weight
-            replacements and new weight initialisations.
-        weight_perturb_power (float): Sets the range of possible values for
-            weight perturbations.
-        weight_min_value (float): Sets the minimum allowed value for connection
-            weights.
-        weight_max_value (float): Sets the maximum allowed value for connection
-            weights.
-        gene_disable_prob (float): The probability of disabling a gene in the
-            child that is disabled in either of the parents when performing
-            crossover.
+        **num_inputs (int):** The number of inputs each network should have.
+
+        **num_outputs (int):** The number of outputs each network should have.
+
+        **num_biases (int):** The number of bias nodes the network should have.
+
+        **initial_conn_prob (float):** The initial connection probability of each
+        potential connection between inputs and outputs. 0.0 = no connections,
+        i.e. all inputs are disconnected from the outputs. 1.0 = fully
+        connected, i.e. all inputs are connected to all outputs.
+
+        **activation_func (str):** The name of the activation function to be used by
+        hidden and output nodes. Must be present in the set of possible
+        activation functions.
+
+        **compatibility_disjoint_coefficient (float):** The disjoint and excess
+        coefficient to be used when calculating genome distance.
+
+        **compatibility_weight_coefficient (float):** The weight and bias
+        coefficient to be used when calculation genome distance.
+
+        **normalise_gene_dist (bool):** Whether or not normalise the gene dist (for
+        genetic distance calculations) for large genomes.
+
+        **feed_forward (bool):** False if recurrent connections are allowed, True
+        otherwise.
+
+        **conn_add_prob (float):** The probability of adding a new connection when
+        performing mutations.
+
+        **node_add_prob (float):** The probability of adding a new node when
+        performing mutations.
+
+        **weight_mutate_prob (float):** The probability of mutating the connection
+        weights of a genome when performing mutations.
+
+        **weight_replace_prob (float):** The probability of replacing, instead of
+        perturbing, a connection weight when performing weight mutations.
+
+        **weight_init_power (float):** Sets the range of possible values for weight
+        replacements and new weight initialisations.
+
+        **weight_perturb_power (float):** Sets the range of possible values for
+        weight perturbations.
+
+        **weight_min_value (float):** Sets the minimum allowed value for connection
+        weights.
+
+        **weight_max_value (float):** Sets the maximum allowed value for connection
+        weights.
+
+        **gene_disable_prob (float):** The probability of disabling a gene in the
+        child that is disabled in either of the parents when performing
+        crossover.
     """
 
     def __init__(self, params):
@@ -421,6 +438,7 @@ class Genome:
         in the genome configuration.
 
         As per the original implementation of NEAT:
+
         - If any structural mutations are performed, weight and bias mutations
           will not be performed.
         - If an add node mutation is performed, an add connection mutation will
@@ -543,10 +561,8 @@ class Genome:
         Each weight is either replaced (with some probability, specified in the
         genome config) or perturbed.
 
-        Replaced weights are drawn from a uniform distribution with range
-        [-weight_replace_power, weight_replace_power). Perturbations are drawn
-        from a uniform distribution with range
-        [-weight_perturb_power, weight_perturb_power).
+        Replaced weights and perturbations are drawn from a uniform distribution
+        with range [-weight_perturb_power, weight_perturb_power).
         """
         for key, gene in self.connections.items():
             if random.random() < self.config.weight_replace_prob:

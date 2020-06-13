@@ -97,8 +97,7 @@ class Species:
         """Get the fitnesses of each genome that belongs to this species.
 
         Returns:
-            :list:`float`: The fitness of each genome that belongs to this
-                species.
+            list: The fitness of each genome that belongs to this species.
         """
         return [m.fitness for m in self.members.values()]
 
