@@ -10,6 +10,10 @@ and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0
 Current
 =======
 
+This release further improves performance and substantially reduces runtime. Performance in the XOR experiments (95%
+success rate) now more closely matches the reported results from the original paper and the performance of Kenneth
+O'Stanley's C++ implementation.
+
 Added
 #####
 
@@ -24,6 +28,7 @@ Added
   saves the logs to a log file.
 - The ability to toggle on/off gene distance normalisation for the genetic distance calculation. Controlled by the
   :code:`normalise_gene_dist` config parameter.
+- Search refocusing if the population stagnates for 20 generations.
 
 Changed
 #######
@@ -35,11 +40,14 @@ Changed
   are restricted to the range [-8., 8.].
 - The :code:`Population.run` function can now take additional keyword arguments that are passed to the provided
   fitness evaluation function.
-- Introduce mpmath dependency to use for calculating exponentials in the activation functions (to avoid overflow errors).
-- An 'add connection' mutation is not performed if an 'add node' mutation has been performed (as per the original
-  implementation of NEAT).
+- Introduced mpmath dependency to use for calculating exponentials in the activation functions (to avoid overflow errors).
 - Use custom copy functions for :code:`Genome`, :code:`NodeGene`, and :code:`ConnectionGene` to avoid using
   :code:`deepcopy()`. This significantly reduces run time (~ 3x faster).
+- Reduce the number of retries from 100 to 20 for "add connection" mutations.
+- Update the XOR example solution check and config to match the original NEAT experiment.
+- Remove node genes from being counted in compatibility distance calculations.
+- Assign genomes to the first compatible species instead of calculating best representatives.
+- Change weight replacements to use the :code:`weight_perturb_power` instead of :code:`weight_init_power`.
 
 Fixed
 #####
@@ -47,6 +55,7 @@ Fixed
 - Fixed bug preventing :code:`survival_threshold` from being applied.
 - Species adjusted fitness is now saved to the right attribute.
 - Disabled connections being used in feed-forward neural networks.
+- Non-required nodes being labelled as required in some circumstances for feed-forward networks.
 
 Version 0.2.0 (25-04-2020)
 ==========================
