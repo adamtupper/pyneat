@@ -1,12 +1,9 @@
 """Implements the core of the evolutionary algorithm.
 """
-from __future__ import print_function
-
 from neat.math_util import mean
 from neat.reporting import ReporterSet
 
 from pyneat.innovation import InnovationStore
-import visualize
 
 
 class CompleteExtinctionException(Exception):
@@ -82,6 +79,7 @@ class Population(object):
             self.population, self.species, self.generation = initial_state
 
         self.best_genome = None
+        self.last_improved = 0
 
     def add_reporter(self, reporter):
         """Add a new reporter to the reporter set.
@@ -99,7 +97,7 @@ class Population(object):
         """
         self.reporters.remove(reporter)
 
-    def run(self, fitness_function, n=None):
+    def run(self, fitness_function, n=None, **kwargs):
         """Runs NEAT's genetic algorithm for at most n generations.  If n is
         None, run until solution is found or extinction occurs.
 
@@ -121,11 +119,11 @@ class Population(object):
             fitness_function (function): The fitness function to assess genomes
                 with.
             n (int): The maximum number of generations to run for.
+            **kwargs: Extra arguments that are passed to the fitness function.
 
         Returns:
             Genome: The best genome found during the run(s).
         """
-
         if self.config.no_fitness_termination and (n is None):
             raise RuntimeError("Cannot have no generational limit with no fitness termination")
 
@@ -135,11 +133,11 @@ class Population(object):
 
             self.reporters.start_generation(self.generation)
 
-            # Ensure population size is correct
+            # Runtime check that the population size is always correct
             assert len(self.population.keys()) == self.config.pop_size
 
             # Evaluate all genomes using the user-provided function.
-            fitness_function(list(self.population.items()), self.config)
+            fitness_function(list(self.population.items()), self.config, **kwargs)
 
             # Draw genomes (useful for debugging)
             # for key, genome in self.population.items():
@@ -168,19 +166,24 @@ class Population(object):
 
             self.reporters.end_generation(self.config, self.population, self.species)
 
+            # If the fitness of the entire population has not improved for more
+            # than 20 generations, refocus the search into the most promising
+            # spaces.
+            if best.fitness == self.best_genome.fitness:
+                self.last_improved = self.generation
+            refocus = self.generation - self.last_improved > 20
+            if refocus:
+                self.last_improved = self.generation
+
             # Create the next generation from the current generation.
             self.population = self.reproduction.reproduce(self.config,
                                                           self.species,
                                                           self.config.pop_size,
                                                           self.generation,
-                                                          self.innovation_store)
+                                                          self.innovation_store,
+                                                          refocus)
 
-            # # Check for genomes with non-unique innovation keys
-            # for key, genome in self.population.items():
-            #     connection_keys = list(genome.connections.keys())
-            #     node_keys = list(genome.nodes.keys())
-            #     if len(node_keys + connection_keys) != len(set(node_keys) ^ set(connection_keys)):
-            #         print('STOP')
+            # Runtime check to ensure that all genomes share an innovation store
             assert len(set([g.innovation_store for g in self.population.values()])) == 1
 
             # Check for complete extinction.
@@ -196,6 +199,17 @@ class Population(object):
                                                                    self.innovation_store)
                 else:
                     raise CompleteExtinctionException()
+
+            # Dynamic compatibility distance thresholding
+            # compat_threshold = self.config.species_set_config.compatibility_threshold
+            # if len(self.species.species) > 35:
+            #     compat_threshold += 0.3
+            # elif len(self.species.species) < 25:
+            #     compat_threshold -= 0.3
+            # compat_threshold = max(0.3, compat_threshold)
+            #
+            # self.config.species_set_config.compatibility_threshold = compat_threshold
+            # self.reporters.info(f'Compatibility threshold = {compat_threshold}')
 
             # Divide the new population into species.
             self.species.speciate(self.config, self.population, self.generation)

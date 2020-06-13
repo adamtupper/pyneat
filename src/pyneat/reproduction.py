@@ -17,10 +17,13 @@ class ReproductionConfig:
     """Sets up and hold configuration information for the Reproduction class.
 
     Config Parameters:
-        crossover_prob (float): The probability that a child is generated via
-            crossover (as opposed to mutation alone). Crossover is only an
-            option if there is more than one remaining parent in the parent
-            pool for the species in question.
+        mutate_only_prob (float): The probability that a child is generated
+            through mutation alone. Crossover is only an option if there is more
+            than one remaining parent in the parent pool for the species in
+            question.
+        crossover_avg_prob (float): The probability that the weights of mutual
+            connections are averaged from both parents instead of chosen at
+            random from one or the other.
         crossover_only_prob (float): The probability that a child
             generated via crossover is not also mutated.
         inter_species_crossover_prob (float): The probability (given crossover)
@@ -42,7 +45,8 @@ class ReproductionConfig:
         Args:
             params (dict): A dictionary of config parameters and values.
         """
-        self._params = [ConfigParameter('crossover_prob', float),
+        self._params = [ConfigParameter('mutate_only_prob', float),
+                        ConfigParameter('crossover_avg_prob', float),
                         ConfigParameter('crossover_only_prob', float),
                         ConfigParameter('inter_species_crossover_prob', float),
                         ConfigParameter('num_elites', int),
@@ -73,7 +77,7 @@ class Reproduction:
         reporters (ReporterSet): The set of reporters to log events via.
         genome_key_generator (generator): Keeps track of the next genome key when
             generating offspring.
-        stagnation (DefaultStagnation): Keeps track of which species have
+        stagnation (Stagnation): Keeps track of which species have
             stagnated.
         ancestors (dict): A dictionary that stores the parents of each
             offspring produced.
@@ -117,7 +121,7 @@ class Reproduction:
             config (ReproductionConfig): The configuration for
                 reproduction hyperparameters.
             reporters (ReporterSet): The set of reporters to log events via.
-            stagnation (DefaultStagnation): Keeps track of which species have
+            stagnation (Stagnation): Keeps track of which species have
                 stagnated.
         """
         self.reproduction_config = config
@@ -154,7 +158,34 @@ class Reproduction:
 
         return genomes
 
-    def reproduce(self, config, species, pop_size, generation, innovation_store):
+    def generate_parent_pools(self, remaining_species):
+        """Culls the lowest performing members of each remaining species
+
+        Args:
+            remaining_species (dict): Species key/species pairs for the
+                remaining species after stagnated species have been removed.
+
+        Returns:
+            dict: The parent genomes for each species. A dictionary of the form
+                species key, genomes.
+        """
+        survival_threshold = self.reproduction_config.survival_threshold
+        parent_pool = {}
+
+        for species_key, species in remaining_species.items():
+            old_members = list(species.members.items())
+
+            # Sort members in order of descending fitness
+            old_members.sort(reverse=True, key=lambda x: x[1].fitness)
+
+            # Eliminate the lowest performing members of the species
+            cutoff = int(math.ceil(survival_threshold * len(old_members)))
+            parents = old_members[:cutoff]
+            parent_pool[species_key] = parents
+
+        return parent_pool
+
+    def reproduce(self, config, species, pop_size, generation, innovation_store, refocus):
         """Produces the next generation of genomes.
 
         Note: This is a required interface method.
@@ -181,21 +212,28 @@ class Reproduction:
         species_set = species
         num_elites = self.reproduction_config.num_elites
         elitism_threshold = self.reproduction_config.elitism_threshold
-        survival_threshold = self.reproduction_config.survival_threshold
 
         # Ensure that the number of elites cannot exceed the minimum species
         # size for elitism.
         assert num_elites <= elitism_threshold
 
-        # Filter stagnant species
         all_fitnesses = []
         remaining_species = {}
-        for species_key, species, stagnant in self.stagnation.update(species_set, generation):
-            if stagnant:
-                self.reporters.species_stagnant(species_key, species)
-            else:
+        if refocus:
+            # Keep only the top two species
+            sorted_species = [s for s in species_set.species.values() if s.fitness is not None]
+            sorted_species.sort(key=lambda x: x.fitness, reverse=True)
+            for species in sorted_species[:2]:
                 all_fitnesses.extend(m.fitness for m in species.members.values())
-                remaining_species[species_key] = species
+                remaining_species[species.key] = species
+        else:
+            # Filter stagnant species
+            for species_key, species, stagnant in self.stagnation.update(species_set, generation):
+                if stagnant:
+                    self.reporters.species_stagnant(species_key, species)
+                else:
+                    all_fitnesses.extend(m.fitness for m in species.members.values())
+                    remaining_species[species_key] = species
 
         # Check for extinction
         if not remaining_species:
@@ -210,17 +248,7 @@ class Reproduction:
         self.reporters.info("Mean fitness: {:.3f}".format(mean_fitness))
 
         # Generate parent pool for each species
-        parent_pool = {}
-        for species_key, species in remaining_species.items():
-            old_members = list(species.members.items())
-
-            # Sort members in order of descending fitness
-            old_members.sort(reverse=True, key=lambda x: x[1].fitness)
-
-            # Eliminate the lowest performing members of the species
-            cutoff = int(math.ceil(survival_threshold) * len(old_members))
-            parents = old_members[:cutoff]
-            parent_pool[species_key] = parents
+        parent_pool = self.generate_parent_pools(remaining_species)
 
         # Generate new population
         new_population = {}
@@ -262,19 +290,20 @@ class Reproduction:
                 num_offspring -= 1
                 child_key = next(self.genome_key_generator)
 
-                if (len(parents) > 1) and (random.random() < self.reproduction_config.crossover_prob):
+                if (len(parents) > 1) and (random.random() > self.reproduction_config.mutate_only_prob):
                     # Child is generated through mutation and crossover
                     (parent1_key, parent1), (parent2_key, parent2) = random.sample(parents, 2)
 
                     if random.random() < self.reproduction_config.inter_species_crossover_prob:
                         # Inter-species crossover (replace the 2nd parent with one from another species)
-                        candidates = [i for i in parent_pool.keys() if i != species_key]
+                        candidates = [i for i in parent_pool.keys() if i != species_key and len(parent_pool[i]) > 0]
                         if len(candidates) > 1:
                             other_species_key = random.choice(candidates)
                             parent2_key, parent2 = random.choice(parent_pool[other_species_key])
 
                     child = Genome(child_key, config.genome_config, innovation_store)
-                    child.configure_crossover(parent1, parent2)
+                    average = True if random.random() < self.reproduction_config.crossover_avg_prob else False
+                    child.configure_crossover(parent1, parent2, average)
                     if random.random() > self.reproduction_config.crossover_only_prob:
                         child.mutate()
                     self.ancestors[child_key] = (parent1, parent2)
@@ -318,16 +347,16 @@ class Reproduction:
         # Calculate the sum of adjusted fitnesses for each species
         for species_key, species in remaining_species.items():
             species_size = len(species.members)
-            species.adj_fitness = 0.0  # reset sum of the adjusted fitnesses
+            species.adjusted_fitness = 0.0  # reset sum of the adjusted fitnesses
             for genome_key, genome in species.members.items():
-                species.adj_fitness += (genome.fitness - lowest_fitness) / species_size
+                species.adjusted_fitness += (genome.fitness - lowest_fitness) / species_size
 
         # Calculate the number of offspring for each species
         offspring = {}
-        adj_fitness_sum = sum([s.adj_fitness for s in remaining_species.values()])
+        adjusted_fitness_sum = sum([s.adjusted_fitness for s in remaining_species.values()])
         for species_key, species in remaining_species.items():
-            if adj_fitness_sum != 0:
-                offspring[species_key] = pop_size * (species.adj_fitness / adj_fitness_sum)
+            if adjusted_fitness_sum != 0:
+                offspring[species_key] = pop_size * (species.adjusted_fitness / adjusted_fitness_sum)
             else:
                 # All members of all species have zero fitness
                 # Allocate each species an equal number of offspring

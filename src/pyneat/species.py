@@ -1,6 +1,5 @@
 """Divides a population into species based on genetic distance.
 """
-import copy
 from itertools import count
 import math
 import statistics
@@ -91,15 +90,14 @@ class Species:
             members (dict): A dictionary of genome ID and genome pairs of the
                 new members of the species.
         """
-        self.representative = copy.deepcopy(representative)
+        self.representative = representative.copy()
         self.members = members
 
     def get_fitnesses(self):
         """Get the fitnesses of each genome that belongs to this species.
 
         Returns:
-            :list:`float`: The fitness of each genome that belongs to this
-                species.
+            list: The fitness of each genome that belongs to this species.
         """
         return [m.fitness for m in self.members.values()]
 
@@ -150,72 +148,51 @@ class SpeciesSet(DefaultClassConfig):
             generation (int): The current generation.
         """
         unspeciated = set(population)
-        distances = GenomeDistanceCache(config.genome_config)
-        new_representatives = {}  # species ID: genome
-        new_members = {}  # species ID: [genome IDs]
+        new_members = {k: [] for k in self.species}  # species ID: [genome IDs]
 
-        # Find the best new representatives for each species (closest to the
-        # current representatives)
-        for species_key, species in self.species.items():
-            best_representative = (None, None, math.inf)
-            for genome_key in unspeciated:
-                genome = population[genome_key]
-                distance = distances(species.representative, genome)
-                if distance < best_representative[2]:
-                    best_representative = (genome_key, genome, distance)
-
-            if best_representative[2] <= config.species_set_config.compatibility_threshold:
-                # Species has not become extinct
-                new_representatives[species_key] = best_representative[1]
-                new_members[species_key] = [best_representative[0]]
-                unspeciated.remove(best_representative[0])
-
-        # Partition the remaining population into species
+        # Partition the new population into species
         while unspeciated:
             genome_key = unspeciated.pop()
             genome = population[genome_key]
 
-            best_species = (None, math.inf)
-            for species_key, representative in new_representatives.items():
-                distance = distances(representative, genome)
-                if distance < best_species[1]:
-                    best_species = (species_key, distance)
+            found = False
+            for species_key, species in self.species.items():
+                # Add genome to the first species it is compatible with
+                distance = genome.distance(species.representative)
+                if distance < config.species_set_config.compatibility_threshold:
+                    # Genome belongs to this existing species
+                    if new_members[species_key]:
+                        new_members[species_key].append(genome_key)
+                    else:
+                        new_members[species_key] = [genome_key]
+                    found = True
+                    break
 
-            if best_species[0] is not None and best_species[1] <= config.species_set_config.compatibility_threshold:
-                # Genome fits an existing species
-                new_members[best_species[0]].append(genome_key)
-            else:
+            if not found:
                 # Genome belongs to a new species
                 species_key = next(self.species_key_generator)
-                new_representatives[species_key] = genome
-                new_members[species_key] = [genome_key]
-
-        # Update set of species with new representatives and members
-        self.genome_to_species = {}
-        for species_key, representative in new_representatives.items():
-            species = self.species.get(species_key)
-            if species is None:
-                # Species is new
                 species = Species(species_key, generation)
                 self.species[species_key] = species
+                new_members[species_key] = [genome_key]
+                species.update(genome, {})
+
+        # Update the representatives and members of each species
+        self.genome_to_species = {}
+        for species_key, members in new_members.items():
+            species = self.species.get(species_key)
 
             members = new_members[species_key]
             for genome_key in members:
                 self.genome_to_species[genome_key] = species_key
 
-            member_dict = {key: population[key] for key in new_members[species_key]}
-            species.update(representative, member_dict)
+            if members:
+                # Update the species if there are any members
+                representative = population[members[0]]
+                member_dict = {key: population[key] for key in new_members[species_key]}
+                species.update(representative, member_dict)
 
         # Remove species without any members
         self.species = {k: s for k, s in self.species.items() if s.members}
-
-        if self.species:
-            # If there are species remaining
-            gdmean = statistics.mean(distances.distances.values())
-            gdstdev = statistics.stdev(distances.distances.values())
-            self.reporters.info(
-                'Mean genetic distance {0:.3f}, standard deviation {1:.3f}'.format(gdmean, gdstdev)
-            )
 
     def get_species_id(self, genome_key):
         """Get the species ID of the species the given individual belongs to.

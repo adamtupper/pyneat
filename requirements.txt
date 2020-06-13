@@ -15,6 +15,9 @@
 # NEAT-Python
 neat-python==0.92
 
+# mpmath for arbitrary-precision floating-point arithmetic
+mpmath
+
 # Visualisation and examples
 numpy
 graphviz

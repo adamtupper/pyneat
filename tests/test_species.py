@@ -12,6 +12,7 @@ from neat.activations import  identity_activation
 from pyneat.species import *
 from pyneat.genome import *
 from pyneat.reproduction import Reproduction
+from pyneat.stagnation import Stagnation
 
 
 class TestSpecies:
@@ -32,11 +33,11 @@ class TestSpecies:
         """Test the Species update method.
         """
         species = Species(key=0, generation=1)
-        new_representative = 0
         new_members = {
             0: Genome(key=0, config=None, innovation_store=None),
             1: Genome(key=1, config=None, innovation_store=None),
         }
+        new_representative = new_members[0]
 
         assert species.representative is None
         assert {} == species.members
@@ -54,7 +55,7 @@ class TestSpeciesSet:
         self.config = neat.Config(Genome,
                                   Reproduction,
                                   SpeciesSet,
-                                  neat.DefaultStagnation,
+                                  Stagnation,
                                   config_path)
 
     def test_species_set_constructor(self):
@@ -256,9 +257,9 @@ class TestSpeciesSet:
         expected_species0.update(representative=population[0], members={0: population[0], 1: population[1]})
 
         expected_species1 = Species(key=1, generation=1)
-        expected_species1.update(representative=population[3], members={2: population[2], 3: population[3]})
+        expected_species1.update(representative=population[2], members={2: population[2], 3: population[3]})
 
-        assert 2 == len(species_set.species)
-        assert 2 == next(species_set.species_key_generator)
-        assert expected_species0 == species_set.species[0]
-        assert expected_species1 == species_set.species[1]
+        assert len(species_set.species) == 2
+        assert next(species_set.species_key_generator) == 2
+        assert species_set.species[0] == expected_species0
+        assert species_set.species[1] == expected_species1

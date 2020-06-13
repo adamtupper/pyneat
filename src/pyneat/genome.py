@@ -63,6 +63,14 @@ class ConnectionGene:
         return (self.key, self.node_in, self.node_out, self.weight, self.expressed) == \
                (other.key, other.node_in, other.node_out, other.weight, other.expressed)
 
+    def copy(self):
+        """Create a copy of the connection gene.
+
+        Returns:
+            ConnectionGene: A copy of itself.
+        """
+        return copy.copy(self)
+
 
 class NodeGene:
     """Defines a node gene used in the genome encoding.
@@ -99,46 +107,73 @@ class NodeGene:
         return (self.key, self.type, self.activation) == \
                (other.key, other.type, other.activation)
 
+    def copy(self):
+        """Create a copy of the node gene.
+
+        Returns:
+            NodeGene: A copy of itself.
+        """
+        return copy.copy(self)
+
 
 class GenomeConfig:
     """Sets up and holds configuration information for the Genome class.
 
     Config Parameters:
-        num_inputs (int): The number of inputs each network should have.
-        num_outputs (int): The number of outputs each network should have.
-        num_biases (int): The number of bias nodes the network should have.
-        initial_conn_prob (float): The initial connection probability of each
-            potential connection between inputs and outputs. 0.0 = no
-            connections, i.e. all inputs are disconnected from the outputs.
-            1.0 = fully connected, i.e. all inputs are connected to all outputs.
-        activation_func (str): The name of the activation function to be used by
-            hidden and output nodes. Must be present in the set of possible
-            activation functions.
-        compatibility_disjoint_coefficient (float): The disjoint and excess
-            coefficient to be used when calculating genome distance.
-        compatibility_weight_coefficient (float): The weight and bias
-            coefficient to be used when calculation genome distance.
-        feed_forward (bool): False if recurrent connections are allowed, True
-            otherwise.
-        conn_add_prob (float): The probability of adding a new connection when
-            performing mutations.
-        node_add_prob (float): The probability of adding a new node when
-            performing mutations.
-        weight_mutate_prob (float): The probability of mutating the connection
-            weights of a genome when performing mutations.
-        weight_replace_prob (float): The probability of replacing, instead of
-            perturbing, a connection weight when performing weight mutations.
-        weight_init_power (float): Sets the range of possible values for weight
-            replacements and new weight initialisations.
-        weight_perturb_power (float): Sets the range of possible values for
-            weight perturbations.
-        weight_min_value (float): Sets the minimum allowed value for connection
-            weights.
-        weight_max_value (float): Sets the maximum allowed value for connection
-            weights.
-        gene_disable_prob (float): The probability of disabling a gene in the
-            child that is disabled in either of the parents when performing
-            crossover.
+        **num_inputs (int):** The number of inputs each network should have.
+
+        **num_outputs (int):** The number of outputs each network should have.
+
+        **num_biases (int):** The number of bias nodes the network should have.
+
+        **initial_conn_prob (float):** The initial connection probability of each
+        potential connection between inputs and outputs. 0.0 = no connections,
+        i.e. all inputs are disconnected from the outputs. 1.0 = fully
+        connected, i.e. all inputs are connected to all outputs.
+
+        **activation_func (str):** The name of the activation function to be used by
+        hidden and output nodes. Must be present in the set of possible
+        activation functions.
+
+        **compatibility_disjoint_coefficient (float):** The disjoint and excess
+        coefficient to be used when calculating genome distance.
+
+        **compatibility_weight_coefficient (float):** The weight and bias
+        coefficient to be used when calculation genome distance.
+
+        **normalise_gene_dist (bool):** Whether or not normalise the gene dist (for
+        genetic distance calculations) for large genomes.
+
+        **feed_forward (bool):** False if recurrent connections are allowed, True
+        otherwise.
+
+        **conn_add_prob (float):** The probability of adding a new connection when
+        performing mutations.
+
+        **node_add_prob (float):** The probability of adding a new node when
+        performing mutations.
+
+        **weight_mutate_prob (float):** The probability of mutating the connection
+        weights of a genome when performing mutations.
+
+        **weight_replace_prob (float):** The probability of replacing, instead of
+        perturbing, a connection weight when performing weight mutations.
+
+        **weight_init_power (float):** Sets the range of possible values for weight
+        replacements and new weight initialisations.
+
+        **weight_perturb_power (float):** Sets the range of possible values for
+        weight perturbations.
+
+        **weight_min_value (float):** Sets the minimum allowed value for connection
+        weights.
+
+        **weight_max_value (float):** Sets the maximum allowed value for connection
+        weights.
+
+        **gene_disable_prob (float):** The probability of disabling a gene in the
+        child that is disabled in either of the parents when performing
+        crossover.
     """
 
     def __init__(self, params):
@@ -157,6 +192,7 @@ class GenomeConfig:
                         ConfigParameter('activation_func', str),
                         ConfigParameter('compatibility_disjoint_coefficient', float),
                         ConfigParameter('compatibility_weight_coefficient', float),
+                        ConfigParameter('normalise_gene_dist', bool),
                         ConfigParameter('feed_forward', bool),
                         ConfigParameter('conn_add_prob', float),
                         ConfigParameter('node_add_prob', float),
@@ -300,19 +336,28 @@ class Genome:
             bool: True if this genome is equal to the other, False otherwise.
         """
         self_attrs = (self.key, self.nodes, self.connections, self.inputs, self.outputs, self.biases)
-        other_attrs = (other.key, other.nodes, other.connections, other.inputs, other.outputs, self.biases)
+        other_attrs = (other.key, other.nodes, other.connections, other.inputs, other.outputs, other.biases)
 
         return self_attrs == other_attrs
 
     def copy(self):
         """Create a copy of the genome.
 
+        Note: Copies share the same config and innovation store.
+
         Returns:
-            Genome: A copy of itself, but with the same innovation store.
+            Genome: A copy of itself, but with the same config and innovation
+                store.
         """
-        copied_genome = copy.deepcopy(self)
-        copied_genome.innovation_store = self.innovation_store
-        return copied_genome
+        new_copy = Genome(self.key, self.config, self.innovation_store)
+        new_copy.fitness = self.fitness
+        new_copy.inputs = self.inputs.copy()
+        new_copy.outputs = self.outputs.copy()
+        new_copy.biases = self.biases.copy()
+        new_copy.nodes = {k: g.copy() for k, g in self.nodes.items()}
+        new_copy.connections = {k: g.copy() for k, g in self.connections.items()}
+
+        return new_copy
 
     def add_node(self, node_in, node_out, node_type):
         """Add a new node positioned between two other nodes. Input and output
@@ -390,18 +435,22 @@ class Genome:
         """Mutate the genome.
 
         Mutates the genome according to the mutation parameter values specified
-        in the genome configuration. If any structural mutations are performed,
-        weight and bias mutations will not be performed (as per the original
-        implementation of NEAT).
+        in the genome configuration.
+
+        As per the original implementation of NEAT:
+
+        - If any structural mutations are performed, weight and bias mutations
+          will not be performed.
+        - If an add node mutation is performed, an add connection mutation will
+          not also be performed.
         """
         connection_added = False
         node_added = False
 
-        if random.random() < self.config.conn_add_prob:
-            connection_added = self.mutate_add_connection()
-
         if random.random() < self.config.node_add_prob:
             node_added = self.mutate_add_node()
+        if random.random() < self.config.conn_add_prob:
+            connection_added = self.mutate_add_connection()
 
         if not (connection_added or node_added):
             if random.random() < self.config.weight_mutate_prob:
@@ -421,7 +470,7 @@ class Genome:
         possible_inputs = [k for k, g in self.nodes.items()]
         possible_outputs = [k for k, g in self.nodes.items() if g.type not in [NodeType.INPUT,NodeType.BIAS]]
 
-        max_retries = 100
+        max_retries = 20
         attempts = 0
         while attempts < max_retries:
             node_in = random.choice(possible_inputs)
@@ -461,44 +510,50 @@ class Genome:
         receives a weight of 1.0 and the connection leading out of the new node
         receives the old connection weight.
 
+        Connections from bias nodes and non-expressed nodes are not split.
+
         Returns:
             bool: True is a node was added, False otherwise.
         """
-        # Find all connections that are not from bias nodes
-        splittable_connections = [k for k, g in self.connections.items() if g.node_in not in self.biases]
 
-        if splittable_connections:
-            # Only add a new node if there connections that can be split
-
+        max_retries = 20
+        attempts = 0
+        while attempts < max_retries:
             # NOTE: Gene dictionaries could be replaced with RandomDict() for faster
             # random access (currently O(n)): https://github.com/robtandy/randomdict
-            old_gene_key = random.choice(splittable_connections)
+            old_gene_key = random.choice(list(self.connections.keys()))
             old_connection_gene = self.connections[old_gene_key]
 
             mutation = (old_connection_gene.node_in,
                         old_connection_gene.node_out,
                         InnovationType.NEW_NODE)
             node_mutation_key = self.innovation_store.mutation_to_key.get(mutation)
-            if node_mutation_key in self.nodes:
-                # Skip if this mutation is already present in this genome
-                # TODO: Decide whether we should retry if the node to be added already exists
-                return False
 
-            old_connection_gene.expressed = False
+            if (node_mutation_key in self.nodes) or \
+               (not old_connection_gene.expressed) or \
+               (old_connection_gene.node_in in self.biases):
+                # Try again if the selected connection is not splittable or the
+                # mutation has already been applied
+                attempts += 1
+            else:
+                # Split the selected connection and add the node
+                old_connection_gene.expressed = False
 
-            node_key = self.add_node(old_connection_gene.node_in,
-                                     old_connection_gene.node_out,
-                                     node_type=NodeType.HIDDEN)
+                node_key = self.add_node(old_connection_gene.node_in,
+                                         old_connection_gene.node_out,
+                                         node_type=NodeType.HIDDEN)
 
-            self.add_connection(node_in=old_connection_gene.node_in,
-                                node_out=node_key,
-                                weight=1.0)
+                self.add_connection(node_in=old_connection_gene.node_in,
+                                    node_out=node_key,
+                                    weight=1.0)
 
-            self.add_connection(node_in=node_key,
-                                node_out=old_connection_gene.node_out,
-                                weight=old_connection_gene.weight)
+                self.add_connection(node_in=node_key,
+                                    node_out=old_connection_gene.node_out,
+                                    weight=old_connection_gene.weight)
 
-            return True
+                return True
+
+        return False
 
     def mutate_weights(self):
         """Mutates (perturbs) or replaces each connection weight in the genome.
@@ -506,15 +561,13 @@ class Genome:
         Each weight is either replaced (with some probability, specified in the
         genome config) or perturbed.
 
-        Replaced weights are drawn from a uniform distribution with range
-        [-weight_replace_power, weight_replace_power). Perturbations are drawn
-        from a uniform distribution with range
-        [-weight_perturb_power, weight_perturb_power).
+        Replaced weights and perturbations are drawn from a uniform distribution
+        with range [-weight_perturb_power, weight_perturb_power).
         """
         for key, gene in self.connections.items():
             if random.random() < self.config.weight_replace_prob:
                 # Replace weight
-                gene.weight = random.uniform(-1.0, 1.0) * self.config.weight_init_power
+                gene.weight = random.uniform(-1.0, 1.0) * self.config.weight_perturb_power
             else:
                 # Perturb weight
                 gene.weight += random.uniform(-1.0, 1.0) * self.config.weight_perturb_power
@@ -525,18 +578,23 @@ class Genome:
 
             assert self.config.weight_min_value <= gene.weight <= self.config.weight_max_value
 
-    def configure_crossover(self, parent1, parent2):
+    def configure_crossover(self, parent1, parent2, average):
         """Performs crossover between two genomes.
 
         If the two genomes have equal fitness then the joint and excess genes
-        are inherited from parent1. Since parent1 and parent2 are chosen at
-        random, this choice is random.
+        are inherited from the smaller genome.
 
         Args:
             parent1 (Genome): The first parent.
             parent2 (Genome): The second parent.
+            average (bool): Whether or not to average the weights of mutual
+                connections or choose at random from one of the parents.
         """
         # Ensure parent1 is the fittest
+        if (parent1.fitness == parent2.fitness) and \
+           (len(parent2.connections) < len(parent1.connections)):
+            # Favour smaller genome
+            parent1, parent2 = parent2, parent1
         if parent1.fitness < parent2.fitness:
             parent1, parent2 = parent2, parent1
 
@@ -546,13 +604,17 @@ class Genome:
 
             if gene2 is None:
                 # gene1 is excess or disjoint
-                self.connections[key] = copy.deepcopy(gene1)
+                self.connections[key] = gene1.copy()
             else:
-                # gene is mutual, randomly choose from parents
-                if random.random() > 0.5:
-                    self.connections[key] = copy.deepcopy(gene1)
+                # gene is mutual, either average or randomly choose from parents
+                if average:
+                    self.connections[key] = gene1.copy()
+                    self.connections[key].weight = (gene1.weight + gene2.weight) / 2
                 else:
-                    self.connections[key] = copy.deepcopy(gene2)
+                    if random.random() > 0.5:
+                        self.connections[key] = gene1.copy()
+                    else:
+                        self.connections[key] = gene2.copy()
 
                 if (not gene1.expressed) or (not gene2.expressed):
                     # Probabilistically disable gene if disabled in at least one parent
@@ -565,13 +627,13 @@ class Genome:
 
             if gene2 is None:
                 # gene1 is excess or disjoint
-                self.nodes[key] = copy.deepcopy(gene1)
+                self.nodes[key] = gene1.copy()
             else:
-                # gene is mutual, randomly choose from parents
+                # gene is mutual, randomly choose from parents (makes no difference for node genes)
                 if random.random() > 0.5:
-                    self.nodes[key] = copy.deepcopy(gene1)
+                    self.nodes[key] = gene1.copy()
                 else:
-                    self.nodes[key] = copy.deepcopy(gene2)
+                    self.nodes[key] = gene2.copy()
 
             # Add to input/output nodes if applicable
             if gene1.type == NodeType.INPUT:
@@ -582,7 +644,7 @@ class Genome:
                 self.biases.append(key)
 
     def distance(self, other):
-        """Computes the compatibility  (genetic) distance between two genomes.
+        """Computes the compatibility (genetic) distance between two genomes.
 
         This is used for deciding how to speciate the population. Distance is a
         function of the number of disjoint and excess genes, as well as the
@@ -600,17 +662,13 @@ class Genome:
         c1 = self.config.compatibility_disjoint_coefficient
         c2 = self.config.compatibility_weight_coefficient
 
-        # Find size of larger genome (set to 1 if both genomes contain < 20 genes)
-        if (len(self.nodes) + len(self.connections) < 20) and (len(other.nodes) + len(other.connections) < 20):
-            N = 1
+        # Find size of larger genome (set to 1 if both genomes contain <= 20 genes)
+        self_n_genes = len(self.connections)
+        other_n_genes = len(other.connections)
+        if self.config.normalise_gene_dist and (self_n_genes > 20 or other_n_genes > 20):
+            n_genes = max(self_n_genes, other_n_genes)
         else:
-            N = max(len(self.nodes) + len(self.connections),
-                    len(other.nodes) + len(other.connections))
-
-        # Node gene distance
-        all_nodes = set(self.nodes.keys()).union(set(other.nodes.keys()))
-        non_matching_nodes = set(self.nodes.keys()) ^ set(other.nodes.keys())
-        matching_nodes = all_nodes - non_matching_nodes
+            n_genes = 1
 
         # Connection gene distance
         all_connections = set(self.connections.keys()).union(set(other.connections.keys()))
@@ -623,7 +681,7 @@ class Genome:
         avg_weight_diff = sum_weight_diff / len(matching_connections) if matching_connections else 0.
 
         weight_dist = c2 * avg_weight_diff
-        gene_dist = c1 * (len(non_matching_nodes) + len(non_matching_connections)) / N
+        gene_dist = c1 * len(non_matching_connections) / n_genes
 
         return gene_dist + weight_dist
 

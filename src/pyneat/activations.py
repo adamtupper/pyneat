@@ -3,17 +3,20 @@
 import math
 import types
 
+from mpmath import mp
+
 
 def sigmoid_activation(z):
     # TODO: This is not a plain sigmoid function!?
     z = max(-60.0, min(60.0, 5.0 * z))
-    return 1.0 / (1.0 + math.exp(-z))
+    return 1.0 / (1.0 + mp.exp(-z))
 
 
 def steep_sigmoid_activation(z):
     """Used in the original implementation by Stanley and Miikkulainen (2002).
     """
-    return 1.0 / (1.0 + math.exp(-4.924273 * z))
+    y = 1.0 / (1.0 + mp.exp(-4.924273 * mp.mpf(z)))
+    return float(y)
 
 
 def tanh_activation(z):
@@ -28,7 +31,7 @@ def sin_activation(z):
 
 def gauss_activation(z):
     z = max(-3.4, min(3.4, z))
-    return math.exp(-5.0 * z ** 2)
+    return mp.exp(-5.0 * z ** 2)
 
 
 def relu_activation(z):
@@ -36,7 +39,7 @@ def relu_activation(z):
 
 
 def elu_activation(z):
-    return z if z > 0.0 else math.exp(z) - 1
+    return z if z > 0.0 else mp.exp(z) - 1
 
 
 def lelu_activation(z):
@@ -47,12 +50,12 @@ def lelu_activation(z):
 def selu_activation(z):
     lam = 1.0507009873554804934193349852946
     alpha = 1.6732632423543772848170429916717
-    return lam * z if z > 0.0 else lam * alpha * (math.exp(z) - 1)
+    return lam * z if z > 0.0 else lam * alpha * (mp.exp(z) - 1)
 
 
 def softplus_activation(z):
     z = max(-60.0, min(60.0, 5.0 * z))
-    return 0.2 * math.log(1 + math.exp(z))
+    return 0.2 * math.log(1 + mp.exp(z))
 
 
 def identity_activation(z):
@@ -79,7 +82,7 @@ def log_activation(z):
 
 def exp_activation(z):
     z = max(-60.0, min(60.0, z))
-    return math.exp(z)
+    return mp.exp(z)
 
 
 def abs_activation(z):

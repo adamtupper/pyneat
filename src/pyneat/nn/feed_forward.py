@@ -75,18 +75,24 @@ class NN:
         output_nodes = genome.outputs
         bias_nodes = genome.biases
 
-        connections = [(g.node_in, g.node_out) for g in genome.connections.values()]
+        enabled_connections = [(g.node_in, g.node_out) for g in genome.connections.values() if g.expressed]
         nodes = [k for k in genome.nodes.keys()]
+        required_nodes = required_for_output(input_nodes, bias_nodes,
+                                             output_nodes, enabled_connections,
+                                             nodes)
+        required_connections = [(i, o) for i, o in enabled_connections if i in required_nodes]
 
         # Gather information required to evaluate each node
-        layers = group_layers(input_nodes, output_nodes, bias_nodes, connections, nodes)
+        layers = group_layers(input_nodes, output_nodes, bias_nodes,
+                              required_connections, required_nodes)
         node_evals = []
         for layer in layers:
             for node_key in layer:
                 inputs = []
                 for conn_gene in genome.connections.values():
-                    if conn_gene.node_out == node_key:
-                        inputs.append((conn_gene.node_in, conn_gene.weight))
+                    if (conn_gene.node_in, conn_gene.node_out) in required_connections:
+                        if conn_gene.node_out == node_key:
+                            inputs.append((conn_gene.node_in, conn_gene.weight))
 
                 node_gene = genome.nodes[node_key]
                 node_evals.append((node_key, node_gene.activation, inputs))
