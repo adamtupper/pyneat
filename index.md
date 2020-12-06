@@ -6,7 +6,7 @@ description: "PyNEAT: A Python Implementation of NEAT"
 permalink: /
 ---
 
-# PyNEAT: A Python Implementation of NEAT
+# PyNEAT
 {: .fs-9 }
 
 PyNEAT is a Python implementation of the NeuroEvolution of Augmenting Topologies (NEAT) algorithm created by Kenneth O’Stanley.
@@ -14,7 +14,7 @@ PyNEAT is a Python implementation of the NeuroEvolution of Augmenting Topologies
 
 [View it on GitHub](https://github.com/adamtupper/pyneat){: .btn .fs-5 .mb-4 .mb-md-0 }
 
---
+---
 
 ## Getting started
 
